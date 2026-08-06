@@ -1,0 +1,2255 @@
+/* ── List-pane shared header (all tab panes except Zone) ─────────────── */
+.tab-pane-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0 10px 0;
+  gap: 4px;
+}
+.tab-pane-head-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 12px/1 Roboto, sans-serif;
+  letter-spacing: 0.28em;
+  color: #cdd2e0;
+  text-align: center;
+}
+.tab-pane-head-icon {
+  font-size: 15px !important;
+  color: #8a8a96;
+  letter-spacing: 0;
+}
+.tab-pane-head-stats {
+  font: 400 11px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #8a90a0;
+  text-align: center;
+  min-height: 13px;
+}
+.tab-pane-head-rule {
+  width: 100%;
+  height: 1px;
+  background: #2c2c34;
+  margin: 3px 0;
+}
+.tab-pane-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+}
+.tab-pane-head-actions button {
+  font: 600 11px/1.2 Roboto, sans-serif;
+  padding: 4px 8px;
+}
+.tab-pane-head-actions button:hover {
+  background: #353541;
+}
+
+/* ── Events panel (EVTS tab) — actor → event tree with category badges ── */
+.evt-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 8px;
+}
+.evt-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font: 600 10px/1 Roboto, sans-serif;
+  color: #cfcfd8;
+  background: #2a2a31;
+  border: 1px solid #3a3a44;
+  border-radius: 11px;
+  padding: 4px 8px;
+}
+.evt-cat-chip:hover {
+  background: #353541;
+}
+.evt-cat-chip.active {
+  color: #fff;
+  background: #353541;
+  border-color: var(--cc, #4aa569);
+}
+.evt-cat-chip b {
+  color: #fff;
+  font-weight: 700;
+}
+.evt-cat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cc, #888);
+}
+
+.list-pane #evtlist-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+}
+.evtlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.evt-actor {
+  border-bottom: 1px solid #26262c;
+}
+.evt-actor-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.evt-actor-head:hover {
+  background: #2c2c34;
+}
+.evt-caret {
+  font-size: 16px;
+  line-height: 1;
+  color: #7a8398;
+  flex-shrink: 0;
+  transition: transform 0.12s;
+}
+.evt-actor.open > .evt-actor-head .evt-caret {
+  transform: rotate(90deg);
+}
+.evt-actor-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: #e6e9f2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.evt-actor-id {
+  flex-shrink: 0;
+  font: 10px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #6f7790;
+}
+.evt-dots {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.evt-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.evt-actor-count {
+  flex-shrink: 0;
+  min-width: 14px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #aeb4c2;
+  background: #2a2a31;
+  border: 1px solid #3a3a44;
+  border-radius: 9px;
+  padding: 1px 6px;
+}
+
+.evt-events {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 4px;
+  background: #202026;
+}
+.evt-event {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 8px 3px 26px;
+  font-size: 11px;
+  border-top: 1px solid #232329;
+}
+.evt-event:hover {
+  background: #2a2a33;
+}
+.evt-badge {
+  flex-shrink: 0;
+  min-width: 56px;
+  text-align: center;
+  font: 700 9px/1.5 Roboto, sans-serif;
+  color: var(--cc, .aaa);
+  background: #00000033;
+  background: color-mix(in srgb, var(--cc, #888) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cc, #888) 45%, #3a3a44);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.evt-ev-id {
+  flex-shrink: 0;
+  color: #d6dae6;
+}
+.evt-ev-hex {
+  flex-shrink: 0;
+  font: 10px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #6f7790;
+}
+
+.evt-msg {
+  padding: 14px 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #8a90a0;
+  text-align: center;
+  list-style: none;
+}
+
+/* Every event row opens the inspector modal; dialogue events also show a chat glyph. */
+.evt-event {
+  cursor: pointer;
+}
+.evt-ev-dlgico {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 1;
+  color: #7fd88f;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+.evt-event.has-dialog:hover .evt-ev-dlgico {
+  opacity: 1;
+}
+.evt-event.active {
+  background: #2a2c33;
+  box-shadow: inset 2px 0 0 var(--cc, #7fd88f);
+}
+.evt-event.has-dialog.active .evt-ev-dlgico {
+  opacity: 1;
+  color: #9be6a8;
+}
+
+/* Pinned events — a per-zone bookmark group pinned to the top of the tree. */
+.evt-pinned-group {
+  border-bottom: 2px solid #2f6fd055;
+  background: #1c222e;
+}
+.evt-pinned-group > .evt-actor-head .evt-actor-name {
+  color: #cdddff;
+  font-weight: 600;
+}
+.evt-pin-ico {
+  font-size: 13px;
+  line-height: 1;
+  color: #82aaff;
+  flex-shrink: 0;
+}
+.evt-event .evt-pin-ico {
+  margin-left: auto;
+  opacity: 0.85;
+} /* push right when it's the only trailing icon */
+.evt-event .evt-ev-dlgico ~ .evt-pin-ico {
+  margin-left: 4px;
+} /* sit beside the chat glyph, not split from it */
+.evt-pin-actor {
+  /* owning actor's name, in pinned rows */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: #8b93a6;
+}
+
+/* Event Dialogue modal — drag the title bar to move, the bottom-right corner to resize. */
+.evt-dialog-modal {
+  width: min(880px, calc(100vw - 40px));
+  resize: both;
+  overflow: hidden;
+  min-width: 420px;
+  min-height: 220px;
+  max-width: calc(100vw - 24px);
+  max-height: min(1000px, calc(100vh - 24px));
+}
+/* Cutscene author — the timeline lives in the bottom sequencer, so the modal
+   only holds cast + dialog + flags + publish. Slimmer than before. */
+.cs-author {
+  width: min(880px, calc(100vw - 40px));
+  min-width: 720px;
+  height: min(680px, calc(100vh - 40px));
+}
+/* Dark canvas for the two premium modals so the accent-tinted cards / tiles / nav pills
+   sit on the right tone (the global .modal grey #25252a is too light for the new style).
+   The title bar keeps its lighter #2a2a31 so it still reads as a distinct header. */
+.evt-dialog-modal { background: #191a20; }
+
+/* Modal body is a pure layout container — no padding on any of them; the nav rail + content
+   pane own their own spacing. Targets both .evt-dialog-modal instances (dialogue + cutscene). */
+.evt-dialog-modal .modal-body { padding: 0; overflow: hidden; }
+.cs-author .evt-dialog-modal-body { flex: 1 1 auto; min-height: 0; display: flex; overflow: hidden; }
+.cs-author .cs-author-layout { flex: 1 1 auto; min-height: 0; display: flex; height: 100%; }
+.cs-author .cs-nav-spacer { flex: 1; }
+.cs-author .cs-tab-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 16px 28px;   /* unified modal content padding (matches .evt-dialog-pane) */
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  font-size: 13px;
+}
+/* All non-nav content buttons in the modal (the rail uses .lnav-btn; the title-bar ×
+   uses .modal-close; the dialog-row × uses .cs-dlg-del — all excluded so they keep their
+   own style). */
+.cs-author button:not(.lnav-btn):not(.modal-close):not(.cs-mini):not(.modal-min) {
+  font: 500 13px/1.2 Roboto, sans-serif;
+  background: #2a2a31;
+  color: #dfdfe5;
+  border: 1px solid #3a3a44;
+  padding: 8px 13px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cs-author button:not(.lnav-btn):not(.modal-close):not(.cs-mini):not(.modal-min):hover { background: #353541; }
+/* Minimal row buttons (× delete, ↑/↓ reorder) — no chrome, just a muted glyph.
+   Deletes redden on hover; the reorder arrows just brighten. */
+.cs-mini {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  font-size: 16px;
+  line-height: 1;
+  color: #7e8698;
+  cursor: pointer;
+}
+.cs-mini:hover { color: #cdd2e0; }
+.cs-mini:disabled { opacity: .3; cursor: default; }
+.cs-dlg-del:hover, .cs-cast-del:hover { color: #e58787; }
+.cs-dlg-actions { display: flex; align-items: center; gap: 1px; }
+/* "+ Add line/NPC" layout is owned by .csa-add (full-width flex pill). */
+.cs-author select:disabled { opacity: .55; cursor: not-allowed; }
+.cs-author button:disabled { opacity: .5; cursor: not-allowed; }
+/* Shared field skin — Edit Cutscene tabs AND the sequencer keyframe popover use the
+   SAME look: borderless dark well, 8px radius, accent focus ring. The input selectors
+   repeat base.css's six :not()s because that base rule is (0,6,1) and silently beats
+   any plain class — a bare `.cs-author input` never actually applied to text inputs. */
+.cs-author select, .cs-seq-modal select,
+.cs-author textarea, .cs-seq-modal textarea,
+.cs-author input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]),
+.cs-seq-modal input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]) {
+  background-color: #0d0e12;            /* longhand so a <select>'s themed chevron survives */
+  color: #eef1f8;
+  border: none;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font: 500 13px/1.3 Roboto, sans-serif;
+  transition: box-shadow .12s, background-color .12s;
+}
+.cs-author select:hover, .cs-seq-modal select:hover,
+.cs-author textarea:hover, .cs-seq-modal textarea:hover,
+.cs-author input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):hover,
+.cs-seq-modal input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):hover {
+  background-color: #101116;
+}
+.cs-author select:focus, .cs-seq-modal select:focus,
+.cs-author textarea:focus, .cs-seq-modal textarea:focus,
+.cs-author input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):focus,
+.cs-seq-modal input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):focus {
+  outline: none; background-color: #101116;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #7fd6e6 18%, transparent);
+}
+/* Selects need extra right room so long option text clears the chevron. */
+.cs-author select, .cs-seq-modal select { padding-right: 28px; cursor: pointer; }
+.cs-author select:disabled, .cs-seq-modal select:disabled,
+.cs-author input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):disabled,
+.cs-seq-modal input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):disabled {
+  opacity: .55; cursor: not-allowed; background-color: #0b0c0f;
+}
+.cs-author h3 { font: 600 18px/1.3 Roboto, sans-serif; letter-spacing: .01em; margin: 0 0 10px; color: #eef; }
+.cs-author .cs-section { background: #16171c; padding: 15px 16px; border-radius: 11px; border: 1px solid #24252c; }
+
+/* Shared premium section header for the author tabs (accent icon tile + title + sub). */
+.cs-author .csa-head { display: flex; align-items: center; gap: 12px; margin-bottom: 13px; }
+.cs-author .csa-head-ico {
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center; color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 16%, #1b1c22);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ac) 34%, transparent);
+}
+.cs-author .csa-head-ico .material-symbols-outlined { font-size: 21px; }
+.cs-author .csa-head-main { min-width: 0; }
+.cs-author .csa-head-title { font: 700 17px/1.2 Roboto, sans-serif; letter-spacing: .01em; color: #eef1f8; }
+.cs-author .csa-head-sub { font: 400 12px/1.35 Roboto, sans-serif; color: #868d9c; margin-top: 2px; }
+.cs-author .csa-head-sub code { font-size: 11px; }
+
+/* Field labels above a full-width control. */
+.cs-author .csa-field-label { display: block; font: 700 10px/1 Roboto, sans-serif; text-transform: uppercase; letter-spacing: .6px; color: #7e8698; margin: 13px 0 6px; }
+
+/* Full-width "+ Add …" button — quiet dashed affordance, accent on hover. */
+.cs-author .csa-add {
+  display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%;
+  margin-top: 10px; padding: 10px; border-radius: 9px; cursor: pointer;
+  font: 600 12.5px Roboto, sans-serif; color: #aab1c2;
+  background: #14151a; border: 1px dashed #3a3b45;
+}
+.cs-author .csa-add:hover { background: #191b22; border-color: #7fd6e6; color: #cfeef6; }
+.cs-author .csa-add .material-symbols-outlined { font-size: 17px; }
+
+/* Camera DAT placement (Settings tab): ROM · Path · Filename + a live path preview. */
+.cs-author .csa-camdat-grid {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 10px;
+  margin-top: 2px;
+}
+.cs-author .csa-camdat-grid .csa-field-label { margin-top: 6px; }
+.cs-author .csa-camdat-preview {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; padding: 9px 12px; border-radius: 8px;
+  background: #0e0f13;
+  border: 1px solid #3a3350;                                  /* fallback before color-mix */
+  border: 1px solid color-mix(in srgb, #c792ea 30%, #24252c);
+  color: #d7c4ee;
+  font: 600 12.5px/1 ui-monospace, "Cascadia Code", monospace;
+  letter-spacing: .02em;
+}
+.cs-author .csa-camdat-preview .material-symbols-outlined { font-size: 17px; color: #c792ea; }
+.cs-author .csa-camdat-preview.is-empty { color: #5f6675; border-color: #2f3039; }
+.cs-author .csa-camdat-preview.is-empty .material-symbols-outlined { color: #5f6675; }
+.cs-author .csa-camdat-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-author .csa-camdat-warn {
+  display: flex; align-items: center; gap: 6px;
+  margin: 9px 0 0; font-size: 11.5px; color: #ffb27f;
+}
+.cs-author .csa-camdat-warn .material-symbols-outlined { font-size: 15px; }
+/* Table-aligned rows in the Dialog / NPCs tabs */
+.cs-author .cs-trow { padding: 3px 2px; border-radius: 4px; }
+.cs-author .cs-trow:hover { background: #20222c; }
+.cs-author .cs-trow select,
+.cs-author .cs-trow input { width: 100%; box-sizing: border-box; }
+.cs-author .cs-trow button {
+  background: none;
+  border: none;
+  color: #9aa3b2;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.cs-author .cs-trow button:hover { color: #e58787; }
+/* De-inlined helpers: subtitles, hints, field rows */
+.cs-author .cs-sub { font-size: 12px; font-weight: 400; opacity: .7; text-transform: none; letter-spacing: 0; }
+.cs-author .cs-hint { font-size: 12px; opacity: .72; margin: 2px 0 12px; line-height: 1.5; }
+.cs-author .cs-hint-sm { font-size: 11px; opacity: .55; margin: 6px 0 0; line-height: 1.5; }
+.cs-author code { background: #0d0f16; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+/* Dialogue escape-code reference — a compact card with a code | meaning grid. */
+.cs-escapes { margin-top: 14px; padding: 11px 13px; border-radius: 8px; background: #16171c; border: 1px solid #24252c; }
+.cs-escapes-title { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #7e8698; font-weight: 700; margin-bottom: 9px; }
+.cs-escapes-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: baseline; }
+.cs-author .cs-escapes-grid code { justify-self: start; color: #7fd6e6; }
+.cs-escapes-grid span { font-size: 12px; color: #aab1c2; }
+.cs-escapes-foot { display: block; margin-top: 10px; padding-top: 9px; border-top: 1px solid #23242b; font-size: 11px; color: #7e8698; }
+.cs-author .cs-field-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.cs-author .cs-field-row > label { font-size: 13px; opacity: .85; white-space: nowrap; }
+.cs-author .cs-grow { flex: 1; min-width: 0; }
+.cs-author .cs-full { width: 100%; box-sizing: border-box; }
+.cs-author .cs-table { display: flex; flex-direction: column; gap: 6px; }
+/* NPC list rows: badge | entity | idle | remove */
+.cs-author .cs-npc-head, .cs-author .cs-npc-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) minmax(0, 1fr) 26px;
+  gap: 10px;
+  align-items: center;
+}
+.cs-author .cs-npc-head { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; opacity: .5; padding: 2px 2px 4px; }
+.cs-author .cs-npc-row { padding: 5px 2px; border-radius: 4px; }
+.cs-author .cs-npc-row:hover { background: #20222c; }
+.cs-author .cs-npc-badge {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  text-align: center; padding: 4px 6px; border-radius: 4px; background: #2f3a52; color: #bcd2f5;
+}
+.cs-author .cs-npc-badge.dim { background: #262a34; color: #8a93a6; }
+.cs-author .cs-npc-lock { font-size: 16px; opacity: .4; text-align: center; cursor: default; }
+/* Presentation tab */
+.cs-author .cs-inline-note { opacity: .55; font-size: 11px; }
+.cs-author .cs-mode-list { display: flex; flex-direction: column; gap: 6px; }
+.cs-author .check { font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+/* Presentation-flag toggles read as bordered rows; the checkbox picks up an accent. */
+.cs-author .cs-mode-list .check {
+  display: flex; padding: 9px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 12.5px; color: #cdd2e0; background: #14151a; border: 1px solid #24252c;
+}
+.cs-author .cs-mode-list .check:hover { border-color: #33343d; background: #191b22; }
+.cs-author .cs-mode-list .cs-inline-note { margin-left: auto; }
+.cs-author .cs-mode-bit { accent-color: #82aaff; }
+.cs-author .cs-cast-idle, .cs-author .cs-cast-entity { accent-color: #c792ea; }
+.cs-author details { margin-top: 8px; }
+.cs-author details summary { cursor: pointer; font-size: 12px; opacity: .7; }
+.cs-author details > div { margin-top: 6px; }
+/* Dialog + Publish tabs */
+.cs-author .cs-dlg-head, .cs-author .cs-dlg-row {
+  display: grid; grid-template-columns: 24px 120px minmax(0, 1fr) auto; gap: 8px; align-items: center;
+}
+.cs-author .cs-dlg-head { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; opacity: .5; padding: 2px 2px 4px; }
+.cs-author .cs-dlg-row { padding: 4px 2px; border-radius: 4px; }
+.cs-author .cs-dlg-row:hover { background: #20222c; }
+.cs-author .cs-rownum { opacity: .5; font-size: 11px; text-align: center; }
+/* ══ Publish tab — release-style dashboard (.csp-*) ═══════════════════════════
+   Scoped under .cs-author so class selectors (1,1,0) outrank the base
+   `.cs-author button` theme (1,0,1) and our gradient CTA survives. */
+.cs-author .csp { display: flex; flex-direction: column; gap: 13px; padding: 0; }
+@keyframes csp-spin { to { transform: rotate(360deg); } }
+
+/* Hero — live publish target + status, tinted by status colour (--ac). */
+.cs-author .csp-hero {
+  display: flex; align-items: center; gap: 14px;
+  padding: 15px 17px; border-radius: 13px;
+  background: #15161b;
+  background:
+    radial-gradient(130% 150% at 0% 0%, color-mix(in srgb, var(--ac) 22%, transparent), transparent 58%),
+    #15161b;
+  border: 1px solid #2f2f38;
+  border: 1px solid color-mix(in srgb, var(--ac) 32%, #2a2a31);
+}
+.cs-author .csp-hero-ico {
+  flex: 0 0 auto; width: 48px; height: 48px; border-radius: 12px;
+  display: grid; place-items: center; color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 18%, #1b1c22);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ac) 38%, transparent);
+}
+.cs-author .csp-hero-ico .material-symbols-outlined { font-size: 27px; }
+.cs-author .csp-hero-main { flex: 1 1 auto; min-width: 0; }
+.cs-author .csp-hero-title {
+  display: flex; align-items: center; gap: 10px;
+  font: 700 21px/1.15 Roboto, sans-serif; letter-spacing: .2px; color: #eef1f8;
+}
+.cs-author .csp-mode {
+  font: 700 10px/1 Roboto, sans-serif; text-transform: uppercase; letter-spacing: .6px;
+  padding: 3px 8px; border-radius: 999px; color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ac) 42%, transparent);
+}
+.cs-author .csp-mode-update { color: #f7c873; background: #f7c8731f; border-color: #f7c8736b; }
+.cs-author .csp-mode-new    { color: #7fd88f; background: #7fd88f1f; border-color: #7fd88f6b; }
+.cs-author .csp-hero-sub { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13px; color: #cdd2e0; }
+.cs-author .csp-sub-ico { font-size: 15px !important; color: #7e8698; }
+.cs-author .csp-hero-hex { font: 12px/1 ui-monospace, "Cascadia Code", monospace; color: #757c8c; }
+.cs-author .csp-status {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+  font: 700 11px/1 Roboto, sans-serif; text-transform: uppercase; letter-spacing: .5px;
+  padding: 6px 11px; border-radius: 999px; color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ac) 36%, transparent);
+}
+.cs-author .csp-status .material-symbols-outlined { font-size: 15px; }
+.cs-author .csp-status-busy .material-symbols-outlined { animation: csp-spin 1s linear infinite; }
+
+/* Actions — ghost Preview/Debug + gradient Publish CTA. */
+.cs-author .csp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.cs-author .csp-btn-ghost {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px;
+  padding: 12px 16px; border-radius: 11px; cursor: pointer;
+  font: 600 13.5px Roboto, sans-serif; color: #cdd2e0;
+  background: #1a1b21; border: 1px solid #33343d;
+}
+.cs-author .csp-btn-ghost:hover { background: #20222b; border-color: #454652; color: #eef1f8; }
+.cs-author .csp-btn-ghost .material-symbols-outlined { font-size: 18px; }
+.cs-author .csp-cta {
+  flex: 1 1 auto; display: inline-flex; align-items: center; gap: 10px;
+  padding: 12px 18px; border-radius: 11px; border: none; cursor: pointer;
+  font: 700 14.5px Roboto, sans-serif; color: #06180f;
+  background: linear-gradient(100deg, #86e0a0, #58c58c);
+  box-shadow: 0 7px 20px -9px #46b47f; transition: filter .14s, box-shadow .16s, transform .08s;
+}
+.cs-author .csp-cta:hover { filter: brightness(1.06); box-shadow: 0 9px 24px -9px #46b47f; }
+.cs-author .csp-cta:active { transform: translateY(1px); }
+.cs-author .csp-cta:disabled { filter: saturate(.5) brightness(.85); cursor: progress; box-shadow: none; }
+.cs-author .csp-cta .material-symbols-outlined { font-size: 20px; }
+.cs-author .csp-cta-arrow { margin-left: auto; opacity: .6; }
+.cs-author .csp-cta:disabled .material-symbols-outlined:first-child { animation: csp-spin 1s linear infinite; }
+.cs-author .csp-cta:disabled .csp-cta-arrow { display: none; }
+.cs-author .csp-note { margin: 0; font-size: 11.5px; line-height: 1.55; color: #868d9c; }
+.cs-author .csp-note code { font-size: 11px; }
+
+/* Metric tiles — event id / opcodes / DAT sizes with byte deltas. */
+.cs-author .csp-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+.cs-author .csp-tile {
+  position: relative; padding: 12px 12px 11px; border-radius: 10px;
+  background: #17181d; border: 1px solid #24252c; overflow: hidden;
+}
+.cs-author .csp-tile::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ac); opacity: .85; }
+.cs-author .csp-tile-ico { position: absolute; top: 9px; right: 9px; font-size: 16px !important; color: var(--ac); opacity: .7; }
+.cs-author .csp-tile-val { font: 700 20px/1.05 Roboto, sans-serif; color: #eef1f8; font-variant-numeric: tabular-nums; }
+.cs-author .csp-tile-key { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #7e8698; margin-top: 4px; }
+.cs-author .csp-tile-delta { margin-top: 7px; font: 700 11px/1 ui-monospace, monospace; }
+.cs-author .csp-d-up   { color: #7fd88f; }
+.cs-author .csp-d-down { color: #ffb27f; }
+.cs-author .csp-d-zero { color: #6b7280; }
+
+/* Cards — warnings / published files / error. */
+.cs-author .csp-card { padding: 13px 15px; border-radius: 11px; background: #16171c; border: 1px solid #24252c; }
+.cs-author .csp-card-h { display: flex; align-items: center; gap: 7px; font: 700 10.5px/1 Roboto, sans-serif; text-transform: uppercase; letter-spacing: .7px; color: #7e8698; margin-bottom: 11px; }
+.cs-author .csp-card-h .material-symbols-outlined { font-size: 16px; }
+.cs-author .csp-card-warn { border-color: #4a3a1c; }
+.cs-author .csp-card-warn .csp-card-h { color: #f7c873; }
+.cs-author .csp-warn-row { font-size: 12px; line-height: 1.5; color: #d6c9a6; padding: 2px 0; }
+.cs-author .csp-card-ok { border-color: #2b4a34; background: linear-gradient(180deg, #14201a, #16171c 60%); }
+.cs-author .csp-card-ok .csp-card-h { color: #7fd88f; }
+.cs-author .csp-card-err { border-color: #4d2626; background: linear-gradient(180deg, #201314, #16171c 60%); }
+.cs-author .csp-card-err .csp-card-h { color: #ff8f8f; }
+.cs-author .csp-err-body { font: 12px/1.55 ui-monospace, "Cascadia Code", monospace; color: #ffb3b3; white-space: pre-wrap; word-break: break-word; }
+
+/* Written-files list — one row per path, icon-tagged game vs Ashita pivot. */
+.cs-author .csp-files { display: flex; flex-direction: column; gap: 3px; }
+.cs-author .csp-file { display: flex; align-items: center; gap: 9px; padding: 3px 2px; }
+.cs-author .csp-file-ico { font-size: 15px !important; flex: 0 0 auto; }
+.cs-author .csp-file-game  { color: #82aaff; }
+.cs-author .csp-file-pivot { color: #c792ea; }
+.cs-author .csp-file-path { font: 11.5px/1.45 ui-monospace, "Cascadia Code", monospace; color: #aeb4c2; word-break: break-all; }
+
+/* Collapsible bytecode + Lua. */
+.cs-author .csp-fold { border-radius: 11px; background: #16171c; border: 1px solid #24252c; overflow: hidden; }
+.cs-author .csp-fold > summary {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+  padding: 12px 15px; font: 700 11px/1 Roboto, sans-serif; text-transform: uppercase; letter-spacing: .6px; color: #aab1c2;
+}
+.cs-author .csp-fold > summary::-webkit-details-marker { display: none; }
+.cs-author .csp-fold > summary .material-symbols-outlined { font-size: 17px; color: #7e8698; }
+.cs-author .csp-fold[open] > summary { border-bottom: 1px solid #23242b; }
+.cs-author .csp-fold-count { margin-left: auto; font: 600 10px/1 ui-monospace, monospace; text-transform: none; letter-spacing: 0; color: #6b7280; background: #0e0f13; padding: 3px 7px; border-radius: 999px; }
+.cs-author .csp-disasm { max-height: 320px; overflow: auto; padding: 8px 6px; }
+.cs-author .csp-op {
+  display: grid; grid-template-columns: 52px 46px minmax(0, auto) 1fr; gap: 8px; align-items: baseline;
+  padding: 2px 9px; border-radius: 4px; font: 12px/1.5 ui-monospace, "Cascadia Code", monospace;
+}
+.cs-author .csp-op:hover { background: #1c1d24; }
+.cs-author .csp-op-off  { color: #5f6675; }
+.cs-author .csp-op-hex  { color: #c792ea; font-weight: 700; }
+.cs-author .csp-op-name { color: #dfe3ec; }
+.cs-author .csp-op-args { color: #6b7280; overflow: hidden; text-overflow: ellipsis; }
+.cs-author .csp-lua { font: 12px/1.55 ui-monospace, "Cascadia Code", monospace; white-space: pre-wrap; word-break: break-word; color: #cdd2e0; background: #0e0f13; padding: 12px 15px; margin: 0; }
+.cs-author .csp-muted { color: #7e8698; }
+
+/* Empty state — before the first compile. */
+.cs-author .csp-empty { display: flex; gap: 13px; align-items: flex-start; padding: 18px 17px; border-radius: 11px; background: #16171c; border: 1px dashed #2f3039; }
+.cs-author .csp-empty > .material-symbols-outlined { font-size: 24px; color: #6b7280; flex: 0 0 auto; margin-top: 1px; }
+.cs-author .csp-empty-h { font: 700 13px/1 Roboto, sans-serif; color: #cdd2e0; margin-bottom: 6px; }
+.cs-author .csp-empty-t { font-size: 12px; line-height: 1.55; color: #868d9c; }
+.evt-dialog-modal .modal-bar {
+  user-select: none;
+}
+.evt-dialog-modal .modal-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* Event modal body = common left-nav rail (left) + content pane (right).
+   The rail uses the shared .modal-lnav/.lnav-btn styling (css/modals.css); the
+   buttons keep the .evt-dlg-tab class purely as the JS hook for tab switching. */
+.evt-dialog-body-layout {
+  flex: 1 1 auto;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 0;
+  min-height: 0;
+}
+
+.evt-dialog-modal-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* Event content pane sits flush against the common-nav divider — pad it.
+   A modifier class (not the id) so it doesn't leak into #cs-author-body, which
+   shares .evt-dialog-modal-body but must stay flush. */
+.evt-dialog-pane {
+  padding: 12px 16px 28px;   /* unified modal content padding (matches .cs-author .cs-tab-content) */
+}
+
+/* Opcodes tab — bytecode disassembly rows.
+   The list is a horizontal scroller: rows keep their natural width (max-content)
+   but fill the pane (min-width:100%) so long operands scroll sideways rather than
+   collapsing the args column. */
+.evt-op-list {
+  overflow-x: auto;
+}
+.evt-op-line {
+  display: flex;
+  gap: 8px;
+  padding: 2px 2px;
+  width: max-content;
+  min-width: 100%;
+  font: 11px/1.6 "Roboto Mono", ui-monospace, monospace;
+  border-bottom: 1px solid #222229;
+}
+.evt-op-line:last-child {
+  border-bottom: none;
+}
+.evt-op-off {
+  flex-shrink: 0;
+  min-width: 40px;
+  color: #5f6677;
+}
+.evt-op-code {
+  flex-shrink: 0;
+  min-width: 36px;
+  color: #c0a36b;
+}
+.evt-op-name {
+  flex-shrink: 0;
+  min-width: 104px;
+  color: #cdd2e0;
+}
+.evt-op-args {
+  flex: 0 0 auto;
+  min-width: 220px;      /* readable floor — never squashes to a sliver */
+  color: #6f7790;
+  white-space: nowrap;   /* keep operand on one line; the list scrolls if it's long */
+}
+.evt-op-ref {
+  flex-shrink: 0;
+  color: #7fd88f;
+}
+.evt-op-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 0 2px 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #222229;
+}
+.evt-op-tags-k {
+  font: 10px/1 Roboto, sans-serif;
+  color: #6f7790;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.evt-op-tag {
+  font: 11px/1.4 "Roboto Mono", ui-monospace, monospace;
+  color: #cdd2e0;
+  background: #26262c;
+  border: 1px solid #36363f;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.evt-op-tag b {
+  color: #c0a36b;
+  font-weight: 700;
+}
+/* load_zone target chip — clickable, opens the loaded zone side-by-side */
+.evt-op-zone {
+  flex-shrink: 0;
+  color: #f7c873;
+  cursor: pointer;
+  border-bottom: 1px dotted #f7c87366;
+}
+.evt-op-zone:hover {
+  color: #ffe1a6;
+  border-bottom-color: #ffe1a6;
+}
+/* actor/NPC the opcode acts on (resolved from its actor-id operand) */
+.evt-op-actor {
+  flex-shrink: 0;
+  color: #6fd3e0;
+}
+
+/* Loaded-zone peek modal (opened from a "→ zone N" chip) */
+.evt-zone-peek-modal {
+  width: min(380px, calc(100vw - 40px));
+  max-height: 70vh;
+}
+.evt-zone-peek-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.evt-zone-peek-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.evt-zone-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.evt-zone-open {
+  font: 600 11px/1 Roboto, sans-serif;
+  color: #cfe3ff;
+  background: #2c3a52;
+  border: 1px solid #3c5170;
+  border-radius: 5px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.evt-zone-open:hover {
+  background: #34466a;
+  color: #fff;
+}
+.evt-zone-stats {
+  display: flex;
+  gap: 18px;
+  padding: 0 2px 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #222229;
+}
+.evt-zone-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.evt-zone-k {
+  font: 9px/1 Roboto, sans-serif;
+  color: #6f7790;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.evt-zone-v {
+  font: 700 15px/1 Roboto, sans-serif;
+  color: #e7e7ee;
+}
+.evt-zone-dat {
+  font: 10px/1.4 "Roboto Mono", ui-monospace, monospace;
+  color: #6f7790;
+  padding: 0 2px 8px;
+  word-break: break-all;
+}
+.evt-zone-actor {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 3px 2px;
+  border-bottom: 1px solid #1e1e24;
+}
+.evt-zone-actor-name {
+  flex-shrink: 0;
+  min-width: 120px;
+  font: 11px/1.5 Roboto, sans-serif;
+  color: #cdd2e0;
+  word-break: break-word;
+}
+.evt-zone-evs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.evt-zone-ev {
+  font: 10px/1.4 "Roboto Mono", ui-monospace, monospace;
+  color: #cdd2e0;
+  background: #26262c;
+  border: 1px solid var(--cc, #36363f);
+  border-left: 3px solid var(--cc, #36363f);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+/* ══ Event Info — redesigned dashboard (.evx-*) ═══════════════════════════════ */
+.evx { display: flex; flex-direction: column; gap: 13px; padding: 0; }
+
+/* Hero banner — actor + event id + category badge, tinted by category colour (--ac). */
+.evx-hero {
+  display: flex; align-items: center; gap: 14px;
+  padding: 15px 17px; border-radius: 13px;
+  background: #15161b;                                   /* fallback if color-mix unsupported */
+  background:
+    radial-gradient(130% 150% at 0% 0%, color-mix(in srgb, var(--ac) 22%, transparent), transparent 58%),
+    #15161b;
+  border: 1px solid #2f2f38;                             /* fallback */
+  border: 1px solid color-mix(in srgb, var(--ac) 32%, #2a2a31);
+}
+.evx-hero-ico {
+  flex: 0 0 auto; width: 48px; height: 48px; border-radius: 12px;
+  display: grid; place-items: center; color: var(--ac);
+  background: #1b1c22;                                   /* fallback */
+  background: color-mix(in srgb, var(--ac) 18%, #1b1c22);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ac) 38%, transparent);
+}
+.evx-hero-ico .material-symbols-outlined { font-size: 27px; }
+.evx-hero-main { flex: 1 1 auto; min-width: 0; }
+.evx-hero-name {
+  font-size: 21px; font-weight: 700; letter-spacing: .2px; color: #eef1f8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.evx-hero-sub { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+.evx-hero-id { font-size: 13px; color: #cdd2e0; font-weight: 600; }
+.evx-hero-hex { font-size: 12px; color: #757c8c; font-family: ui-monospace, "Cascadia Code", monospace; }
+.evx-badge {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+  padding: 2px 9px; border-radius: 999px; color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ac) 42%, transparent);
+}
+.evx-badge-flag { --ac: #8b93a6; }
+.evx-hero-meta { flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; text-align: right; }
+.evx-hero-meta > div { display: flex; gap: 7px; justify-content: flex-end; align-items: baseline; }
+.evx-hero-meta-k { font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px; color: #656c7a; }
+.evx-hero-meta-v { font-size: 12px; color: #aab1c2; font-family: ui-monospace, "Cascadia Code", monospace; }
+
+/* Metric tiles — a responsive grid of big-number cards, each accented by --ac. */
+.evx-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(94px, 1fr)); gap: 8px; }
+.evx-tile {
+  position: relative; padding: 12px 11px 10px; border-radius: 10px;
+  background: #17181d; border: 1px solid #24252c; overflow: hidden;
+}
+.evx-tile::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ac); opacity: .85; }
+.evx-tile-ico { position: absolute; top: 9px; right: 9px; font-size: 16px !important; color: var(--ac); opacity: .75; }
+.evx-tile-val { font-size: 21px; font-weight: 700; color: #eef1f8; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.evx-tile-key { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #7e8698; margin-top: 4px; }
+
+/* Cards (composition / server / loading / error) */
+.evx-card { padding: 13px 15px; border-radius: 11px; background: #16171c; border: 1px solid #24252c; }
+.evx-card-h { font-size: 10.5px; text-transform: uppercase; letter-spacing: .7px; color: #7e8698; font-weight: 700; margin-bottom: 11px; }
+.evx-muted { color: #7e8698; }
+.evx-err { color: #ff9b9b; border-color: #4d2626; }
+
+/* Composition — a stacked proportional bar + legend. */
+.evx-compbar { display: flex; gap: 2px; height: 15px; border-radius: 8px; overflow: hidden; background: #0e0f13; padding: 2px; }
+.evx-seg { display: block; min-width: 5px; border-radius: 4px; background: var(--cc); }
+
+/* Loading state — skeleton of the Composition card while the timeline decodes:
+   an indeterminate accent sweep where the proportional bar will appear + spinner line. */
+.evx-loadbar { height: 15px; border-radius: 8px; overflow: hidden; background: #0e0f13; padding: 2px; }
+.evx-loadbar span {
+  display: block; height: 100%; width: 40%; border-radius: 4px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, #7fd6e6 55%, transparent), transparent);
+  animation: evx-sweep 1.1s ease-in-out infinite;
+}
+@keyframes evx-sweep {
+  from { transform: translateX(-100%); }   /* own-width units: fully hidden left → */
+  to   { transform: translateX(250%); }    /* 250% × 40% width = exits container right */
+}
+.evx-loadmsg { display: flex; align-items: center; gap: 8px; margin-top: 11px; font-size: 12.5px; color: #9aa3b6; }
+.evx-loadmsg .material-symbols-outlined {
+  font-size: 16px; color: #7fd6e6;
+  animation: csp-spin .9s linear infinite;   /* reuse the Publish tab's rotate keyframes */
+}
+.evx-legend { display: flex; flex-wrap: wrap; gap: 7px 15px; margin-top: 12px; }
+.evx-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #aab1c2; }
+.evx-leg i { width: 9px; height: 9px; border-radius: 3px; background: var(--cc); }
+.evx-leg b { color: #eef1f8; font-weight: 700; }
+.evx-res-wrap { margin-top: 13px; padding-top: 12px; border-top: 1px solid #23242b; display: flex; flex-direction: column; gap: 7px; }
+.evx-res { display: flex; gap: 9px; font-size: 12px; align-items: baseline; }
+.evx-res-k { flex: 0 0 40px; font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; color: var(--cc); }
+.evx-res-v { color: #cdd2e0; min-width: 0; }
+
+/* Primary call-to-action — Open Timeline Sequencer. */
+.evx-cta {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 13px 16px; border-radius: 11px; border: none; cursor: pointer;
+  font: 700 14px Roboto, sans-serif; color: #07141b;
+  background: linear-gradient(100deg, #7fd6e6, #74b6ef);
+  box-shadow: 0 7px 20px -9px #4aa5c8; transition: filter .14s, box-shadow .16s, transform .08s;
+}
+.evx-cta:hover { filter: brightness(1.07); box-shadow: 0 9px 24px -9px #4aa5c8; }
+.evx-cta:active { transform: translateY(1px); }
+.evx-cta .material-symbols-outlined { font-size: 20px; }
+.evx-cta-arrow { margin-left: auto; opacity: .65; }
+
+/* Server lookup */
+.evx-server-row { display: flex; gap: 8px; }
+.evx-input {
+  flex: 1 1 auto; min-width: 0; padding: 8px 11px; border-radius: 8px;
+  background: #0d0e12; border: none; color: #e4e8f2;
+  font: 12.5px ui-monospace, "Cascadia Code", monospace;
+}
+.evx-input:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, #7fd6e6 18%, transparent); }
+/* Find script — layout only; inherits the base editor button theme (bg / border / hover). */
+.evx-btn { flex: 0 0 auto; }
+
+/* Danger zone */
+.evx-danger {
+  padding: 14px 15px; border-radius: 11px;
+  background: linear-gradient(180deg, #1d1315, #17161b); border: 1px solid #4a2226;
+}
+.evx-danger-h { display: flex; align-items: center; gap: 7px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .7px; font-weight: 700; color: #e97b7b; margin-bottom: 9px; }
+.evx-danger-h .material-symbols-outlined { font-size: 16px; }
+.evx-danger-txt { font-size: 11.5px; color: #969cab; line-height: 1.55; margin-bottom: 12px; }
+.evx-del {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 15px; border-radius: 8px; cursor: pointer;
+  background: #b3352f; border: 1px solid #cf4a44; color: #fff; font: 600 13px Roboto, sans-serif;
+}
+.evx-del:hover { background: #c53c35; }
+.evx-del .material-symbols-outlined { font-size: 17px; }
+
+/* Cutscene Timeline tab — summary + Load button */
+.cs-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 2px;
+}
+/* Merged Info view: labelled sections (Info / Timeline) split by a divider. */
+.evt-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.evt-sec-label {
+  font: 700 10px/1 Roboto, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7f8698;
+}
+.evt-sec-div {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #2a2a32;
+  margin: 2px 0;
+}
+
+/* Compact cutscene stats — a small horizontal table: header row (Animation / Frames / …)
+   above one row of values. */
+.cs-stat-table {
+  align-self: flex-start;
+  border-collapse: collapse;
+  text-align: left;
+}
+.cs-stat-table th {
+  padding: 0 22px 4px 0;
+  font: 700 10px/1.4 Roboto, sans-serif;
+  color: #6f7790;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  text-align: left;
+}
+.cs-stat-table td {
+  padding: 0 22px 0 0;
+  font: 700 15px/1.2 "Roboto Mono", ui-monospace, monospace;
+  color: #eef1f6;
+  white-space: nowrap;
+  vertical-align: top;
+}
+.cs-stat-table th:last-child,
+.cs-stat-table td:last-child {
+  padding-right: 0;
+}
+/* Info metadata reuses the stat table, but its values are names/labels — plain text, not
+   the mono metric font. */
+.cs-stat-table.evt-meta td {
+  font: 500 13px/1.35 Roboto, sans-serif;
+}
+.cs-stat-note {
+  font: 400 11px/1 Roboto, sans-serif;
+  color: #8890a0;
+}
+.cs-info-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cs-info-chip {
+  font: 400 12px/1.6 Roboto, sans-serif;
+  color: var(--cc, #aaa);
+  background: #00000033;
+  border: 1px solid color-mix(in srgb, var(--cc, #888) 45%, #3a3a44);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+.cs-info-chip b {
+  color: #eef1f6;
+}
+/* Cast / VFX / Anim / SFX resource summary in the cutscene info panel */
+.cs-info-resources {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cs-info-res {
+  font: 12px/1.5 Roboto, sans-serif;
+  color: #c4c9d6;
+}
+.cs-info-res-k {
+  display: inline-block;
+  min-width: 38px;
+  margin-right: 8px;
+  font: 700 9px/1.5 Roboto, sans-serif;
+  color: var(--cc, #8a90a0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: 1px;
+}
+/* Layout only — colour / padding / radius / hover all come from the base `button` theme. */
+.cs-load-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.cs-load-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Server Path lookup — resolve the server script that drives this event */
+.cs-server {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #2a2a32;
+}
+.cs-server-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cs-server-lbl {
+  font: 700 9px/1.5 Roboto, sans-serif;
+  color: #6f7790;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.cs-server-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 7px;
+  color: #dfe3ec;
+  background: #0d0e12;
+  border: none;
+  border-radius: 8px;
+}
+/* Layout only — inherits the base `button` theme (bg / padding / radius / hover). */
+.cs-server-btn {
+  flex: 0 0 auto;
+}
+.cs-server-out {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.cs-server-msg {
+  font: 11px/1.5 Roboto, sans-serif;
+  color: #8a90a0;
+}
+.cs-server-msg.err {
+  color: #ff8a7a;
+}
+.cs-server-name {
+  font: 700 15px/1.2 Roboto, sans-serif;
+  color: #f0e6c8;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.cs-server-kind {
+  font: 700 8px/1.4 Roboto, sans-serif;
+  color: #c89a5a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.cs-server-zone {
+  font: 700 10px/1.4 Roboto, sans-serif;
+  color: #6fd3e0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cs-server-match {
+  padding: 6px 8px;
+  background: #00000028;
+  border: 1px solid #2a2a32;
+  border-radius: 5px;
+}
+.cs-server-match.is-zone {
+  border-color: #4a6a4a;
+  background: #0e160e44;
+}
+.cs-server-file {
+  font: 600 11px/1.5 "Roboto Mono", ui-monospace, monospace;
+  color: #c8cedd;
+  margin-bottom: 3px;
+  word-break: break-all;
+}
+.cs-server-line {
+  font: 11px/1.5 "Roboto Mono", ui-monospace, monospace;
+  color: #aeb4c4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cs-server-line .ln {
+  display: inline-block;
+  min-width: 38px;
+  color: #5f6680;
+}
+.cs-server-line.mv {
+  color: #ffcf8f;
+}
+.cs-server-mvh {
+  margin-top: 4px;
+  font: 700 8px/1.5 Roboto, sans-serif;
+  color: #c89a5a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Cutscene actor name tag — floats above a clicked NPC in world space. */
+.cs-actor-tag {
+  position: fixed;
+  z-index: 19;
+  pointer-events: none;
+  background: #1a1a22ee;
+  border: 1px solid #2f6fd0;
+  border-radius: 4px;
+  padding: 3px 9px;
+  font: 600 11px/1.4 Roboto, sans-serif;
+  color: #7eb8f7;
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 10px));
+  display: none;
+}
+
+/* 16:9 cinematic letterbox — fixed overlay over the 3D canvas, 4 black bars (pointer-through). z
+   below the sequencer (18) so the timeline stays usable. */
+.cs-letterbox {
+  position: fixed;
+  z-index: 17;
+  pointer-events: none;
+}
+.cs-letterbox .lb {
+  position: absolute;
+  background: #000;
+}
+.cs-letterbox .lb.t {
+  top: 0;
+  left: 0;
+  right: 0;
+}
+.cs-letterbox .lb.b {
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+.cs-letterbox .lb.l {
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+.cs-letterbox .lb.r {
+  top: 0;
+  bottom: 0;
+  right: 0;
+}
+
+/* Sequencer-camera picture-in-picture frame (the WebGL render fills the interior).
+   z-index above the letterbox bars (17) so the preview stays visible when 16:9 is on. */
+.cs-cam-pip {
+  position: fixed;
+  z-index: 25;
+  display: none;
+  border: 2px solid #7fd6e6;
+  border-radius: 5px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  overflow: hidden;
+}
+.cs-cam-pip-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 2px 8px;
+  font: 700 10px/1.5 Roboto, sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #06222a;
+  background: #7fd6e6;
+  border-radius: 0 0 5px 0;
+}
+
+/* Framing crosshair — marks the camera view's centre so you can line up shots. Toggled
+   from the sequencer bar; positioned in JS onto the camera render rect (16:9 or full). */
+.cs-crosshair {
+  position: fixed;
+  z-index: 17;
+  width: 3000px;
+  height: 3000px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  display: none;
+}
+.cs-crosshair::before,
+.cs-crosshair::after {
+  content: "";
+  position: absolute;
+  background: #ffffff;
+}
+.cs-crosshair::before {          /* vertical line */
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+.cs-crosshair::after {           /* horizontal line */
+  top: 50%;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  transform: translateY(-50%);
+}
+
+/* Cutscene sequencer — bottom-anchored timeline player (video-editor / sequencer style) */
+.cs-seq {
+  position: absolute;
+  left: 0;
+  right: 300px;
+  bottom: 0;
+  z-index: 18;
+  display: flex;
+  flex-direction: column;
+  max-height: 46vh;
+  font: 12px/1.4 Roboto, sans-serif;
+  color: #cdd2e0;
+}
+.cs-seq[hidden] {
+  display: none;
+}
+/* Dragging a song from the Asset Browser over the sequencer (drop keys it as Music). */
+.cs-seq.cs-seq-droptarget {
+  outline: 2px solid #ff8fcf;   /* Music-track pink */
+  outline-offset: -2px;
+  box-shadow: inset 0 0 40px rgba(255, 143, 207, 0.12);
+}
+/* When the user drags the grip we control height explicitly — lift the content caps so the
+   timeline fills the chosen height (default mode stays content-sized at max 46vh / 260px). */
+.cs-seq.cs-seq-resized { max-height: none; }
+.cs-seq.cs-seq-resized .cs-seq-graph { max-height: none; }
+/* Resize grip — a thin strip at the very top edge; drag to grow/shrink the timeline. */
+.cs-seq-grip {
+  flex: 0 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  touch-action: none;                  /* pointer drag, not scroll */
+}
+.cs-seq-grip::before {
+  content: "";
+  width: 46px;
+  height: 3px;
+  border-radius: 2px;
+  background: #4a4a4a;
+  transition: background .12s;
+}
+.cs-seq-grip:hover::before { background: #7fd6e6; }
+.cs-seq-grip.dragging::before { background: #7fd6e6; }
+.cs-seq-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #232323;    /* divider above the graph */
+  background: #000000;
+}
+.cs-seq-btn {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #c2c7d4;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.cs-seq-btn:hover:not(:disabled) {
+  color: #fff;
+  background: #ffffff1f;
+}
+.cs-seq-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.cs-seq-btn .material-symbols-outlined {
+  font-size: 22px;
+}
+.cs-seq-btn:hover:not(:disabled) .material-symbols-outlined {
+  font-size: 24px;
+}
+.cs-seq-btn.active {
+  color: #7eb8f7;
+}
+.cs-seq-cam.active {
+  color: #7eb8f7;
+}
+.cs-seq-cam.active:hover {
+  color: #9ecbff;
+}
+/* Quick "add camera keyframe" toolbar button — red icon, slightly smaller than the rest. */
+.cs-seq-addcam .material-symbols-outlined {
+  color: #e5534b;
+  font-size: 20px;
+}
+.cs-seq-addcam:hover:not(:disabled) .material-symbols-outlined {
+  color: #ff6a5e;
+  font-size: 20px;
+}
+/* Author-mode: highlight the track row (label + body) under the cursor so the
+   right-click target is obvious. */
+.cs-auth-lane, .cs-auth-lane-label { transition: background 0.08s; }
+.cs-track-hi { background: #ffffff12 !important; }
+
+/* Vertical divider between toolbar button groups. */
+.cs-seq-sep {
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: #ffffff1f;
+}
+.cs-seq-sep[hidden] { display: none; }
+
+/* ── Sequencer modal ──────────────────────────────────────────────────────────
+   One reusable panel that floats ABOVE the sequencer (bottom:100% of #cs-seq).
+   Hosts three views: keyframe data, sequence length, and add-track. All styling
+   lives here — the JS only fills the body and sets nothing inline. */
+.cs-seq-modal {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 100%;
+  margin-bottom: 8px;
+  z-index: 5;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  background: #1c1e26;
+  border: 1px solid #3a3a44;
+  border-radius: 8px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  font: 12px/1.4 Roboto, sans-serif;
+  color: #cdd2e0;
+}
+.cs-seq-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #2a2d38;
+  user-select: none;
+}
+.cs-seq-modal-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+/* Track-colour dot beside the title (colour bound via the --dot custom property). */
+.cs-seq-modal-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot, #7fd6e6);
+}
+.cs-seq-modal-grow { flex: 1 1 auto; }
+/* Close button reuses the general .modal-close style (css/projects.css). */
+.cs-seq-modal-body { padding: 12px; }
+.cs-seq-modal-foot {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cs-modal-foot-grow { flex: 1; }   /* pushes the left button (Update) away from Delete */
+
+/* Keyframe / control field grid: right-aligned labels + full-width controls. */
+.cs-kf-grid {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 9px 10px;
+  align-items: center;
+}
+/* Camera keyframe: two side-by-side label/control columns (Frame+Type | FOV/Rot/Pos) → the
+   modal is wider + shorter. Widen the popup only when it holds this layout. */
+.cs-kf-cols {
+  display: flex;
+  gap: 22px;
+  align-items: start;
+}
+.cs-kf-cols .cs-kf-grid {
+  flex: 1;
+  min-width: 0;
+}
+.cs-seq-modal:has(.cs-kf-cols) {
+  width: 50%;
+  min-width: 500px;
+}
+.cs-kf-grid > label {
+  opacity: 0.7;
+  text-align: right;
+  font-size: 11px;
+}
+.cs-kf-grid > div { min-width: 0; }
+.cs-kf-grid > [hidden] { display: none; }
+
+.cs-kf-full { width: 100%; }
+.cs-kf-num { width: 72px; }
+.cs-kf-grow { flex: 1 1 auto; min-width: 0; }
+.cs-kf-inline { display: flex; gap: 6px; align-items: center; }
+/* Unit/help hint always drops onto its own line below the input (block span acts like a div). */
+.cs-kf-hint { display: block; margin-top: 3px; opacity: 0.55; }
+/* …except inside an inline flex row (e.g. the Length view), where it stays centered beside the input. */
+.cs-kf-inline .cs-kf-hint { margin-top: 0; }
+/* Slider row: range fills the width, live value pinned to the right. */
+.cs-kf-sliderrow { display: flex; align-items: center; gap: 9px; }
+.cs-kf-sliderrow input[type="range"] { flex: 1; min-width: 0; }
+.cs-kf-slidernum {
+  flex: 0 0 auto;
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+.cs-kf-note { opacity: 0.5; font-size: 10px; }
+.cs-kf-mono { opacity: 0.7; font-size: 10px; }
+.cs-kf-val { opacity: 0.85; }
+.cs-kf-recap { font-size: 10px; }
+.cs-kf-del { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }   /* colour comes from .btn-danger */
+.cs-kf-lock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+.cs-kf-lock .material-symbols-outlined {
+  vertical-align: middle;
+  font-size: 13px;
+}
+.cs-seq-title {
+  flex: 0 1 auto;
+  font-weight: 700;
+  color: #eef1f6;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cs-seq-readout {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 11px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #aeb4c2;
+}
+.cs-seq-rk {
+  color: #6f7790;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 9px;
+}
+.cs-seq-readout b {
+  color: #eef1f6;
+  font-weight: 700;
+}
+.cs-seq-grow {
+  flex: 1 1 auto;
+}
+
+.cs-seq-graph {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;               /* both columns fill the graph height → no scrollbar gap */
+  min-height: 0;
+  max-height: 260px;
+  overflow: hidden;                    /* the tracks column owns BOTH scrollbars (at visible edges) */
+  padding: 0;                         /* padding lives on the two inner columns instead */
+  background-color: #191919;
+}
+.cs-seq-labels {
+  flex: 0 0 250px;
+  overflow: hidden;                    /* no own scrollbar — its vertical scroll is synced to the
+                                          tracks column in JS, so both stay row-aligned */
+  padding: 0px;
+  border-right: solid 1px #232323;
+  box-shadow: 0 0 12px 2px #000;
+  z-index: 5;                         /* float above the tracks so the shadow reads */
+  display: flex;
+  flex-direction: column;
+}
+/* Never let the flex column squeeze its rows: when the graph overflows its max-height and
+   scrolls (e.g. the camera track expanded into curves), align-self:stretch would otherwise
+   shrink these to fit, drifting every label out of line with its track. */
+.cs-seq-labels > * {
+  flex-shrink: 0;
+}
+.cs-seq-ruler-spacer {
+  flex: 0 0 auto;
+  height: 16px;
+}
+.cs-seq-lane-label {
+  height: 20px;                       /* fixed 20px grid — matches .cs-seq-lane-track so rows align */
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font: 11px/1 Roboto, sans-serif;
+  color: #8a92a6;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Actor group header + its indented sub-track lanes. */
+.cs-actor-group-label { background: #ffffff0a; }
+.cs-actor-group-label:hover { background: #ffffff16; }
+.cs-sub-lane-label { color: #9aa3b8; text-transform: none; letter-spacing: 0; }
+.cs-sub-lane { background: #ffffff05; }
+/* Inner flex row: [bookend-l][body][bookend-r]. Sizes to CONTENT height so the gutters
+   (align-items:stretch) span the full track stack, not just the scroll viewport. Width is
+   set inline (= csZoom×100%) so the flex-1 body fills the space between the two gutters. */
+.cs-seq-scrollrow {
+  display: flex;
+  align-items: stretch;
+  min-height: min-content;
+  min-width: 100%;
+}
+.cs-seq-body {
+  position: relative;
+  flex: 1 1 auto;      /* fills the row between the two 62px bookend gutters */
+  min-width: 0;
+  cursor: pointer;
+}
+.cs-seq-ruler {
+  position: relative;
+  height: 16px;
+  border-bottom: 1px solid #2c2c34;
+}
+.cs-seq-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.cs-seq-tick i {
+  width: 1px;
+  height: 5px;
+  background: #3a3a44;
+}
+.cs-seq-tick span {
+  margin-top: 2px;
+  font: 9px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #6f7790;
+}
+.cs-seq-lane-track {
+  position: relative;
+  height: 20px;
+}
+.cs-seq-lane-track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: #ffffff0d;
+}
+.cs-seq-span {
+  position: absolute;
+  top: 50%;
+  height: 6px;
+  transform: translateY(-50%);
+  background: color-mix(in srgb, var(--cc, #888) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cc, #888) 55%, #2a2a31);
+  border-radius: 3px;
+  z-index: 1;
+}
+.cs-seq-dot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%);
+  background: var(--cc, #888);
+  border: 1px solid #00000066;
+  border-radius: 50%;
+  z-index: 2;
+}
+/* Bookend gutter columns — fixed prologue/epilogue fade zones OUTSIDE the 0..total
+   timeline domain. Flank #cs-seq-body inside the flex scroller; no keyframes can land
+   here (they're separate divs, all frame↔x math lives on the body). */
+.cs-seq-bookend-col {
+  flex: 0 0 62px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 3px;
+  cursor: help;
+  background:
+    repeating-linear-gradient(-45deg,
+      color-mix(in srgb, #5a6a86 14%, transparent) 0 5px,
+      transparent 5px 10px);
+  border-top: 1px solid #ffffff10;
+}
+.cs-seq-bookend-col-l { border-right: 1px solid color-mix(in srgb, #5a6a86 70%, #fff 10%); }
+.cs-seq-bookend-col-r { border-left: 1px solid color-mix(in srgb, #5a6a86 70%, #fff 10%); }
+.cs-seq-bookend-time {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: #8f9ab4;
+  line-height: 14px;                 /* matches the ruler strip height feel */
+}
+.cs-seq-bookend-tag {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.4;
+  color: #6c7690;
+  top: 50%;
+  position: relative;
+  transform: translate(0, -50%);
+}
+/* Actor Show/Hide keyframes render as white triangles (▲ show, ▽ hide) so they stand apart
+   from the round dialog/anim/position dots. */
+.cs-seq-dot.cs-kf-show,
+.cs-seq-dot.cs-kf-hide {
+  width: 12px;
+  height: 11px;
+  border: none;
+  border-radius: 0;
+  background: #ffffff;
+  filter: drop-shadow(0 0 1px #000a);
+}
+.cs-seq-dot.cs-kf-show { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.cs-seq-dot.cs-kf-hide { clip-path: polygon(0 0, 100% 0, 50% 100%); background: #aeb4c2; }
+/* Styled confirm modal — replaces native confirm() for destructive cutscene actions. */
+.cs-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+.cs-confirm-card {
+  background: #1c1e26;
+  color: #cdd2e0;
+  border: 1px solid #33343e;
+  border-radius: 8px;
+  padding: 18px 20px 16px;
+  min-width: 280px;
+  max-width: 440px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+}
+.cs-confirm-msg { line-height: 1.5; margin-bottom: 16px; }
+.cs-confirm-msg b { color: #fff; font-weight: 600; }
+.cs-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.cs-confirm-btn {
+  padding: 6px 15px;
+  border-radius: 5px;
+  border: 1px solid #3a3b45;
+  background: #2a2b34;
+  color: #cdd2e0;
+  cursor: pointer;
+  font-size: 12px;
+}
+.cs-confirm-btn:hover { background: #33343f; }
+.cs-confirm-ok.danger { background: #7a2e2e; border-color: #9a3a3a; color: #ffe1e1; }
+.cs-confirm-ok.danger:hover { background: #8f3636; }
+
+/* Joined camera segment — a Move keyframe interpolates from the previous keyframe;
+   the connector line makes the motion visible while the channel curves are collapsed
+   (a Cut keyframe starts a new shot, so no line crosses it). Under the dots (z 1 vs 2),
+   click-through so it never blocks lane right-clicks or dot drags. */
+.cs-seq-join {
+  position: absolute;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  background: color-mix(in srgb, var(--cc, #888) 65%, transparent);
+  border-radius: 2px;
+  z-index: 1;
+  pointer-events: auto;
+  cursor: default;
+}
+/* Tooltip on hover showing frame delta and duration. Invisible by default, shown on
+   .cs-seq-join:hover via the ::before pseudo-element. Positioned at the midpoint. */
+.cs-seq-join::before {
+  content: attr(data-frames) ' frames | ' attr(data-time) 's';
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #16171c;
+  border: 1px solid #34363f;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #cdd2e0;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 1000;
+  letter-spacing: 0.3px;
+}
+.cs-seq-join:hover::before {
+  opacity: 1;
+}
+
+/* Position CUT keyframe = a diamond (new shot boundary); Moves stay round. */
+.cs-seq-dot.cs-kf-cut {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: #f7c873;
+  border: 1px solid #00000066;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.cs-seq-dot.active {
+  box-shadow: 0 0 0 2px var(--cc, #888), 0 0 8px var(--cc, #888);
+}
+.cs-seq-dot:hover {
+  transform: translate(-50%, -50%) scale(1.5);
+  box-shadow: 0 0 0 2px var(--cc, #888), 0 0 9px var(--cc, #888);
+  z-index: 4;
+}
+/* Keyframes captured by a marquee (shift+drag) selection. */
+.cs-seq-dot.cs-kf-multi {
+  outline: 2px solid #7fd6e6;
+  outline-offset: 1px;
+  box-shadow: 0 0 7px #7fd6e6;
+  z-index: 3;
+}
+/* The shift+drag marquee box itself (fixed-positioned, drawn on document.body). */
+.cs-seq-marquee {
+  position: fixed;
+  z-index: 40;
+  border: 1px solid #7fd6e6;
+  background: #7fd6e622;
+  pointer-events: none;
+}
+.cs-seq-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #ff5a5a;
+  box-shadow: 0 0 6px #ff5a5a99;
+  pointer-events: none;
+  z-index: 3;
+}
+.cs-seq-playhead::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #ff5a5a;
+}
+/* Frame · time pill — floats above the sequencer bar at the playhead's x while scrubbing.
+   Fixed-positioned (left/top set in JS) so it escapes the graph's overflow; hidden by default. */
+.cs-seq-ph-tip {
+  position: fixed;
+  display: none;
+  transform: translateX(-50%);
+  padding: 3px 9px;
+  font: 700 11px/1.4 "Roboto Mono", ui-monospace, monospace;
+  white-space: nowrap;
+  color: #fff;
+  background: #ff5a5a;
+  border-radius: 6px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 30;
+}
+.cs-seq-scrollx {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: auto;                                 /* horizontal (zoom) + vertical (tracks) — the
+                                                     scrollbars sit at the VISIBLE edges, so the
+                                                     H-bar is always in view (no scrolling down) */
+  scrollbar-width: thin;                          /* Firefox */
+  scrollbar-color: #4a4a5a transparent;
+}
+.cs-seq-scrollx::-webkit-scrollbar {              /* Chromium / WebKit */
+  height: 10px;
+}
+.cs-seq-scrollx::-webkit-scrollbar-thumb {
+  background: #4a4a5a;
+  border-radius: 5px;
+}
+.cs-seq-scrollx::-webkit-scrollbar-thumb:hover {
+  background: #5c5c70;
+}
+.cs-seq-scrollx::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cs-seq-lane-label.clickable {
+  cursor: pointer;
+}
+.cs-seq-lane-label.clickable:hover {
+  color: #cdd2e0;
+}
+.cs-seq-curve-label {
+  display: flex;
+  flex-direction: column;
+  /* Top-aligned so the label sits at the head of its (fixed-height) curve row — the
+     row height is set inline to match the curve graph, which keeps the labels column
+     and the graph column lined up. The dashed border then brackets the whole curve. */
+  justify-content: flex-start;
+  gap: 0px;
+  font: 9px / 1.2 Roboto, sans-serif;
+  color: #8a92a6;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-left: 15px;
+  padding-top: 5px;
+  padding-bottom: 10px;
+  /* background-color: #222426; */
+  border-left: 2px dashed #444;
+  margin-left: 6px;
+}
+.cs-seq-curve-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cs-seq-curve-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #aeb4c2;
+}
+.cs-seq-curve-legend i {
+  width: 9px;
+  height: 2px;
+  border-radius: 1px;
+}
+.cs-seq-curve-key {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 3px;
+}
+.cs-seq-curve-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #8a92a6;
+}
+.cs-seq-curve-key i {
+  display: inline-block;
+  width: 12px;
+  height: 0;
+  border-top: 2px solid #aeb4c2;
+}
+.cs-seq-curve-key i.dash {
+  border-top-style: dashed;
+}
+.cs-seq-curves {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid #2c2c34;
+}
+.cs-seq-curves svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cs-seq-curves-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 10px Roboto, sans-serif;
+  color: #5a6070;
+}
+
+.cs-seq-now {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border-top: 1px solid #2a2a31;
+  background: #181818;
+  max-height: 84px;
+  overflow-y: auto;
+}
+.cs-now-line {
+  font-size: 13px;
+  color: #eef1f6;
+  min-height: 18px;
+  margin-bottom: 5px;
+}
+.cs-now-empty {
+  color: #4a4f5a;
+}
+.cs-now-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  height: 18px;          /* fixed so the row doesn't jump when chips appear/clear */
+  overflow: hidden;
+  align-items: center;
+}
+.cs-now-chip {
+  font: 700 9px/1.5 Roboto, sans-serif;
+  color: var(--cc, #aaa);
+  background: #00000033;
+  border: 1px solid color-mix(in srgb, var(--cc, #888) 45%, #3a3a44);
+  border-radius: 4px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Lines tab — dialogue as an SMS-style chat: colour-coded speaker names, bubbles left
+   (NPCs) / right (player), a speaker accent stripe, and a faint message-id tag. */
+.evt-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 6px 4px;
+}
+.evt-chat-msg {
+  display: flex;
+}
+.evt-chat-msg.self {
+  justify-content: flex-end;
+}
+.evt-chat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 78%;
+  min-width: 0;
+  align-items: flex-start;
+}
+.evt-chat-msg.self .evt-chat-col {
+  align-items: flex-end;
+}
+.evt-chat-who {
+  padding: 5px 0;
+  font: 700 11px/1 Roboto, sans-serif;
+  color: var(--sc, #9aa3b2);
+}
+.evt-chat-bubble {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: 100%;
+  padding: 5px 6px;
+  color: #e6e8ee;
+  background: #343743;
+  border-left: 3px solid #bde455;
+  border-radius: 5px;
+}
+.evt-chat-msg.self .evt-chat-bubble {
+  border-left: none;
+  border-right: 3px solid var(--sc, #7fd6e6);
+  border-radius: 5px;
+  background: #263139;
+}
+.evt-chat-text {
+  min-width: 0;
+  font: 400 13px/1.45 Roboto, sans-serif;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.evt-chat-text i {
+  color: #7e8698;
+}
+.evt-chat-id {
+  flex: 0 0 auto;
+  font: 400 10px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #656b7b;
+}
+.evt-dlg-msg {
+  padding: 10px 2px;
+  font-size: 12px;
+  color: #8a90a0;
+  font-style: italic;
+}
+
+/* Mobs category — "+ New Mob" bar above the mob list */
+.cb-mob-newbar {
+  padding: 8px 4px 10px;
+  border-bottom: 1px solid #26262c;
+  margin-bottom: 6px;
+}
+.cb-mob-newbar .load-btn {
+  width: 100%;
+}
+
+/* New Mob modal (built on the fly by openNewMobDialog) */
+.nm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0008;
+}
+.nm-dialog {
+  width: 320px;
+  max-width: 90vw;
+  padding: 16px 16px 14px;
+  background: #1b1b22;
+  border: 1px solid #3a3a46;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px #000a;
+}
+.nm-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e6e9f2;
+  margin-bottom: 12px;
+}
+.nm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.nm-row > span {
+  flex: 0 0 70px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: #9aa0b4;
+  text-transform: uppercase;
+}
+.nm-row input,
+.nm-row select {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: #0d0e12;
+  color: #e6e9f2;
+  font-size: 12px;
+}
+.nm-row select {
+  cursor: pointer;
+}
+.nm-hint {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #8a90a0;
+  margin: 4px 0 8px;
+}
+.nm-status {
+  min-height: 16px;
+  font-size: 11px;
+  color: #d6a86a;
+  margin-bottom: 8px;
+}
+.nm-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Create Event wizard ─────────────────────────────────────────────────────
+   Small dialog, centred on open (still draggable — no transform, so makeDraggable
+   stays clean), dark canvas + premium field + cyan Create CTA. */
+.cs-create-modal {
+  width: 400px;
+  top: max(60px, calc(50% - 150px));
+  left: calc(50% - 200px);
+  background: #191a20;
+}
+.cse-body {
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+}
+.cse-label {
+  font: 700 10px/1 Roboto, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7e8698;
+  margin-bottom: 7px;
+}
+.cse-select {
+  width: 100%;
+  padding: 10px 30px 10px 12px;   /* right room for the chevron */
+  font-size: 13px;
+  color: #eef1f8;
+  background-color: #0d0e12;       /* longhand keeps the base select chevron */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  accent-color: #7fd6e6;
+}
+.cse-select:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, #7fd6e6 18%, transparent);
+}
+.cse-select option { background-color: #16171c; color: #eef1f8; }
+.cse-select option:checked { background: color-mix(in srgb, #7fd6e6 30%, #16171c); }
+.cse-desc {
+  margin: 13px 0 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #868d9c;
+}
+.cse-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.cse-cancel {
+  padding: 9px 16px;
+  font: 600 12.5px Roboto, sans-serif;
+  color: #aab1c2;
+  background: #1a1b21;
+  border: 1px solid #33343d;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.cse-cancel:hover {
+  color: #eef1f8;
+  background: #20222b;
+  border-color: #454652;
+}
+.cse-create {
+  padding: 9px 18px;
+  font: 700 13px Roboto, sans-serif;
+  color: #07141b;
+  background: linear-gradient(100deg, #7fd6e6, #74b6ef);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px -8px #4aa5c8;
+  cursor: pointer;
+  transition: filter 0.14s, box-shadow 0.16s, transform 0.08s;
+}
+.cse-create:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 8px 20px -8px #4aa5c8;
+}
+.cse-create:active {
+  transform: translateY(1px);
+}

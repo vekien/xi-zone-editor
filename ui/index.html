@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FFXI Zone Editor</title>
+  <link rel="icon" type="image/x-icon" href="./icon.ico" />
+  <link rel="icon" type="image/png" href="./icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app-loader" class="app-loader">
+    <div class="app-loader-inner">
+      <span class="material-symbols-outlined app-loader-icon">map</span>
+      <div class="app-loader-text">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Shown while a project's saved change-set replays onto the scene; blocks viewport interaction. -->
+  <div id="changes-loader" class="changes-loader hidden">
+    <div class="changes-loader-card">
+      <span class="material-symbols-outlined changes-loader-icon">sync</span>
+      <div class="changes-loader-text">Loading Changes…</div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+    <canvas class="view" id="view"></canvas>
+    <div class="view-frame" id="view-frame" title="View mode — editing locked"><div class="view-mode-label" id="view-mode-label">VIEWING MODE</div></div>
+    <div class="error-banner" id="error-banner" role="alert" hidden>
+        <div class="error-banner-ico" aria-hidden="true"><span class="material-symbols-outlined">error</span></div>
+        <div class="error-banner-body">
+          <div class="error-banner-title">Something went wrong</div>
+          <div class="error-banner-msg" id="error-banner-msg"></div>
+        </div>
+        <button type="button" class="error-banner-close" id="error-banner-close" title="Dismiss" aria-label="Dismiss">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+    <!-- Live transform readout — floats by the gizmo during a move/rotate/scale drag -->
+    <div id="transform-hud" class="transform-hud" hidden></div>
+
+    <div id="gizmo-tools" class="gizmo-tools">
+      <div id="history-tools" class="mode-group">
+        <button id="undo-btn" title="Undo (Ctrl+Z)" disabled><span class="material-symbols-outlined">undo</span>Undo</button>
+        <button id="redo-btn" title="Redo (Ctrl+Y)" disabled><span class="material-symbols-outlined">redo</span>Redo</button>
+      </div>
+      <div id="transform-cluster" class="transform-cluster">
+        <div class="mode-group">
+          <button id="tool-move" class="xform" title="Move (1)"><span class="material-symbols-outlined">drag_pan</span>Move</button>
+          <button id="tool-rotate" class="xform" title="Rotate (2)"><span class="material-symbols-outlined">crop_rotate</span>Rotate</button>
+          <button id="tool-scale" class="xform" title="Scale (3)"><span class="material-symbols-outlined">open_in_full</span>Scale</button>
+          <button id="tool-space" class="active" title="Toggle local / world space (X)"><span class="material-symbols-outlined">grid_3x3</span>Local</button>
+        </div>
+        <button id="tool-uniform" class="flyout flyout-mid" title="Scale uniformly on all axes — toggle"><span class="material-symbols-outlined">fit_screen</span>Uniform</button>
+      </div>
+      <div id="collision-cluster" class="collision-cluster">
+        <div class="mode-group">
+          <button id="tool-focus" title="Focus selected (F)"><span class="material-symbols-outlined">center_focus_strong</span>Focus</button>
+          <button id="tool-flat" title="Flat mode — solid random colours, no textures"><span class="material-symbols-outlined">hexagon</span>Flat</button>
+          <button id="tool-collision" title="Toggle collision mesh"><span class="material-symbols-outlined">deployed_code</span>Collision</button>
+          <button id="tool-navmesh" title="Toggle navmesh overlay"><span class="material-symbols-outlined">assistant_navigation</span>Nav</button>
+        </div>
+        <button id="tool-col-isolate" class="flyout flyout-top" title="Isolate custom collision — show only your authored collision prims, hide everything else"><span class="material-symbols-outlined">view_in_ar</span>Isolate</button>
+        <button id="tool-col-baked" class="flyout flyout-baked" title="Isolate baked collision — show only the collision baked into the game DAT right now, hide everything else"><span class="material-symbols-outlined">oven_gen</span>Baked</button>
+        <button id="tool-nav-isolate" class="flyout flyout-bottom" title="Isolate navmesh — hide everything else"><span class="material-symbols-outlined">circle_circle</span>Isolate</button>
+      </div>
+    </div>
+
+    <div class="fps-counter" id="fps-counter" title="Camera speed | FPS">CAM <b id="cam-val">50</b><span class="sep">|</span>FPS <b id="fps-val">--</b></div>
+
+    <!-- Hotkey bar — bottom-centre row of remembered objects. Each chip stamps a fresh copy
+         of its object in front of the camera (same effect as Ctrl+C/Ctrl+V). Built in JS by
+         renderHotkeyBar(); per-zone, hidden when empty. -->
+    <div id="hotkey-bar" class="hotkey-bar" hidden></div>
+
+    <!-- Framing aid: a crosshair marking the camera's centre (toggled from the sequencer bar). -->
+    <div id="cs-crosshair" class="cs-crosshair"></div>
+
+    <!-- Cutscene sequencer — bottom-anchored timeline editor. Opened by "Open Timeline
+         Sequencer" on the Events → Info tab; spans the viewport width, left of #panel. -->
+    <div id="cs-seq" class="cs-seq" hidden>
+      <!-- Drag up/down to resize the timeline; the 16:9 framed view above follows it.
+           No title tooltip — a native one just hangs in place during the drag. -->
+      <div id="cs-seq-grip" class="cs-seq-grip"></div>
+      <div class="cs-seq-bar">
+        <button id="cs-seq-play" class="cs-seq-btn" title="Play / pause"><span class="material-symbols-outlined">play_arrow</span></button>
+        <button id="cs-seq-stop" class="cs-seq-btn" title="Stop — rewind to start"><span class="material-symbols-outlined">stop</span></button>
+        <button id="cs-seq-editcut" class="cs-seq-btn" title="Edit Cutscene — open the author"><span class="material-symbols-outlined">movie_edit</span></button>
+        <span id="cs-seq-title" class="cs-seq-title">Cutscene</span>
+        <span class="cs-seq-readout">
+          <span class="cs-seq-rk">frame</span><b id="cs-seq-frame">0</b>
+          <span class="cs-seq-rk">time</span><b id="cs-seq-time">0.0 / 0.0s</b>
+          <span class="cs-seq-rk">fps</span><b id="cs-seq-fps">30</b>
+          <span class="cs-seq-rk">camera</span><b id="cs-seq-cam-mode">Viewport</b>
+          <span class="cs-seq-rk">cam pos</span><b id="cs-seq-cam-pos">—</b>
+          <span class="cs-seq-rk">cam rot</span><b id="cs-seq-cam-rot">—</b>
+        </span>
+        <span class="cs-seq-grow"></span>
+        <!-- Author-editing tools (hidden in playback) -->
+        <button id="cs-seq-addcam" class="cs-seq-btn cs-seq-auth cs-seq-addcam" title="Add a camera keyframe at the playhead" hidden><span class="material-symbols-outlined">radio_button_checked</span></button>
+        <button id="cs-seq-tracks" class="cs-seq-btn cs-seq-auth" title="New track" hidden><span class="material-symbols-outlined">list_alt_add</span></button>
+        <button id="cs-seq-length" class="cs-seq-btn cs-seq-auth" title="Sequence length &amp; clamp" hidden><span class="material-symbols-outlined">chronic</span></button>
+        <span id="cs-seq-sep" class="cs-seq-sep" hidden></span>
+        <!-- View controls -->
+        <button id="cs-seq-snap" class="cs-seq-btn" title="Snap keyframes to other keyframes when dragging"><span class="material-symbols-outlined">grid_on</span></button>
+        <button id="cs-seq-framesnap" class="cs-seq-btn" title="Playhead snapping OFF — scrub is free"><span class="material-symbols-outlined">text_select_move_forward_character</span></button>
+        <button id="cs-seq-hideui" class="cs-seq-btn" title="Hide editor UI"><span class="material-symbols-outlined">text_ad_off</span></button>
+        <button id="cs-seq-ratio" class="cs-seq-btn" title="Fixed 16:9 aspect — frame like the game"><span class="material-symbols-outlined">aspect_ratio</span></button>
+        <button id="cs-seq-crosshair" class="cs-seq-btn" title="Add Visual Crosshair — mark the camera centre to line up shots"><span class="material-symbols-outlined">add_to_queue</span></button>
+        <button id="cs-seq-cam" class="cs-seq-btn cs-seq-cam" title="Toggle Sequencer Camera"><span class="material-symbols-outlined">video_camera_front</span></button>
+        <button id="cs-seq-zoom-in" class="cs-seq-btn" title="Zoom timeline in"><span class="material-symbols-outlined">zoom_in</span></button>
+        <button id="cs-seq-zoom-out" class="cs-seq-btn" title="Zoom timeline out"><span class="material-symbols-outlined">zoom_out</span></button>
+        <button id="cs-seq-frame-prev" class="cs-seq-btn" title="Previous frame (←)"><span class="material-symbols-outlined">skip_previous</span></button>
+        <button id="cs-seq-frame-next" class="cs-seq-btn" title="Next frame (→)"><span class="material-symbols-outlined">skip_next</span></button>
+        <span class="cs-seq-sep"></span>
+        <!-- Close -->
+        <button id="cs-seq-close" class="cs-seq-btn" title="Close sequencer"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div id="cs-seq-graph" class="cs-seq-graph"></div>
+      <div id="cs-seq-now" class="cs-seq-now"></div>
+    </div>
+
+    <div class="topbar" id="topbar">
+      <button class="mode-btn" id="mode-btn" title="Switch editor mode">MODE: Editing</button>
+      <button id="file-btn">File</button>
+      <button id="projects-btn" title="Back to the Projects launcher">Projects</button>
+      <button id="assets-btn">Assets</button>
+      <button id="database-btn">Database</button>
+      <button id="changes-btn">Changes <span id="changes-badge" class="hidden changes-badge">0</span></button>
+      <button id="settings-btn">Settings</button>
+      <button id="view-btn">View</button>
+      <span id="bridge-status" class="bridge-dot off material-symbols-outlined" title="Disconnected from XI Tools — Save / Publish unavailable. Run via `xi gui zone`.">android_wifi_3_bar_off</span>
+    </div>
+
+    <!-- Quick-action bar — a separate pill of one-click File-menu shortcuts -->
+    <div class="quick-bar" id="quick-bar">
+      <button id="quick-publish" class="quick-btn" data-bridge title="Publish the change-set to the game DAT (File &gt; Publish)"><span class="material-symbols-outlined">publish</span>Publish</button>
+      <button id="quick-navmesh" class="quick-btn" data-bridge title="Bake a navmesh from the collision (File &gt; NavMesh &gt; Generate)">Navmesh</button>
+      <button id="quick-glb" class="quick-btn" title="Import a GLB model into the scene (File &gt; Import &gt; GLB)">GLB</button>
+      <button id="quick-sfx" class="quick-btn" title="Import a .wav/.ogg as a new sound effect — converts it and adds it to the Sound FX browser to drag into the zone (File &gt; Import &gt; Sound FX)">SFX</button>
+    </div>
+
+    <!-- Mode dropdown (click-out closes) -->
+    <div id="mode-menu" class="menu mode-menu">
+      <button data-mode="edit" title="Edit on the working copy">Edit</button>
+      <button data-mode="view" title="Read-only — shows your changes">View</button>
+      <div class="menu-sep"></div>
+      <button data-mode="production" title="Read-only — the released DAT, no changes">Live: Standard Zone</button>
+      <button data-mode="hd" title="Read-only — the Ashenbubs HD asset-pack DAT for this zone">Live: HD Zone</button>
+      <div class="menu-sep"></div>
+      <button data-mode="base" title="Read-only — the pristine .base DAT, zero changes ever">Backup Base</button>
+    </div>
+
+    <!-- File dropdown menu (click-out closes, unlike the draggable modals) -->
+    <div id="file-menu" class="menu">
+      <button data-action="new" title="Create a new zone from a template">New</button>
+      <button data-action="duplicate" data-bridge title="Duplicate this zone to a new zone ID — copies model, event, dialog, and NPC DATs, then clones zone settings">Duplicate</button>
+      <div class="menu-sep"></div>
+      <button data-action="save" data-bridge title="Save the change-set to this zone's workspace (zone-changes.json) via the backend, so it auto-restores next time">Save <span class="menu-kbd">Ctrl+S</span></button>
+      <button data-action="apply-game" data-bridge title="Publish the current change-set into the game DAT via the backend — same as `xi zone import-json` (applies to the current DAT, no reset)">Publish</button>
+      <button data-action="version-history">Version History</button>
+      <div class="menu-item has-submenu">
+        <button class="submenu-parent" title="Package and template tools">Package Changes<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <div class="submenu">
+          <button id="menu-make-template" data-action="make-template" data-bridge title="Package this Published zone into a reusable template bundle (zone + event + dialog + npc DATs) stored in the workspaces repo">Make Template</button>
+          <button data-action="package-changes" data-bridge title="Open the Package wizard: pick which of this project's edited zones to bundle, then zip their game + HD DATs into one deployable package (workspaces/packages/&lt;project&gt;.zip) matching the client's override-DAT folder layout.">Package Project</button>
+        </div>
+      </div>
+      <div class="menu-sep"></div>
+      <div class="menu-item has-submenu">
+        <button class="submenu-parent" title="Import into the scene">Import<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <div class="submenu">
+          <button data-action="load" title="Load a zone-changes.json and replay its edits onto the current scene">JSON</button>
+          <button data-action="import" title="Load a GLB model from disk into the scene as a new object (scaled by Settings → Import → GLB Import Scale)">GLB</button>
+          <button data-action="import-sound" title="Import a .wav/.ogg as a new sound effect — installs it and adds it to the Sound FX browser to drag into the zone">Sound FX</button>
+          <button data-action="import-music" title="Import a .wav/.ogg as new music — installs it and adds it to the Music browser (assign it to a zone via the database / zone music)">Music</button>
+          <button data-action="import-col-obj" title="Import a xi collision OBJ — replaces the zone's entire baked collision. Use xi zone export --collision to get the correct OBJ format (Y-negated, col_wall/col_floor materials). Writes directly to the DAT; no publish needed.">Collision OBJ</button>
+        </div>
+      </div>
+      <div class="menu-item has-submenu">
+        <button class="submenu-parent" title="Download the current change-set">Export<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <div class="submenu">
+          <button data-action="export-json" title="Download changes as JSON (for xi zone import-json)">JSON</button>
+          <button data-action="export-cmds" title="Download as individual xi CLI commands">Commands</button>
+        </div>
+      </div>
+      <div class="menu-sep"></div>
+      <div class="menu-item has-submenu">
+        <button class="submenu-parent" title="Navmesh tools">NavMesh<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <div class="submenu">
+          <button id="navmesh-refresh" data-bridge title="Reload the .nav file from disk">Refresh</button>
+          <button id="navmesh-generate" data-bridge title="Bake a new .nav from this zone's collision mesh (requires native xi_navmesh lib)">Generate</button>
+        </div>
+      </div>
+      <div class="menu-sep"></div>
+      <div class="menu-item has-submenu">
+        <button class="submenu-parent" title="Destructive zone actions">Reset<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <div class="submenu">
+          <button data-action="reset" data-bridge class="menu-danger" title="Reset this zone to its pristine baseline (xi zone reset) — restores the DAT from its .base backup and clears your pending edits for this zone. Cannot be undone.">Reset Zone</button>
+          <button data-action="reset-collision" class="menu-danger" title="Remove all user-placed collision primitives (boxes/planes) from this zone. The zone's original collision mesh is not affected. Cannot be undone.">Reset Collision</button>
+          <button data-action="clear-versions" data-bridge class="menu-danger" title="Delete all published version snapshots for this zone and reset its version counter to v1. Your current scene and saved change-set are not affected. Cannot be undone.">Clear Version History</button>
+          <button id="menu-delete-zone" data-action="delete-zone" class="menu-danger" title="Permanently delete this custom zone from game files (only available for custom zones 400+)">Delete Zone</button>
+        </div>
+      </div>
+      <div class="menu-sep"></div>
+      <button data-action="help" title="Controls, shortcuts, and about">Help</button>
+    </div>
+    <!-- View dropdown menu -->
+    <div id="view-menu" class="menu">
+      <button data-action="grid"><span class="material-symbols-outlined">grid_on</span>Grid</button>
+      <button data-action="center"><span class="material-symbols-outlined">my_location</span>Center</button>
+      <button data-action="sel-outline"><span class="material-symbols-outlined">select</span>Selected Outline</button>
+      <button data-action="hover-outline"><span class="material-symbols-outlined">ads_click</span>MouseOver Outline</button>
+      <button data-action="wireframe"><span class="material-symbols-outlined">grid_4x4</span>Wireframe</button>
+      <div class="menu-sep"></div>
+      <button data-action="perf"><span class="material-symbols-outlined">speed</span>Performance</button>
+      <div class="menu-sep"></div>
+      <button data-action="reset-windows" title="Move every floating window back on-screen, cascaded from the top-left"><span class="material-symbols-outlined">grid_goldenratio</span>Reset Windows</button>
+    </div>
+    <input type="file" id="glb-file-input" accept=".glb,.gltf,model/gltf-binary" hidden />
+    <input type="file" id="json-file-input" accept=".json,application/json" hidden />
+    <input type="file" id="obj-file-input" accept=".obj,text/plain" hidden />
+
+    <!-- Unified selection panel — floats top-right, always visible when something is selected -->
+    <div id="sel-panel" class="sel-panel">
+
+      <!-- Always: name / mesh readout -->
+      <div class="selection" id="selection">nothing selected</div>
+
+      <!-- Always: pos / rot / scale -->
+      <div class="selection-transform" id="selection-transform"></div>
+
+      <!-- Type-specific: Marker -->
+      <div id="marker-details" class="sel-section">
+        <div class="mdet-head">Marker Details</div>
+        <label class="kv"><span class="k">Type</span>
+          <select id="mdet-type">
+            <option value="Sequencer Actor Position">Sequencer Actor Position</option>
+            <option value="Spawn">Spawn</option>
+            <option value="NPC">NPC</option>
+            <option value="Monster">Monster</option>
+            <option value="Object">Object</option>
+            <option value="Trigger">Trigger</option>
+          </select>
+        </label>
+        <label class="kv"><span class="k">Name</span>
+          <input id="mdet-name" type="text" />
+        </label>
+        <label class="kv"><span class="k">Icon</span>
+          <select id="mdet-cs-icon">
+            <option value="location_on">Pinpoint</option>
+            <option value="person">Person / NPC</option>
+            <option value="groups">Group / Crowd</option>
+            <option value="swords">Monster / Enemy</option>
+            <option value="pets">Creature</option>
+            <option value="deployed_code">Object</option>
+            <option value="route">Path / Route</option>
+            <option value="auto_awesome">VFX / Effect</option>
+            <option value="volume_up">Sound</option>
+            <option value="videocam">Camera</option>
+            <option value="flag">Flag / Spawn</option>
+            <option value="sensor_door">Door / Trigger</option>
+            <option value="star">Point of Interest</option>
+          </select>
+        </label>
+        <label class="kv"><span class="k">Colour</span>
+          <input id="mdet-color" type="color" value="#42d9c8" class="swatch" title="Marker colour" />
+        </label>
+        <label class="kv mdet-desc-row"><span class="k">Info</span>
+          <textarea id="mdet-desc" rows="2"></textarea>
+        </label>
+        <button id="mdet-pin-floor" class="mdet-pin-btn" title="Drop this marker onto the zone floor beneath it — matches how the game grounds cutscene actors"><span class="material-symbols-outlined">vertical_align_bottom</span>Pin to floor</button>
+      </div>
+
+      <!-- Type-specific: GLB Import -->
+      <div id="glb-details" class="sel-section glb-details">
+        <div class="mdet-head">GLB Import</div>
+        <div class="kv" id="glb-uuid-row"><span class="k">id</span><span class="glb-uuid" id="glb-uuid" title="xi import id — every copy of this mesh shares it; click to copy"></span></div>
+        <div class="kv" id="glb-name-row"><span class="k">Name</span><span id="glb-name" title="GLB model name"></span></div>
+        <div class="kv" id="glb-file-row"><span class="k">File</span><span class="glb-file" id="glb-file" title="GLB copied into the project folder — the publish source; click to copy"></span></div>
+        <div class="kv" id="glb-origin-row"><span class="k">Origin</span><span id="glb-origin" title="full path of the source GLB this links to — Refresh copies it back over the project file; click to copy"></span></div>
+        <div class="kv" id="glb-added-row"><span class="k">Added</span><span class="glb-added" id="glb-added" title="when this object was added"></span></div>
+        <button id="glb-link-origin" class="glb-link-btn" title="Pick a GLB on disk to set as this import's Origin — right-click → Refresh GLB from disk then re-copies it into the project">Link to new Origin</button>
+        <div class="mdet-spacer"></div>
+        <label class="check"><input id="glb-lit" type="checkbox" /> Bake brightness</label>
+        <label class="kv" id="glb-shade-row" style="display:none"><span class="k">Brightness</span>
+          <input id="glb-shade" type="range" min="0" max="2" step="0.05" value="1" />
+          <span id="glb-shade-val">1.00</span>
+        </label>
+        <label class="check"><input id="glb-opaque" type="checkbox" /> Opaque</label>
+        <label class="check"><input id="glb-two-sided" type="checkbox" /> Two-sided</label>
+        <p class="spane-hint">Visible from both sides in-game</p>
+      </div>
+
+      <!-- Type-specific: Text Plane -->
+      <div id="textplane-details" class="sel-section textplane-details">
+        <div class="mdet-head">Text Plane</div>
+        <div class="kv"><span class="k">Text</span>
+          <textarea id="tp-text" rows="3" spellcheck="false" placeholder="Type your text…"></textarea>
+        </div>
+        <div class="tp-inline"><span class="k">Size</span>
+          <input id="tp-size" type="range" min="16" max="160" step="2" value="64" />
+          <span id="tp-size-val">64</span>
+        </div>
+        <div class="tp-inline"><span class="k">Text colour</span>
+          <input id="tp-color" type="color" value="#ffffff" />
+        </div>
+        <div class="tp-inline"><span class="k">Panel colour</span>
+          <input id="tp-panel" type="color" value="#1b1b22" />
+        </div>
+        <div class="tp-note">Bakes to a GLB with a text texture on Publish.</div>
+      </div>
+
+      <!-- Type-specific: Collision -->
+      <div id="collision-details" class="sel-section">
+        <div class="mdet-head">Collision</div>
+        <label class="check" title="Collision always blocks the player — this controls the camera only. On: the camera is blocked by this collision (solid). Off: the camera clips / passes through it."><input type="checkbox" id="cdet-block-camera" /> Block Camera</label>
+        <label class="kv"><span class="k">Terrain</span>
+          <select id="cdet-terrain">
+            <option value="0">object</option>
+            <option value="1">path</option>
+            <option value="2">grass</option>
+            <option value="3">sand</option>
+            <option value="4">snow</option>
+            <option value="5">stone</option>
+            <option value="6">metal</option>
+            <option value="7">wood</option>
+            <option value="8">shallowwater</option>
+            <option value="9">deepwater</option>
+            <option value="10">unk0xa</option>
+          </select>
+        </label>
+        <div class="kv" id="cdet-segs-row" title="Subdivisions: box/plane = segments per axis (auto-filled from scale, min 2); mesh = triangle subdivision level (1 = original, 2 = ×4 tris, 3 = ×9 tris)."><span class="k">Segments</span>
+          <div class="cdet-segs-inputs">
+            <label id="cdet-seg-x-label"><span id="cdet-seg-x-text">X</span><input type="number" id="cdet-seg-x" min="1" max="64" value="2" /></label>
+            <label id="cdet-seg-y-label">Y<input type="number" id="cdet-seg-y" min="1" max="64" value="2" /></label>
+            <label id="cdet-seg-z-label">Z<input type="number" id="cdet-seg-z" min="1" max="64" value="2" /></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Type-specific: Sound Emitter -->
+      <div id="sound-details" class="sel-section sound-details">
+        <div class="mdet-head">Sound Emitter</div>
+        <div class="kv"><span class="k">Sound</span><span class="sdet-id" id="sdet-id" title="sound file this emitter plays"></span></div>
+        <label class="check"><input id="sdet-repeat" type="checkbox" /> Repeat (loop)</label>
+        <button id="sdet-play" class="load-btn">▶ Play</button>
+        <div class="sdet-note" id="sdet-note">Editor-only preview — DAT write-back is Phase 2.</div>
+      </div>
+
+    </div>
+
+    <div class="modal changes-panel" id="changes-panel">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">alt_route</span>Tracked changes</span>
+        <button class="modal-close" data-close="changes-panel" title="Close">×</button>
+      </div>
+      <div id="changes-filter-bar" class="changes-filter-bar">
+        <div class="cf-group cf-search-group">
+          <input id="changes-search" class="cf-search" type="text" placeholder="Search name…" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="cf-group">
+          <span class="cf-label">Type</span>
+          <button class="cf-btn active" data-cf-type="">All</button>
+          <button class="cf-btn" data-cf-type="OBJECT">Object</button>
+          <button class="cf-btn" data-cf-type="VFX">VFX</button>
+          <button class="cf-btn" data-cf-type="SFX">SFX</button>
+          <button class="cf-btn" data-cf-type="MARKER">Marker</button>
+          <button class="cf-btn" data-cf-type="SKY">Sky</button>
+          <button class="cf-btn" data-cf-type="COLLISION">Collision</button>
+        </div>
+        <div class="cf-group">
+          <span class="cf-label">Source</span>
+          <button class="cf-btn active" data-cf-src="">All</button>
+          <button class="cf-btn" data-cf-src="internal">Internal</button>
+          <button class="cf-btn" data-cf-src="external">External</button>
+        </div>
+        <div class="cf-group">
+          <span class="cf-label">Op</span>
+          <button class="cf-btn active" data-cf-op="">All</button>
+          <button class="cf-btn" data-cf-op="add">Add</button>
+          <button class="cf-btn" data-cf-op="delete">Delete</button>
+          <button class="cf-btn" data-cf-op="modify">Modify</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="changes-list" id="changes-list"></div>
+      </div>
+    </div>
+
+    <div class="modal perf-panel" id="perf-panel">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">speed</span>Performance</span>
+        <button class="modal-close" data-close="perf-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="perf-grid">
+          <span class="perf-k">FPS</span><span class="perf-v" id="perf-fps">--</span>
+          <span class="perf-k">Frame</span><span class="perf-v" id="perf-frame">--</span>
+          <span class="perf-k">Draw calls</span><span class="perf-v" id="perf-dc">--</span>
+          <span class="perf-k">Triangles</span><span class="perf-v" id="perf-tri">--</span>
+          <span class="perf-k">Shader programs</span><span class="perf-v" id="perf-prog">--</span>
+          <span class="perf-k">Geometries</span><span class="perf-v" id="perf-geo">--</span>
+          <span class="perf-k">Textures</span><span class="perf-v" id="perf-tex">--</span>
+          <span class="perf-k">Placements</span><span class="perf-v" id="perf-plc">--</span>
+        </div>
+        <div class="perf-cull">
+          <div class="perf-cullrow">
+            <label class="check"><input type="checkbox" id="cull-enable" /> Distance cull</label>
+            <span class="perf-cullcount" id="cull-count"></span>
+          </div>
+          <div class="perf-slider" id="cull-slider-row">
+            <div class="perf-slider-head"><span class="perf-k">Draw distance</span><span class="perf-v" id="cull-dist-val">--</span></div>
+            <input type="range" id="cull-dist" min="5" max="100" step="1" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal settings-panel" id="settings-panel">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">settings</span>Settings</span>
+        <button class="modal-close" data-close="settings-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body settings-layout">
+
+        <nav class="settings-nav">
+          <div class="snav-cat">User Settings</div>
+          <button class="snav-btn active" data-spane="editor">Editor</button>
+          <button class="snav-btn" data-spane="collision">Collision / NavMesh</button>
+          <button class="snav-btn" data-spane="autosave">Save / Publish</button>
+          <button class="snav-btn" data-spane="database">Database</button>
+          <div class="snav-cat">Project Settings</div>
+          <button class="snav-btn" data-spane="project">Project</button>
+          <div class="snav-cat dev">Dev</div>
+          <button class="snav-btn dev" data-spane="dev-ids">Dev ID Ranges</button>
+          <button class="snav-btn dev" data-spane="dev-theme">Theme</button>
+        </nav>
+
+        <div class="settings-content">
+
+          <div class="spane active" id="spane-editor">
+            <div class="spane-grouphead">Viewport</div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-grid" checked /> Grid</label></div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-map-center" checked /> Show Map Center</label></div>
+            <div class="form-row"><label class="check" title="Show a 'PLAYER' disc in the viewport at the spawn position read live from the database (chars.pos_x/y/z for the charid in the Database panel's spawn bar). Lets you keep collision under where the player lands."><input type="checkbox" id="toggle-show-player" checked /> Show player spawn marker</label></div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-axis-gizmo" checked /> Axis Gizmo</label>
+              <p class="spane-hint">X/Y/Z orientation, bottom-left</p>
+            </div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-wire" /> Wireframe <input type="color" id="wire-color" value="#000000" title="Wireframe colour" class="swatch" /></label></div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-vfx-icons" checked /> VFX icons</label></div>
+            <div class="form-row"><label class="setting-row">VFX icon size <span id="vfx-icon-size-val">35px</span><input type="range" id="vfx-icon-size" min="10" max="80" step="5" value="35" /></label></div>
+            <div class="form-row"><label class="setting-row">Undo limit <input type="number" id="undo-limit" min="0" step="1" value="100" /></label><p class="spane-hint">Commands kept for this browser session. 0 disables undo history.</p></div>
+            <div class="form-row"><div class="swatch-row">Background <input type="color" id="bg-color" value="#edffd1" class="swatch" title="Custom solid background colour — overrides the default gradient" /> <button id="bg-reset" title="Reset to default gradient">Reset</button></div></div>
+            <div class="spane-grouphead">Selection</div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-outline" checked /> Show Selected Outline</label></div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-simple-outline" /> Show Simple Selection Outline</label>
+              <p class="spane-hint">Silhouette only — hides internal polygon edges</p>
+            </div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-hover-outline" checked /> Show MouseOver Outline</label></div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-front-normal" checked /> Show Face Normal</label>
+              <p class="spane-hint">Arrow = the side visible in-game</p>
+            </div>
+            <div class="form-row">
+              <label class="check" title="On: Ctrl+V drops the copy slightly offset from the original. Off: paste keeps the exact same position (copy sits on top)."><input type="checkbox" id="toggle-paste-offset" /> Offset on Copy &amp; Paste</label>
+              <p class="spane-hint">On: pasted copies land slightly offset. Off: paste keeps the exact same position.</p>
+            </div>
+            <div class="spane-grouphead">Transformation</div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-scale-uniform" checked /> Scale Uniformly</label></div>
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-copy-transform-scale" /> Include Scale in Transform Copy</label></div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-snap-on-shift" checked /> Snap on Shift</label>
+              <p class="spane-hint">When on, snapping only activates while holding Shift.</p>
+              <p class="spane-hint">Ctrl+V drops a copy in front of the camera at ground/collision level.</p>
+            </div>
+            <div class="form-row"><label class="setting-row">Move Snap <span id="snap-move-value">Off</span><input type="range" id="snap-move" min="0" max="5" step="0.1" /></label></div>
+            <div class="form-row"><label class="setting-row">Rotate Snap <span id="snap-rotate-value">Off</span><input type="range" id="snap-rotate" min="0" max="180" step="15" /></label></div>
+            <div class="form-row"><label class="setting-row">Scale Snap <span id="snap-scale-value">Off</span><input type="range" id="snap-scale" min="0" max="1" step="0.1" /></label></div>
+          </div>
+
+          <div class="spane" id="spane-collision">
+            <div class="spane-grouphead">Collision</div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-collision" /> Show Collision Mesh</label>
+              <p class="spane-hint">Red = wall / impassable, coloured = floor terrain type</p>
+            </div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-isolate-collision" /> Isolate Custom Collision</label>
+              <p class="spane-hint">Hides everything except your authored collision prims</p>
+            </div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-isolate-baked" /> Isolate Baked Collision</label>
+              <p class="spane-hint">Hides everything except the collision currently baked into the game DAT</p>
+            </div>
+            <div class="form-row"><label class="setting-row">Opacity <span id="collision-opacity-value">45%</span><input type="range" id="collision-opacity" min="0.05" max="1" step="0.05" /></label></div>
+            <div class="spane-grouphead">NavMesh</div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-navmesh" /> Show Navmesh</label>
+              <p class="spane-hint">Green = server walkable area (.nav). Requires bridge + baked .nav file.</p>
+            </div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-isolate-navmesh" /> Isolate Navmesh</label>
+              <p class="spane-hint">Hides all other scene geometry so only the navmesh is visible</p>
+            </div>
+            <div class="form-row"><label class="setting-row">Opacity <span id="navmesh-opacity-value">35%</span><input type="range" id="navmesh-opacity" min="0.05" max="1" step="0.05" /></label></div>
+          </div>
+
+          <div class="spane" id="spane-autosave">
+            <div class="form-row"><label class="check"><input type="checkbox" id="toggle-autosave" /> Enable Auto Save</label></div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-autosave-action" /> Save After Every Action</label>
+              <p class="spane-hint">When disabled, auto-saves once per minute instead</p>
+            </div>
+            <div class="spane-grouphead">Publish</div>
+            <div class="form-row">
+              <label class="check"><input type="checkbox" id="toggle-publish-pivot" checked /> Publish Cutscenes to Pivot</label>
+              <p class="spane-hint">Also patch the F/VTABLEs in the pivot DAT overlay (FFXI_PIVOT_DIR) when publishing a cutscene, so a client reading the overlay's tables can resolve the camera-scene file.</p>
+            </div>
+            <div class="form-row">
+              <label class="check" title="Before Publish, check the player's DB spawn point has collision beneath it. If the floor was moved away (you'd spawn into the void / be stuck), Publish warns and lets you cancel."><input type="checkbox" id="toggle-validate-spawn" checked /> Validate player spawn on Publish</label>
+              <p class="spane-hint">PLAYER marker + check use chars.pos for the charid in the Database panel's spawn bar (default 1).</p>
+            </div>
+          </div>
+
+          <div class="spane spane-database" id="spane-database">
+            <div class="form-row"><label class="setting-row wide">Host <input type="text" id="db-host" placeholder="127.0.0.1" autocomplete="off" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Port <input type="number" id="db-port" min="1" max="65535" placeholder="3306" /></label></div>
+            <div class="form-row"><label class="setting-row wide">User <input type="text" id="db-user" placeholder="root" autocomplete="off" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Password <input type="text" id="db-password" class="masked" placeholder="xi" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Database <input type="text" id="db-database" placeholder="tpzdb" autocomplete="off" /></label></div>
+            <p class="spane-hint">MariaDB credentials for the FFXI server. Defaults are read from network.lua on the backend; only override if you need different values.</p>
+          </div>
+
+          <div class="spane" id="spane-dev-theme">
+            <div class="spane-grouphead">Theme</div>
+            <p class="spane-hint">Reference swatches for all form elements — edit styles here to theme the whole editor.</p>
+
+            <div class="spane-grouphead">Text Input</div>
+            <div class="form-row"><label class="setting-row wide">Label <input type="text" placeholder="Placeholder text" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Disabled <input type="text" value="Disabled value" disabled /></label></div>
+
+            <div class="spane-grouphead">Number Input</div>
+            <div class="form-row"><label class="setting-row">Count <input type="number" value="42" min="0" step="1" /></label></div>
+
+            <div class="spane-grouphead">Textarea</div>
+            <div class="form-row"><label class="setting-row wide">Notes <textarea rows="3" placeholder="Multi-line text…"></textarea></label></div>
+
+            <div class="spane-grouphead">Select / Combo</div>
+            <div class="form-row"><label class="proj-select-row" for="theme-select">Option <select id="theme-select"><option>First option</option><option>Second option</option><option>Third option</option></select></label></div>
+
+            <div class="spane-grouphead">Checkbox</div>
+            <div class="form-row"><label class="check"><input type="checkbox" checked /> Checked</label></div>
+            <div class="form-row"><label class="check"><input type="checkbox" /> Unchecked</label></div>
+            <div class="form-row"><label class="check"><input type="checkbox" disabled /> Disabled</label></div>
+
+            <div class="spane-grouphead">Slider</div>
+            <div class="form-row"><label class="setting-row">Value <span id="theme-range-val">50</span><input type="range" id="theme-range" min="0" max="100" value="50" oninput="document.getElementById('theme-range-val').textContent=this.value" /></label></div>
+
+            <div class="spane-grouphead">Colour Picker</div>
+            <div class="form-row"><div class="swatch-row">Colour <input type="color" value="#5fe6ff" class="swatch" title="Colour picker" /></div></div>
+
+            <div class="spane-grouphead">Button</div>
+            <div class="form-row theme-btn-row">
+              <button>Default</button>
+              <button class="btn-primary">Primary</button>
+              <button class="btn-success">Success</button>
+              <button class="btn-danger">Delete</button>
+              <button disabled>Disabled</button>
+            </div>
+          </div>
+
+          <div class="spane" id="spane-dev-ids">
+            <div class="form-row"><div class="dev-range-row"><span class="dev-label">Zone ID Range</span><div class="dev-range-inputs"><input type="number" id="dev-zone-min" min="0" step="1" /><span class="dev-dash">—</span><input type="number" id="dev-zone-max" min="0" step="1" /></div></div></div>
+            <div class="form-row"><div class="dev-range-row"><span class="dev-label">Model ID Range</span><div class="dev-range-inputs"><input type="number" id="dev-model-min" min="0" step="1" /><span class="dev-dash">—</span><input type="number" id="dev-model-max" min="0" step="1" /></div></div></div>
+            <div class="form-row"><div class="dev-range-row"><span class="dev-label">BGM ID Range</span><div class="dev-range-inputs"><input type="number" id="dev-bgm-min" min="0" step="1" /><span class="dev-dash">—</span><input type="number" id="dev-bgm-max" min="0" step="1" /></div></div></div>
+            <div class="form-row">
+              <div class="dev-range-row"><span class="dev-label">Rom Path</span><div class="dev-range-inputs"><input type="number" id="dev-rom-path" min="1" step="1" /></div></div>
+              <p class="spane-hint">ROM folder edits save into (e.g. 2 = ROM2). Not wired up yet.</p>
+            </div>
+          </div>
+
+          <div class="spane" id="spane-project">
+            <p class="spane-hint">These settings are saved with the project (in its workspace), not globally — so each map keeps its own publish and viewport preferences.</p>
+
+            <div class="spane-grouphead">HD Zone</div>
+            <div class="form-row">
+              <label class="proj-select-row" for="hd-publish-mode">On Publish
+                <select id="hd-publish-mode">
+                  <option value="off">Don’t update the HD zone</option>
+                  <option value="publish">Publish changes to HD</option>
+                  <option value="clone">Clone standard over HD</option>
+                </select>
+              </label>
+              <p class="spane-hint" id="hd-publish-mode-hint"></p>
+              <p class="spane-hint">Only applies to zones that ship an Ashenbubs HD asset-pack DAT — new / custom maps usually have none, so this is a no-op there.</p>
+            </div>
+
+            <div class="spane-grouphead">Publish</div>
+            <div class="form-row">
+              <label class="check" title="Before Publish, reset the zone DAT from its pristine .base backup, then inject — so every publish is clean and idempotent (re-publishing never doubles edits). Disable to apply your edits onto the CURRENT DAT instead (like `xi zone import-json`), preserving anything already baked in but accumulating across publishes."><input type="checkbox" id="toggle-publish-reset" checked /> Reset DAT before Publish</label>
+              <p class="spane-hint">On: each Publish starts from pristine, then applies all current changes. Off: applies onto the current DAT (no reset).</p>
+            </div>
+            <div class="form-row" id="row-strip-collision">
+              <label class="check" title="On Publish, after resetting from the pristine .base, wipe the zone’s EXISTING baked collision (keeping the grid + per-object cull transforms) BEFORE applying your changes — so the collision you author becomes the ONLY collision. Off: your collision is added on top of the zone’s original collision. Custom zones (ID ≥ 400) only."><input type="checkbox" id="toggle-clear-collision" /> Strip Baked Collision</label>
+              <p class="spane-hint">Publish = reset from .base → strip the zone’s own collision → apply your changes. Set once per project; custom zones (ID ≥ 400) only.</p>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal help-panel" id="help-panel">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">help</span>Help</span>
+        <button class="modal-close" data-close="help-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="help-grid">
+          <div class="help-col about">
+            <div class="help-version"><img src="./icon.png" alt="" />FFXI Zone Editor <b>v0.5</b></div>
+            <div class="help-group">
+              <h3>About</h3>
+              <p>Direct DAT zone viewer and placement editor for FFXI zones.</p>
+              <ul>
+                <li>Loads zone meshes, textures, placements, VFX, and sound emitters directly from DAT files.</li>
+                <li>Authentic FFXI lighting — weather environments, time of day, sun/moon direction, and fog ported from the client.</li>
+                <li>Collision (0x1C MZB) and server navmesh overlays for walkability review.</li>
+                <li>Move, rotate, scale, copy/paste, delete, and restore scene objects with full undo/redo.</li>
+                <li>Import custom GLB meshes into the scene.</li>
+                <li>Place and annotate markers (Spawn, NPC, Monster, Object, Trigger).</li>
+                <li>Save change-sets to workspace; publish directly to game DATs via the backend.</li>
+                <li>Export as JSON or individual xi CLI commands.</li>
+              </ul>
+            </div>
+            <div class="help-group">
+              <h3>Credits</h3>
+              <ul style="display:flex;gap:16px;list-style:none;padding:0;margin:0">
+                <li>Vekien</li>
+                <li>Loxley</li>
+                <li>Carver</li>
+              </ul>
+              <img src="./icon.png" alt="XI Zone Editor" style="margin-top:10px;max-height:36px;opacity:0.85" />
+            </div>
+          </div>
+
+          <div class="help-col controls">
+            <div class="help-group">
+              <h3>Fly camera</h3>
+              <div class="help-row"><span class="keys"><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span></span><span>Move</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Q</span><span class="kbd">E</span></span><span>Down / Up</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Shift</span></span><span>Boost (3×)</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Wheel</span></span><span>Zoom speed</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Drag</span></span><span>Look around</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Click</span></span><span>Select object</span></div>
+            </div>
+
+            <div class="help-group">
+              <h3>Editing</h3>
+              <div class="help-row"><span class="keys"><span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span></span><span>Move / Rotate / Scale</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">F</span></span><span>Focus selected</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Del</span></span><span>Delete selected</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Ctrl</span><span class="plus">+</span><span class="kbd">C</span></span><span>Copy object</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Ctrl</span><span class="plus">+</span><span class="kbd">V</span></span><span>Paste (+1 offset)</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Ctrl</span><span class="plus">+</span><span class="kbd">Z</span></span><span>Undo</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Ctrl</span><span class="plus">+</span><span class="kbd">Y</span></span><span>Redo</span></div>
+              <div class="help-row"><span class="keys"><span class="kbd">Esc</span></span><span>Deselect</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel" id="panel">
+      <!-- ZONE -->
+      <div class="tab-pane" data-pane="zone">
+        <div id="project-zones-block" class="panel-block" style="display:none">
+          <label class="panel-block-label project-zones-label">Project Zones</label>
+          <ul class="project-zones" id="project-zones"></ul>
+        </div>
+        <div id="pinned-zones-block" class="panel-block" style="display:none">
+          <label class="panel-block-label pinned-zones-label">Pinned Zones</label>
+          <ul class="pinned-zones" id="pinned-zones"></ul>
+        </div>
+        <div class="row">
+          <label for="zone">Zone List</label>
+          <select id="zone">
+            <option value="">loading zones…</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="custom-dat">Zone DAT</label>
+          <input id="custom-dat" type="text" placeholder="ROM/1/48.DAT" title="Enter a DAT path relative to game/ to load any zone or room"/>
+          <button class="load-btn" id="custom-dat-load">LOAD</button>
+        </div>
+        <div class="row">
+          <label for="zone-search">Zone Search</label>
+          <input id="zone-search" type="text" placeholder="Filter zones…" autocomplete="off" spellcheck="false" />
+        </div>
+        <ul class="zone-search-results" id="zone-search-results"></ul>
+        <div class="zone-info" id="zone-info"></div>
+        <!-- Zone Type + Misc settings -->
+        <div class="zone-settings" id="zone-settings" style="display:none">
+          <div class="section-title">Zone Type</div>
+          <select id="zs-zonetype" class="zs-select">
+            <option value="0">— None —</option>
+            <option value="1">City</option>
+            <option value="2">Outdoors</option>
+            <option value="4">Dungeon</option>
+            <option value="8">Signet</option>
+            <option value="16">Sanction</option>
+            <option value="32">Sigil</option>
+            <option value="64">Ionis</option>
+            <option value="128">Dynamis</option>
+            <option value="256">Instanced</option>
+          </select>
+          <div class="section-title" style="margin-top:10px">Zone Misc</div>
+          <div class="zs-flags" id="zs-misc-flags">
+            <label class="check" title="Escape spell works here"><input type="checkbox" data-bit="1" data-field="misc" /> Escape</label>
+            <label class="check" title="Fellow NPC allowed"><input type="checkbox" data-bit="2" data-field="misc" /> Fellow</label>
+            <label class="check" title="Mounts (Chocobo Whistle etc.) allowed"><input type="checkbox" data-bit="4" data-field="misc" /> Mount</label>
+            <label class="check" title="Mazurka (movement speed songs) allowed"><input type="checkbox" data-bit="8" data-field="misc" /> Mazurka</label>
+            <label class="check" title="Tractor spell works here"><input type="checkbox" data-bit="16" data-field="misc" /> Tractor</label>
+            <label class="check" title="Mog Menu (storage) accessible"><input type="checkbox" data-bit="32" data-field="misc" /> Mog Menu</label>
+            <label class="check" title="Costume (Mog Wardrobe / mannequin display) usable"><input type="checkbox" data-bit="64" data-field="misc" /> Costume</label>
+            <label class="check" title="Pet avatars / familiars allowed"><input type="checkbox" data-bit="128" data-field="misc" /> Pet</label>
+            <label class="check" title="Treasure Casket drops enabled"><input type="checkbox" data-bit="256" data-field="misc" /> Treasure</label>
+            <label class="check" title="Auction House accessible"><input type="checkbox" data-bit="512" data-field="misc" /> Auction House</label>
+            <label class="check" title="Yell chat channel active"><input type="checkbox" data-bit="1024" data-field="misc" /> Yell</label>
+            <label class="check" title="Trust NPCs can be summoned"><input type="checkbox" data-bit="2048" data-field="misc" /> Trust</label>
+            <label class="check" title="Line-of-sight blocks player targeting"><input type="checkbox" data-bit="4096" data-field="misc" /> LoS Player Block</label>
+            <label class="check" title="Line-of-sight system disabled entirely"><input type="checkbox" data-bit="8192" data-field="misc" /> LoS Off</label>
+            <label class="check" title="Assist (party assist) allowed"><input type="checkbox" data-bit="16384" data-field="misc" /> Assist</label>
+          </div>
+        </div>
+        <!-- Building interiors / shops linked to this zone (0x36 sub-areas) -->
+        <div id="zone-subareas" class="subareas-block zone-subareas" style="display:none">
+          <!-- Shown when THIS DAT is itself an interior: links back to the owning zone -->
+          <div id="subarea-parent" class="subarea-parent subarea-parent" style="display:none"></div>
+          <!-- Shown when this zone OWNS interiors: the spawnable list -->
+          <div id="subarea-own" style="display:none">
+            <div class="section-title">
+              Sub-areas <span id="subarea-count"></span>
+              <span class="section-actions"><button id="subarea-show" title="Show all interiors">Show</button><button id="subarea-hide" title="Hide all interiors">Hide</button></span>
+            </div>
+            <ul class="subarea-list" id="subarea-list"></ul>
+            <button id="subarea-strip" class="subarea-strip-btn" title="Remove this zone's sub-area shop/building swaps AND zone-line edge teleports (0x36 'm'/'z' entries) on Publish — for templating a city into a standalone custom zone. Building shells stay as solid geometry; doors are kept. Tracked as a change; click again to restore.">Remove Sub-areas &amp; Zone Lines</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBJS -->
+      <div class="tab-pane list-pane" data-pane="objs">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">grid_view</span>OBJECTS</div>
+          <div class="tab-pane-head-stats" id="objcount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="obj-show" title="Show currently listed objects">Show</button>
+            <button id="obj-hide" title="Hide currently listed objects">Hide</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <input id="filter" class="list-search" type="text" placeholder="search objects…" />
+        <ul class="objlist" id="objlist"></ul>
+      </div>
+
+      <!-- VFX -->
+      <div class="tab-pane list-pane" data-pane="vfx">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">electric_bolt</span>VISUAL FX</div>
+          <div class="tab-pane-head-stats" id="vfxcount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="vfx-show" title="Show currently listed VFX">Show</button>
+            <button id="vfx-hide" title="Hide currently listed VFX">Hide</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <div class="pane-options">
+          <label class="check"><input type="checkbox" id="toggle-disable-vfx-pane" /> Disable VFX</label>
+        </div>
+        <input id="vfx-filter" class="list-search" type="text" placeholder="search VFX…" />
+        <ul class="vfxlist" id="vfxlist"></ul>
+      </div>
+
+      <!-- SFX -->
+      <div class="tab-pane list-pane" data-pane="sfx">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">sound_detection_loud_sound</span>SOUND FX</div>
+          <div class="tab-pane-head-stats" id="soundcount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="sound-show" title="Show listed sound icons">Show</button>
+            <button id="sound-hide" title="Hide listed sound icons">Hide</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <div class="panel-block">
+          <label class="panel-block-label"><span class="material-symbols-outlined panel-block-icon">footprint</span>Footsteps</label>
+          <select id="footstep-source-zone">
+            <option value="">Keep DAT as-is</option>
+          </select>
+        </div>
+        <input id="sound-filter" class="list-search" type="text" placeholder="search SFX…" />
+        <div class="sfx-playbar">
+          <button id="sfx-play" title="Select a sound to play it" disabled><span class="material-symbols-outlined">play_arrow</span>Play</button>
+          <button id="sfx-stop" title="Stop playback" disabled><span class="material-symbols-outlined">stop</span>Stop</button>
+        </div>
+        <div id="sfx-now" class="sfx-now" title="Now playing"></div>
+        <ul class="soundlist" id="soundlist"></ul>
+      </div>
+
+      <!-- MUSIC -->
+      <div class="tab-pane list-pane" data-pane="music">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">music_note</span>MUSIC</div>
+        </div>
+        <div class="zone-music" id="zone-music"></div>
+      </div>
+
+      <!-- MKRS -->
+      <div class="tab-pane list-pane" data-pane="mkrs">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">add_location_alt</span>MARKERS</div>
+          <div class="tab-pane-head-stats" id="markercount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="marker-add" title="Add a marker in front of the camera">Add</button>
+            <button id="marker-show" title="Show all markers">Show</button>
+            <button id="marker-hide" title="Hide all markers">Hide</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <input id="marker-filter" class="list-search" type="text" placeholder="search markers…" />
+        <ul class="markerlist" id="markerlist"></ul>
+      </div>
+
+      <!-- TEXT -->
+      <div class="tab-pane list-pane" data-pane="text">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">title</span>TEXT PLANES</div>
+          <div class="tab-pane-head-stats" id="textcount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="text-add" title="Add a text plane in front of the camera">Add</button>
+            <button id="text-show" title="Show all text planes">Show</button>
+            <button id="text-hide" title="Hide all text planes">Hide</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <input id="text-filter" class="list-search" type="text" placeholder="search text planes…" />
+        <ul class="textlist" id="textlist"></ul>
+        <details id="text-baked-wrap" class="text-baked">
+          <summary>Baked GLB (auto) <span id="textbakedcount"></span></summary>
+          <p class="text-baked-hint">Generated from the text planes above on Publish — hidden by default and re-drawn every Publish. Read-only.</p>
+          <ul class="textbakedlist" id="textbakedlist"></ul>
+        </details>
+      </div>
+
+      <!-- SKY -->
+      <div class="tab-pane list-pane" data-pane="sky">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">partly_cloudy_day</span>SKYBOX</div>
+          <div class="tab-pane-head-stats" id="skycount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="sky-show" title="Show all sky elements">Show</button>
+            <button id="sky-hide" title="Hide all sky elements">Hide</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <div class="pane-options">
+          <label class="check"><input type="checkbox" id="toggle-sky" /> Skybox</label>
+          <label class="check"><input type="checkbox" id="toggle-sky-scaled" /> Skybox Scaled to Zone</label>
+        </div>
+        <input id="sky-filter" class="list-search" type="text" placeholder="search sky…" />
+        <ul class="skylist" id="skylist"></ul>
+      </div>
+
+      <!-- MOBS -->
+      <div class="tab-pane list-pane" data-pane="mobs">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">ar_stickers</span>MONSTERS</div>
+          <div class="tab-pane-head-stats" id="mobcount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="mob-show" title="Show all mob spawns">Show</button>
+            <button id="mob-hide" title="Hide all mob spawns">Hide</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <input id="mob-filter" class="list-search" type="text" placeholder="search monsters…" />
+        <ul class="moblist" id="moblist"></ul>
+      </div>
+
+      <!-- COLS -->
+      <div class="tab-pane list-pane" data-pane="cols">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">deployed_code</span>COLLISION</div>
+          <div class="tab-pane-head-stats" id="colscount"></div>
+        </div>
+        <div id="cols-tris" class="cols-tris"></div>
+        <div class="cols-add-btns">
+          <button id="cols-add-box"   title="Add a box collision primitive"><span class="material-symbols-outlined">deployed_code</span> Box</button>
+          <button id="cols-add-plane" title="Add a plane collision primitive"><span class="material-symbols-outlined">square</span> Plane</button>
+        </div>
+        <input id="cols-filter" class="list-search" type="text" placeholder="search collision…" />
+        <ul class="colslist" id="colslist"></ul>
+      </div>
+
+      <!-- NAV -->
+      <div class="tab-pane list-pane" data-pane="nav">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">assistant_navigation</span>NAVMESH</div>
+        </div>
+      </div>
+
+      <!-- EVTS -->
+      <div class="tab-pane list-pane" data-pane="evts">
+        <div class="tab-pane-head">
+          <div class="tab-pane-head-title"><span class="material-symbols-outlined tab-pane-head-icon">movie</span>EVENTS</div>
+          <div class="tab-pane-head-stats" id="evtcount"></div>
+          <div class="tab-pane-head-rule"></div>
+          <div class="tab-pane-head-actions">
+            <button id="cs-author-btn" title="Create a new cutscene (compiles to Event + Dialog DAT)">Create</button>
+            <button id="evt-expand" title="Expand / collapse all actors">Expand</button>
+            <button id="evt-refresh" title="Reload events from the zone DAT">Refresh</button>
+          </div>
+          <div class="tab-pane-head-rule"></div>
+        </div>
+        <div id="evt-cats" class="evt-cats"></div>
+        <input id="evt-filter" class="list-search" type="text" placeholder="search actor / event id / category…" />
+        <div id="evtlist-wrap"><ul class="evtlist" id="evtlist"></ul></div>
+      </div>
+
+    </aside>
+
+    <!-- Navmesh Generate progress overlay -->
+    <div id="navmesh-gen-overlay" class="navmesh-gen-overlay" style="display:none">
+      <div class="navmesh-gen-dialog">
+        <div class="navmesh-gen-title">Generating Navmesh</div>
+        <div class="navmesh-gen-spinner"></div>
+        <div id="navmesh-gen-status" class="navmesh-gen-status">Building collision geometry…</div>
+        <button id="navmesh-gen-close" class="navmesh-gen-close" style="display:none">Close</button>
+      </div>
+    </div>
+
+    <!-- Package Wizard -->
+    <div id="pkg-wizard-overlay" class="navmesh-gen-overlay" style="display:none">
+      <div class="pkg-wizard-dialog">
+        <!-- Selection view -->
+        <div class="pkg-wizard-select" id="pkg-wizard-select">
+          <div class="pkg-wizard-title">Package Project</div>
+          <div class="pkg-wizard-subtitle" id="pkg-wizard-zipname"></div>
+          <div class="pkg-wizard-zone-list" id="pkg-wizard-zone-list"></div>
+          <label class="pkg-wizard-opt" id="pkg-wizard-npc-row" style="display:none">
+            <input type="checkbox" id="pkg-wizard-npcs" checked />
+            <span>Include custom NPCs <span class="pkg-wizard-opt-sub" id="pkg-wizard-npc-count"></span></span>
+          </label>
+          <div class="pkg-wizard-actions">
+            <button id="pkg-wizard-selall">Select All</button>
+            <button id="pkg-wizard-selnone">None</button>
+            <span class="pkg-wizard-spacer"></span>
+            <button id="pkg-wizard-cancel">Cancel</button>
+            <button id="pkg-wizard-go" class="pkg-wizard-primary">Package</button>
+          </div>
+        </div>
+        <!-- Progress view -->
+        <div class="pkg-wizard-progress" id="pkg-wizard-progress" style="display:none">
+          <div class="pkg-wizard-title">Packaging</div>
+          <div id="pkg-wizard-spinner" class="navmesh-gen-spinner"></div>
+          <div id="pkg-wizard-status" class="navmesh-gen-status">Building package…</div>
+          <button id="pkg-wizard-close" class="navmesh-gen-close" style="display:none">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- First-run workspace setup gate — blocks the editor until a workspaces folder is configured -->
+    <div id="setup-overlay" class="setup-overlay" style="display:none">
+      <div class="setup-card">
+        <div class="setup-logo"><img src="./icon.png" alt="XI Zone Editor" /></div>
+        <h1 class="setup-title">Workspace Setup</h1>
+        <div id="setup-form">
+          <p class="setup-sub">The zone editor saves your edits as workspace JSON files. Choose where you’d like to store them — a git repository is recommended so you can share and version your work.</p>
+          <label class="setup-field-label" for="setup-path">Save folder</label>
+          <div class="setup-path-row">
+            <input id="setup-path" class="setup-path-input" type="text" spellcheck="false" autocomplete="off" placeholder="C:/xi-zone-workspaces" />
+            <button type="button" id="setup-browse" class="setup-browse-btn">Browse…</button>
+          </div>
+          <p class="setup-hint">Pick an empty folder to start fresh, or an existing project folder if you already have one.</p>
+          <div id="setup-error" class="setup-error" hidden></div>
+          <div class="setup-actions">
+            <button id="setup-skip" class="setup-skip-btn" type="button">Skip</button>
+            <button id="setup-go" class="setup-go-btn" type="button">Continue</button>
+          </div>
+        </div>
+        <div id="setup-progress" class="setup-progress" hidden>
+          <div class="setup-spinner"></div>
+          <div class="setup-progress-status" id="setup-progress-status">Setting up folder…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- First-run FFXI paths (.env) — after workspace, before projects -->
+    <div id="env-setup-overlay" class="setup-overlay" style="display:none">
+      <div class="setup-card setup-card-wide">
+        <div class="setup-logo"><img src="./icon.png" alt="XI Zone Editor" /></div>
+        <h1 class="setup-title">Game Paths</h1>
+        <p class="setup-sub">Point the tools at your FFXI install. Only the game folder is required — HD, pivot, and Blender are optional.</p>
+        <div id="env-setup-form" class="env-setup-form">
+          <label class="setup-field-label" for="env-ffxi">FFXI directory <span class="req">required</span></label>
+          <div class="setup-path-row">
+            <input id="env-ffxi" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
+              placeholder="C:\Program Files (x86)\PlayOnline\SquareEnix\FINAL FANTASY XI" data-env-key="FFXI_DIR" />
+            <span class="env-tick" id="tick-FFXI_DIR" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
+            <button type="button" class="setup-browse-btn" data-env-browse="FFXI_DIR" data-kind="folder">Browse…</button>
+          </div>
+          <p class="setup-hint">Folder with the game ROM tree. Needs <code>FFXiMain.dll</code> in or next to it.</p>
+
+          <label class="setup-field-label" for="env-hd">HD DAT pack <span class="opt">optional</span></label>
+          <div class="setup-path-row">
+            <input id="env-hd" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
+              placeholder="…\Ashita\polplugins\DATs\ffxi-hd" data-env-key="FFXI_HD_DIR" />
+            <span class="env-tick" id="tick-FFXI_HD_DIR" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
+            <button type="button" class="setup-browse-btn" data-env-browse="FFXI_HD_DIR" data-kind="folder">Browse…</button>
+          </div>
+
+          <label class="setup-field-label" for="env-pivot">Pivot / override DATs <span class="opt">optional</span></label>
+          <div class="setup-path-row">
+            <input id="env-pivot" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
+              placeholder="…\Ashita\polplugins\DATs\your-overlay" data-env-key="FFXI_PIVOT_DIR" />
+            <span class="env-tick" id="tick-FFXI_PIVOT_DIR" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
+            <button type="button" class="setup-browse-btn" data-env-browse="FFXI_PIVOT_DIR" data-kind="folder">Browse…</button>
+          </div>
+
+          <label class="setup-field-label" for="env-blender">Blender <span class="opt">optional</span></label>
+          <div class="setup-path-row">
+            <input id="env-blender" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
+              placeholder="C:\Program Files\Blender Foundation\Blender 5.x\blender.exe" data-env-key="BLENDER_PATH" />
+            <span class="env-tick" id="tick-BLENDER_PATH" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
+            <button type="button" class="setup-browse-btn" data-env-browse="BLENDER_PATH" data-kind="file">Browse…</button>
+          </div>
+          <p class="setup-hint">Only needed for FBX conversion. Leave blank if you only use GLB.</p>
+
+          <div id="env-setup-error" class="setup-error" hidden></div>
+          <div class="setup-actions">
+            <button id="env-setup-go" class="setup-go-btn" type="button">Save &amp; continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projects launcher — two-tone, edge-to-edge entry screen -->
+    <div id="projects-overlay" class="projects-overlay" style="display:none">
+      <div class="projects-shell">
+        <aside class="projects-sidebar">
+          <div class="projects-brand">
+            <img class="projects-logo" src="./icon.png" alt="XI Zone Editor" />
+            <div class="projects-version" id="projects-version">XI Zone Editor</div>
+          </div>
+          <nav class="projects-nav" id="projects-nav">
+            <button class="projects-cat active" data-cat="zones">Zones</button>
+            <button class="projects-cat" data-cat="effects" disabled>Effects <span class="soon">soon</span></button>
+            <button class="projects-cat" data-cat="weapons" disabled>Weapons <span class="soon">soon</span></button>
+            <button class="projects-cat" data-cat="npcs" disabled>NPCs <span class="soon">soon</span></button>
+            <button class="projects-cat" data-cat="animations" disabled>Animations <span class="soon">soon</span></button>
+          </nav>
+        </aside>
+        <main class="projects-main" id="projects-main">
+          <div class="projects-top-actions">
+            <button id="projects-back-btn" class="projects-back-btn" title="Close projects and return to editor" style="display:none"><span class="material-symbols-outlined">arrow_back</span>Go Back</button>
+            <button id="projects-delete-btn" class="projects-delete-btn" title="Delete a project"><span class="material-symbols-outlined">delete</span>Delete Project</button>
+          </div>
+          <div class="projects-pane" data-pane="zones">
+            <h2 class="projects-pane-title">Zones</h2>
+            <p class="projects-pane-sub">Open a project to edit, or browse zones read-only.</p>
+            <div class="projects-actions">
+              <button id="projects-new-btn" class="projects-new-btn"><span class="material-symbols-outlined">deployed_code</span>NEW PROJECT</button>
+              <button id="projects-browse" class="projects-browse-btn"><span class="material-symbols-outlined">control_camera</span>BROWSE ZONES</button>
+            </div>
+
+            <div id="projects-tag-filter" class="proj-filter" style="display:none"></div>
+            <div id="projects-list" class="projects-list"><div class="projects-empty">Loading…</div></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- New Project modal — opened from the launcher's NEW PROJECT button -->
+    <div id="new-project-overlay" class="np-overlay" style="display:none">
+      <div class="np-modal">
+        <div class="np-modal-bar">
+          <span class="np-modal-title" id="np-modal-title">New Project</span>
+          <button class="np-modal-close" id="np-close" title="Close">×</button>
+        </div>
+        <div class="np-modal-body">
+          <label class="projects-field">Name
+            <input id="np-name" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 5th Anniversary" />
+          </label>
+          <label class="projects-field">Description
+            <textarea id="np-desc" rows="3" maxlength="260" spellcheck="false" placeholder="What this project changes…"></textarea>
+          </label>
+          <label class="projects-field">Authors
+            <input id="np-authors" type="text" autocomplete="off" spellcheck="false" placeholder="comma, separated, names" />
+          </label>
+          <label class="projects-field">Tags
+            <input id="np-tags" type="text" autocomplete="off" spellcheck="false" placeholder="comma, separated, tags" />
+          </label>
+          <div id="np-error" class="projects-new-error" hidden></div>
+          <button id="np-create" class="projects-create-btn">Create Project</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Project modal -->
+    <div id="delete-project-overlay" class="np-overlay" style="display:none">
+      <div class="np-modal">
+        <div class="np-modal-bar">
+          <span class="np-modal-title">Delete Project</span>
+          <button class="np-modal-close" id="dp-close" title="Close">×</button>
+        </div>
+        <div class="np-modal-body">
+          <label class="projects-field">Project
+            <select class="dp-select" id="dp-select"></select>
+          </label>
+          <p class="dp-note">Removes the project folder and its <code>projects.json</code> entry, then commits. Its <b>git history is preserved</b>, so it can be recovered later.</p>
+          <div id="dp-confirm" class="dp-confirm" hidden></div>
+          <div id="dp-error" class="projects-new-error" hidden></div>
+          <button id="dp-delete" class="dp-delete-btn">Delete Project</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Welcome / Getting Started — shown on entering an empty project -->
+    <div id="welcome-overlay" class="welcome-overlay" style="display:none">
+      <div class="welcome-card">
+        <button class="welcome-close" id="welcome-close" title="Close">×</button>
+        <h2 class="welcome-title">Welcome! 👋</h2>
+        <p class="welcome-sub">Your project is ready. To start editing, pick one of these:</p>
+        <div class="welcome-steps">
+          <div class="welcome-step">
+            <span class="welcome-step-ico material-symbols-outlined">map</span>
+            <div>
+              <div class="welcome-step-h">Edit an existing zone</div>
+              <div class="welcome-step-d">Choose a zone from the <b>Zone</b> list on the right.</div>
+            </div>
+          </div>
+          <div class="welcome-step">
+            <span class="welcome-step-ico material-symbols-outlined">add_circle</span>
+            <div>
+              <div class="welcome-step-h">Start a new zone</div>
+              <div class="welcome-step-d">Use <b>File ▸ New</b> to build one from a template.</div>
+            </div>
+          </div>
+        </div>
+        <button id="welcome-got-it" class="welcome-btn">Got it</button>
+      </div>
+    </div>
+
+    <!-- New Zone dialog -->
+    <div class="modal new-zone-panel" id="new-zone-panel">
+      <div class="modal-bar">
+        <span class="modal-title">New Zone</span>
+        <button class="modal-close" data-close="new-zone-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body nz-body">
+        <div class="nz-row">
+          <label class="nz-label" for="nz-name">Zone Name</label>
+          <input id="nz-name" type="text" class="nz-input" placeholder="e.g. My Custom Zone" autocomplete="off" />
+        </div>
+        <div class="nz-row">
+          <label class="nz-label" for="nz-template">Template</label>
+          <select id="nz-template" class="nz-select" title="Choose a template bundle">
+            <option value="" disabled selected>Loading templates…</option>
+          </select>
+        </div>
+        <div id="nz-error" class="nz-error" hidden></div>
+        <div class="nz-footer">
+          <button id="nz-create" class="nz-create-btn">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Make Template dialog -->
+    <div class="modal make-template-panel" id="make-template-panel">
+      <div class="modal-bar">
+        <span class="modal-title">Make Template</span>
+        <button class="modal-close" data-close="make-template-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body mt-body">
+        <div class="mt-left">
+          <div class="nz-hint">Packages <b>this Published zone</b> (id ≥ 400) into a reusable template bundle. Duplicate an original zone first if needed.</div>
+          <div class="nz-row">
+            <label class="nz-label" for="mt-label">Name</label>
+            <input id="mt-label" type="text" class="nz-input" placeholder="e.g. Snow Template" autocomplete="off" />
+          </div>
+          <div class="nz-row">
+            <label class="nz-label" for="mt-description">Description</label>
+            <textarea id="mt-description" class="nz-input nz-textarea" placeholder="Optional description" rows="3"></textarea>
+          </div>
+          <div id="mt-error" class="nz-error" hidden></div>
+          <div class="nz-footer">
+            <button id="mt-create" class="nz-create-btn">Make Template</button>
+          </div>
+        </div>
+        <div class="mt-right">
+          <div class="section-title">Zone Info</div>
+          <div id="mt-zone-info"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Make Template success modal -->
+    <div class="modal" id="mt-success-panel">
+      <div class="modal-bar">
+        <span class="modal-title">Template Created</span>
+        <button class="modal-close" data-close="mt-success-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body" style="padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+        <div id="mts-rows"></div>
+        <button id="mts-ok" class="nz-create-btn" style="margin-top:4px">OK</button>
+      </div>
+    </div>
+
+    <!-- Add to Category dialog -->
+    <div class="modal category-modal" id="category-modal">
+      <div class="modal-bar">
+        <span class="modal-title">Add to Category</span>
+        <button class="modal-close" data-close="category-modal" title="Close">×</button>
+      </div>
+      <div class="modal-body nz-body">
+        <div id="cat-target-note" class="cat-note"></div>
+        <div class="nz-row">
+          <label class="nz-label" for="cat-existing">Existing Category</label>
+          <select id="cat-existing" class="nz-input"></select>
+        </div>
+        <div class="cat-or">— or —</div>
+        <div class="nz-row">
+          <label class="nz-label" for="cat-new">New Category</label>
+          <input id="cat-new" type="text" class="nz-input" placeholder="e.g. Buildings" autocomplete="off" />
+        </div>
+        <div id="cat-error" class="nz-error" hidden></div>
+        <div class="nz-footer cat-footer">
+          <button id="cat-cancel" class="dz-cancel-btn">Cancel</button>
+          <button id="cat-apply" class="nz-create-btn">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Groups dialog -->
+    <div class="modal" id="manage-groups-modal">
+      <div class="modal-bar">
+        <span class="modal-title">Manage Groups</span>
+        <button class="modal-close" data-close="manage-groups-modal" title="Close">×</button>
+      </div>
+      <div class="modal-body nz-body">
+        <div class="nz-row">
+          <label class="nz-label" for="mg-select">Group</label>
+          <select id="mg-select" class="nz-input"></select>
+        </div>
+        <div class="nz-row">
+          <label class="nz-label" for="mg-name">Rename</label>
+          <input id="mg-name" type="text" class="nz-input" placeholder="Group name" autocomplete="off" />
+        </div>
+        <div id="mg-error" class="nz-error" hidden></div>
+        <div class="nz-footer cat-footer">
+          <button id="mg-cancel" class="dz-cancel-btn">Close</button>
+          <button id="mg-save" class="nz-create-btn">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Duplicate Zone dialog -->
+    <div class="modal" id="dupz-panel">
+      <div class="modal-bar">
+        <span class="modal-title">Duplicate Zone</span>
+        <button class="modal-close" data-close="dupz-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body nz-body">
+        <div class="nz-row">
+          <label class="nz-label" for="dupz-name">Zone Name</label>
+          <input id="dupz-name" type="text" class="nz-input" placeholder="e.g. My Zone (Copy)" autocomplete="off" />
+        </div>
+        <div class="nz-footer">
+          <button id="dupz-create" class="nz-create-btn">Duplicate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset complete dialog -->
+    <div class="modal reset-done-panel" id="reset-done-panel">
+      <div class="modal-bar">
+        <span class="modal-title">Zone Reset</span>
+        <button class="modal-close" data-close="reset-done-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body rd-body">
+        <div class="rd-icon">✓</div>
+        <p class="rd-msg" id="reset-done-msg">Zone restored to its pristine baseline.</p>
+        <div class="rd-footer">
+          <button id="reset-done-ok" class="nz-create-btn">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generic confirm / alert dialog -->
+    <div class="modal xi-dialog-panel" id="xi-dialog-panel">
+      <div class="modal-bar">
+        <span class="modal-title" id="xi-dialog-title">Confirm</span>
+        <button class="modal-close" id="xi-dialog-x" title="Close">×</button>
+      </div>
+      <div class="modal-body xi-dlg-body">
+        <div class="xi-dlg-icon" id="xi-dialog-icon">!</div>
+        <p class="xi-dlg-msg" id="xi-dialog-msg"></p>
+        <div class="xi-dlg-footer">
+          <button id="xi-dialog-cancel" class="dz-cancel-btn">Cancel</button>
+          <button id="xi-dialog-ok" class="dz-delete-btn">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Zone dialog -->
+    <div class="modal delete-zone-panel" id="delete-zone-panel">
+      <div class="modal-bar">
+        <span class="modal-title">Delete Zone</span>
+        <button class="modal-close" data-close="delete-zone-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body dz-body">
+        <div id="dz-confirm">
+          <p class="dz-warning">This will permanently delete Zone <strong id="dz-zone-id-label"></strong> from game files and cannot be undone.</p>
+          <div class="dz-footer">
+            <button class="dz-cancel-btn" data-close="delete-zone-panel">Cancel</button>
+            <button class="dz-delete-btn" id="dz-confirm-btn">Delete Zone</button>
+          </div>
+        </div>
+        <div id="dz-countdown" class="dz-hidden">
+          <p class="dz-countdown-msg">Deleting in <span class="dz-counter" id="dz-counter">10</span>…</p>
+          <div class="dz-footer">
+            <button class="dz-cancel-btn" id="dz-abort-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Version History -->
+    <div class="modal version-panel" id="version-panel">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">history</span>Version History</span>
+        <button class="modal-close" data-close="version-panel" title="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="vh-zone" class="vh-zone"></div>
+        <div id="vh-list" class="vh-list"></div>
+      </div>
+      <div id="vh-statusbar" class="modal-status-bar"></div>
+    </div>
+
+    <!-- Event Dialogue viewer -->
+    <div class="modal evt-dialog-modal" id="evt-dialog-modal">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">chat</span><span id="evt-dialog-title">Dialogue</span></span>
+        <button class="modal-close" data-close="evt-dialog-modal" title="Close">×</button>
+      </div>
+      <div class="modal-body evt-dialog-body-layout">
+        <nav id="evt-dialog-sub" class="modal-lnav">
+          <button class="lnav-btn evt-dlg-tab" data-view="info" title="Event metadata + cutscene timeline">
+            <span class="material-symbols-outlined lnav-ico">info</span><span>Info</span>
+          </button>
+          <button class="lnav-btn evt-dlg-tab active" data-view="lines" title="Decoded dialogue lines">
+            <span class="material-symbols-outlined lnav-ico">chat</span><span>Lines</span>
+          </button>
+          <button class="lnav-btn evt-dlg-tab" data-view="opcodes" title="Event bytecode disassembly">
+            <span class="material-symbols-outlined lnav-ico">code</span><span>Opcodes</span>
+          </button>
+        </nav>
+        <div id="evt-dialog-modal-body" class="evt-dialog-modal-body evt-dialog-pane"></div>
+      </div>
+    </div>
+
+    <!-- Create Event wizard — pick a type, then open the editor on a blank event -->
+    <div class="modal cs-create-modal" id="cs-create-event-modal">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">add_circle</span>Create Event</span>
+        <button class="modal-close" data-close="cs-create-event-modal" title="Close">×</button>
+      </div>
+      <div class="modal-body cse-body">
+        <label class="cse-label" for="cs-create-type">Event type</label>
+        <select id="cs-create-type" class="cse-select">
+          <option value="cutscene">Cutscene</option>
+          <option value="menu" disabled>Menu (soon)</option>
+          <option value="dialogue" disabled>Dialogue (soon)</option>
+          <option value="door" disabled>Door (soon)</option>
+          <option value="magic" disabled>Magic (soon)</option>
+          <option value="script" disabled>Script (soon)</option>
+        </select>
+        <p id="cs-create-desc" class="cse-desc">A cinematic cutscene — camera fades, NPC dialogue with Enter prompts, gestures. Compiles to the zone's Event + Dialog DATs.</p>
+        <div class="cse-footer">
+          <button class="cse-cancel" data-close="cs-create-event-modal">Cancel</button>
+          <button id="cs-create-go" class="cse-create">Create Event</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cutscene Author modal (compiles xi.cutscene.v1 JSON → Event + Dialog DAT) -->
+    <div class="modal evt-dialog-modal cs-author" id="cs-author-modal">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">movie_edit</span><span id="cs-author-title">Cutscene</span></span>
+        <button class="modal-close" data-close="cs-author-modal" title="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="cs-author-body" class="evt-dialog-modal-body">
+          <!-- populated by panels/cutscene-author.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Loaded-zone peek (opened from a load_zone opcode in the Opcodes view) -->
+    <div class="modal evt-zone-peek-modal" id="evt-zone-peek-modal">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">map</span><span id="evt-zone-peek-title">Zone</span></span>
+        <button class="modal-close" data-close="evt-zone-peek-modal" title="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="evt-zone-peek-body" class="evt-zone-peek-body"></div>
+      </div>
+    </div>
+
+    <!-- Content Browser -->
+    <div class="modal assets-panel" id="assets-panel">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">grid_view</span>Asset Browser</span>
+        <button class="modal-close" data-close="assets-panel" title="Close">×</button>
+      </div>
+      <div class="cb-body">
+        <div class="cb-sidebar">
+          <button class="cb-cat" data-cat="favourites"><span class="cb-cat-ico material-symbols-outlined" aria-hidden="true">star</span>Favourites <span class="cb-count" id="cb-count-favourites"></span></button>
+
+          <div class="snav-cat">NPCs</div>
+          <button class="cb-cat" data-cat="customnpcs" title="Register a placed model as a zone NPC — usable in cutscenes">Custom NPCs <span class="cb-count" id="cb-count-customnpcs"></span></button>
+          <button class="cb-cat" data-cat="mobs">Mobs <span class="cb-count" id="cb-count-mobs"></span></button>
+
+          <div class="snav-cat">Zones</div>
+          <button class="cb-cat active" data-cat="objects">Objects <span class="cb-count" id="cb-count-objects"></span></button>
+          <button class="cb-cat" data-cat="floors">Floors <span class="cb-count" id="cb-count-floors"></span></button>
+          <button class="cb-cat" data-cat="walls">Walls <span class="cb-count" id="cb-count-walls"></span></button>
+          <button class="cb-cat" data-cat="terrain">Terrain <span class="cb-count" id="cb-count-terrain"></span></button>
+          <button class="cb-cat" data-cat="structure">Structure <span class="cb-count" id="cb-count-structure"></span></button>
+          <button class="cb-cat" data-cat="misc">Misc <span class="cb-count" id="cb-count-misc"></span></button>
+
+          <div class="snav-cat">Sound</div>
+          <button class="cb-cat" data-cat="music">Music <span class="cb-count" id="cb-count-music"></span></button>
+          <button class="cb-cat" data-cat="sfx">Effects <span class="cb-count" id="cb-count-sfx"></span></button>
+        </div>
+        <div class="cb-main">
+          <div class="cb-toolbar">
+            <input type="text" class="cb-search" id="cb-search" placeholder="Search assets..." autocomplete="off" />
+            <button class="cb-clear" id="cb-clear" title="Clear search" style="display:none">Clear</button>
+            <select class="cb-zone-filter" id="cb-zone-filter" title="Filter by zone"><option value="">All zones</option></select>
+            <input type="file" id="cb-sound-file" accept="audio/*,.wav,.ogg,.mp3,.flac,.m4a" hidden />
+            <input type="file" id="cb-music-file" accept="audio/*,.wav,.ogg,.mp3,.flac,.m4a" hidden />
+          </div>
+          <div class="cb-music-player" id="cb-music-player" style="display:none">
+            <div class="mcp-now" id="mcp-now">Now Playing: —</div>
+            <div class="mcp-controls">
+              <button class="mcp-btn" id="mcp-play" title="Play">▶</button>
+              <button class="mcp-btn" id="mcp-pause" title="Pause" disabled>⏸</button>
+              <button class="mcp-btn" id="mcp-stop" title="Stop" disabled>⏹</button>
+              <span class="mcp-time" id="mcp-cur">0:00</span>
+              <input class="mcp-seek" id="mcp-seek" type="range" min="0" max="1000" step="1" value="0" disabled />
+              <span class="mcp-time" id="mcp-dur">0:00</span>
+              <span class="mcp-vol-ico" id="mcp-vol-ico" title="Mute / unmute">🔊</span>
+              <input class="mcp-vol" id="mcp-vol" type="range" min="0" max="100" step="1" value="100" title="Volume" />
+            </div>
+          </div>
+          <div class="cb-grid" id="cb-grid"></div>
+        </div>
+      </div>
+      <div id="cb-statusbar" class="modal-status-bar"></div>
+    </div>
+
+    <!-- DB row context menu -->
+    <div id="db-ctx-menu" class="db-ctx-menu" style="display:none">
+      <button id="db-ctx-edit">Edit</button>
+    </div>
+
+    <!-- Music row context menu (asset browser → set as zone music) -->
+    <div id="music-ctx-menu" class="db-ctx-menu" style="display:none">
+      <button data-slot="day">Set as Day Music</button>
+      <button data-slot="night">Set as Night Music</button>
+      <button data-slot="battlesolo">Set as Battle (Solo) Music</button>
+      <button data-slot="battlemulti">Set as Battle (Party) Music</button>
+    </div>
+
+    <!-- Manage Zone Music modal -->
+    <div id="zone-music-modal" class="zmm-overlay" style="display:none">
+      <div class="zmm-box">
+        <div class="zmm-bar"><span class="zmm-title" id="zmm-title">Manage Zone Music</span><button class="modal-close" id="zmm-close" title="Close">×</button></div>
+        <div class="zmm-body">
+          <label class="zmm-row">Day <select id="zmm-day"></select></label>
+          <label class="zmm-row">Night <select id="zmm-night"></select></label>
+          <label class="zmm-row">Battle (solo) <select id="zmm-battlesolo"></select></label>
+          <label class="zmm-row">Battle (party) <select id="zmm-battlemulti"></select></label>
+        </div>
+        <div class="zmm-foot"><span class="zmm-status" id="zmm-status"></span><button class="zmm-save" id="zmm-save">Save to database</button></div>
+      </div>
+    </div>
+
+    <!-- Database Viewer -->
+    <div class="modal database-panel" id="database-panel">
+      <div class="modal-bar">
+        <span class="modal-title"><span class="material-symbols-outlined">database</span>Database</span>
+        <button class="modal-close" data-close="database-panel" title="Close">×</button>
+      </div>
+      <div class="db-query-bar">
+        <textarea id="db-query-input" class="db-query-input" placeholder="SELECT * FROM …  (Ctrl+Enter to run)" spellcheck="false" rows="3"></textarea>
+        <div class="db-query-actions">
+          <div class="db-spawn-group">
+            <span class="db-spawn-label">Spawn</span>
+            <input id="db-spawn-x" class="db-spawn-num" type="number" step="any" value="0" title="X (pos_x)" placeholder="X">
+            <input id="db-spawn-z" class="db-spawn-num" type="number" step="any" value="0" title="Z (pos_z)" placeholder="Z">
+            <input id="db-spawn-y" class="db-spawn-num" type="number" step="any" value="0" title="Y / height (pos_y)" placeholder="Y">
+            <span class="db-spawn-label">ID</span>
+            <input id="db-spawn-id" class="db-spawn-num" type="number" step="1" value="1" title="Character ID (chars.charid)" placeholder="ID">
+            <button class="db-set-spawn" id="db-set-spawn">Set Spawn Point</button>
+            <button class="db-force-offline" id="db-force-offline" title="Delete this character's login session (accounts_sessions) — force logout after a client crash so you can log back in without waiting for the server timeout">Force Offline</button>
+            <button class="db-reset-spawn" id="db-reset-spawn" title="Move this character to a safe spot in Southern San d'Oria (zone 230). Use when stuck in geometry or a broken zone. Takes effect on next login — log out first.">Reset Spawn</button>
+          </div>
+          <span class="db-query-hint">Ctrl+Enter</span>
+          <button class="db-query-run" id="db-query-run">&#9654; Run</button>
+          <button class="db-table-refresh" id="db-table-refresh" title="Refresh current table">&#8635;</button>
+        </div>
+      </div>
+      <div class="db-body">
+        <div class="db-sidebar">
+          <input type="text" id="db-table-search" class="db-table-search" placeholder="Search tables…" autocomplete="off" />
+          <div class="db-tables-list" id="db-tables-list"></div>
+        </div>
+        <div class="db-main">
+          <div id="db-edit-overlay" class="db-edit-overlay" style="display:none">
+            <div class="db-edit-form">
+              <div class="db-edit-bar">
+                <span id="db-edit-title" class="db-edit-title">Edit Row</span>
+                <button id="db-edit-close" class="modal-close" title="Cancel">×</button>
+              </div>
+              <div id="db-edit-fields" class="db-edit-fields"></div>
+              <div class="db-edit-footer">
+                <button class="db-edit-save" id="db-edit-save">Save</button>
+                <button class="db-edit-cancel" id="db-edit-cancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <div id="db-grid" class="db-grid"><div class="db-msg">Select a table</div></div>
+        </div>
+      </div>
+      <div id="db-statusbar" class="modal-status-bar">
+        <span id="db-status-text"></span>
+        <div class="db-page-btns">
+          <button id="db-prev" title="Previous page" disabled>‹ Prev</button>
+          <button id="db-next" title="Next page" disabled>Next ›</button>
+          <button id="db-last" title="Last page" disabled>Last ›|</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-tabs" id="side-tabs">
+      <button class="side-tab" data-tab="zone" title="Zone"><span class="material-symbols-outlined">map</span></button>
+      <button class="side-tab active" data-tab="objs" title="Objects"><span class="material-symbols-outlined">grid_view</span></button>
+      <button class="side-tab" data-tab="vfx" title="Visual FX"><span class="material-symbols-outlined">electric_bolt</span></button>
+      <button class="side-tab" data-tab="sfx" title="Sound FX"><span class="material-symbols-outlined">sound_detection_loud_sound</span></button>
+      <button class="side-tab" data-tab="music" title="Zone Music"><span class="material-symbols-outlined">music_note</span></button>
+      <button class="side-tab" data-tab="mkrs" title="Markers"><span class="material-symbols-outlined">add_location_alt</span></button>
+      <button class="side-tab" data-tab="text" title="Text Planes"><span class="material-symbols-outlined">title</span></button>
+      <button class="side-tab" data-tab="sky" title="Skybox"><span class="material-symbols-outlined">partly_cloudy_day</span></button>
+      <button class="side-tab" data-tab="mobs" title="Monsters"><span class="material-symbols-outlined">ar_stickers</span></button>
+      <button class="side-tab" data-tab="cols" title="Collision Mesh"><span class="material-symbols-outlined">deployed_code</span></button>
+      <button class="side-tab" data-tab="nav" title="NavMesh"><span class="material-symbols-outlined">assistant_navigation</span></button>
+      <button class="side-tab" data-tab="evts" title="Events / Cutscenes"><span class="material-symbols-outlined">movie</span></button>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

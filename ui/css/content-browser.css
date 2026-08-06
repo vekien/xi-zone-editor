@@ -1,0 +1,595 @@
+/* ── Content Browser ──────────────────────────────────────────────────────── */
+.assets-panel {
+  width: min(1160px, calc(100vw - 60px));
+  height: min(700px, calc(100vh - 80px));
+  top: 56px;
+  left: max(30px, calc(50% - 580px));
+  flex-direction: column;
+  /* drag the bottom-right corner to resize */
+  resize: both;
+  overflow: hidden;
+  min-width: 520px;
+  min-height: 320px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 40px);
+  background: #191a20;   /* dark canvas to match the premium modals */
+}
+.assets-panel .modal-bar {
+  user-select: none;
+}
+
+.cb-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.cb-sidebar {
+  width: 172px;
+  flex-shrink: 0;
+  border-right: 1px solid #24252c;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 3px;
+  overflow-y: auto;
+}
+
+.cb-cat {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  font: 500 13.5px/1.2 Roboto, sans-serif;
+  color: #9aa0ad;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+.cb-cat:hover {
+  background: #ffffff0e;
+  color: #e8ebf2;
+}
+.cb-cat.active {
+  color: #7fd6e6;
+  background: color-mix(in srgb, #7fd6e6 15%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #7fd6e6 34%, transparent);
+  font-weight: 600;
+}
+
+.cb-count {
+  margin-left: auto;
+  font: 600 11px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #6b7280;
+}
+.cb-cat.active .cb-count {
+  color: #7fd6e6;
+}
+
+.cb-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-toolbar {
+  flex-shrink: 0;
+  padding: 12px 14px;
+  border-bottom: 1px solid #24252c;
+  background: #16171c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cb-search {
+  flex: 1;
+  max-width: 420px;
+  padding: 8px 12px;
+  width: auto;
+}
+.cb-search:focus {
+  border-color: #7fd6e6;
+}
+.cb-search::placeholder {
+  color: #5f6675;
+}
+
+.cb-clear {
+  padding: 8px 12px;
+  font: 600 11px Roboto, sans-serif;
+  color: #aab1c2;
+  background: #1a1b21;
+  border: 1px solid #33343d;
+  border-radius: 8px;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.cb-clear:hover {
+  color: #eef1f8;
+  background: #20222b;
+  border-color: #454652;
+}
+
+.cb-zone-filter {
+  max-width: 220px;
+  cursor: pointer;
+  background-color: #0d0e12;   /* longhand so the base <select> chevron survives */
+  border: 1px solid #34363f;
+  border-radius: 8px;
+  color: #eef1f8;
+}
+.cb-zone-filter:focus {
+  border-color: #7fd6e6;
+  outline: none;
+}
+
+.cb-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  padding: 14px 14px 56px;   /* bottom clearance so the last row clears the floating status pill */
+}
+
+.cb-item {
+  position: relative;
+  width: 108px;
+  border-radius: 9px;
+  background: #16171c;
+  border: 1px solid #24252c;
+  cursor: grab;
+  overflow: hidden;
+  transition: border-color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+
+/* Favourites — gold star on the tab, a toggle star badge on each tile */
+.cb-cat-ico {
+  color: #f5c542;
+  margin-right: 4px;
+  font-size: 18px;
+  line-height: 1;
+  margin-top: -3px;
+}
+.cb-star {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  color: #8a8a92;
+  background: rgba(18, 18, 22, 0.72);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+.cb-item:hover .cb-star {
+  opacity: 1;
+}
+.cb-star:hover {
+  color: #f5c542;
+}
+.cb-item.cb-faved .cb-star {
+  opacity: 1;
+  color: #f5c542;
+} /* favourited = persistent gold star */
+.cb-star .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
+}
+.cb-item:hover {
+  border-color: color-mix(in srgb, #7fd6e6 40%, #2c2c36);
+  background: #191b22;
+}
+.cb-item.cb-sel {
+  border-color: #7fd88f;
+  background: color-mix(in srgb, #7fd88f 12%, #16171c);
+}
+.cb-item:active {
+  cursor: grabbing;
+}
+
+.view.cb-drop-target {
+  outline: 2px solid #4a9eff;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 40px rgba(74, 158, 255, 0.15);
+}
+
+.cb-thumb {
+  width: 108px;
+  height: 74px;
+  background: #0e0f13;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #24252c;
+  overflow: hidden;
+}
+.cb-thumb img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.cb-thumb img.cb-ok {
+  opacity: 1;
+}
+.cb-sp {
+  width: 64px;
+  height: 64px;
+  display: block;
+  background-repeat: no-repeat;
+  background-size: auto;
+  margin: auto;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.cb-sp.cb-ok {
+  opacity: 1;
+}
+
+.cb-labels {
+  padding: 4px 6px 6px;
+}
+.cb-mesh {
+  font-size: 11px;
+  color: #e4e8f2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+.cb-zone {
+  font-size: 10px;
+  color: #7e8698;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.cb-msg {
+  width: 100%;
+  padding: 48px 20px;
+  text-align: center;
+  color: #868d9c;
+  font-size: 14px;
+}
+.cb-msg.cb-spin {
+  color: #6a6a80;
+  animation: cb-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cb-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── Asset Browser: floating status pill ─────────────────────────────────────
+   Scoped to .assets-panel so the database panel's shared .modal-status-bar keeps
+   its flush footer. Absolutely positioned inside the modal, centred, glassy. */
+.assets-panel .modal-status-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: auto;
+  height: auto;
+  gap: 8px;
+  justify-content: center;
+  padding: 7px 16px;
+  border: 1px solid #2f3039;
+  border-radius: 999px;
+  background: color-mix(in srgb, #14151a 82%, transparent);
+  backdrop-filter: blur(9px);
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.7);
+  font: 600 11px/1 Roboto, sans-serif;
+  letter-spacing: 0.02em;
+  color: #9aa1b0;
+}
+.assets-panel .modal-status-bar::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7fd6e6;
+  box-shadow: 0 0 7px color-mix(in srgb, #7fd6e6 70%, transparent);
+}
+
+/* ── Asset Browser: Music player bar ─────────────────────────────────────── */
+.cb-music-player {
+  padding: 10px 12px;
+  border-bottom: 1px solid #24252c;
+  background: #16171c;
+}
+.mcp-now {
+  color: #d6dae6;
+  font-size: 13px;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcp-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mcp-btn {
+  width: 34px;
+  height: 28px;
+  padding: 0;
+  line-height: 1;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #cdd2de;
+  cursor: pointer;
+  font-size: 16px;
+}
+.mcp-btn:hover:not(:disabled) {
+  background: rgba(126, 184, 247, 0.12);
+  color: #7eb8f7;
+}
+.mcp-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.mcp-btn.active {
+  color: #7ee0a0;
+}
+.mcp-time {
+  color: #9aa0b0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+  text-align: center;
+}
+.mcp-seek {
+  flex: 1 1 120px;
+  min-width: 100px;
+  accent-color: #7eb8f7;
+  cursor: pointer;
+}
+.mcp-seek:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.mcp-vol-ico {
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+.mcp-vol {
+  flex: 0 0 90px;
+  width: 90px;
+  accent-color: #7eb8f7;
+  cursor: pointer;
+}
+
+/* ── Asset Browser: Music list (single-line rows) ────────────────────────── */
+.mc-list {
+  width: 100%;
+  flex: 1 1 100%;
+  align-self: flex-start;
+}
+.mc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #23232b;
+  cursor: pointer;
+}
+.mc-row:hover {
+  background: #20202a;
+}
+.mc-row.mc-active {
+  background: #1e2a24;
+}
+.mc-row.mc-unavail {
+  cursor: default;
+  opacity: 0.45;
+}
+.mc-ico {
+  flex: 0 0 auto;
+  width: 20px;
+  text-align: center;
+  color: #9aa0b0;
+  font-size: 16px;
+  font-family: "Material Symbols Outlined";
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 20;
+  line-height: 1;
+}
+.mc-row.mc-active .mc-ico {
+  color: #7ee0a0;
+}
+.mc-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mc-title {
+  color: #d6dae6;
+  font-size: 13px;
+}
+.mc-meta {
+  color: #7a7a88;
+  font-size: 12px;
+  margin-left: 8px;
+}
+.mc-dur {
+  flex: 0 0 auto;
+  color: #9aa0b0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Asset Browser: Sound FX (collapsible folder groups) ─────────────────── */
+.sfx-list {
+  width: 100%;
+  flex: 1 1 100%;
+  align-self: flex-start;
+}
+.sfx-group {
+  border-bottom: 1px solid #23232b;
+}
+.sfx-ghead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.sfx-ghead:hover {
+  background: #20202a;
+}
+.sfx-caret {
+  flex: 0 0 auto;
+  color: #7a7a88;
+  font-size: 18px;
+  line-height: 1;
+  font-family: "Material Symbols Outlined";
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 20;
+}
+.sfx-group:not(.open) .sfx-caret::before {
+  content: "keyboard_arrow_right";
+}
+.sfx-group.open .sfx-caret::before {
+  content: "keyboard_arrow_down";
+}
+.sfx-glabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #d6dae6;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sfx-gkey {
+  flex: 0 0 auto;
+  color: #6a6a78;
+  font-size: 11px;
+}
+.sfx-gcount {
+  flex: 0 0 auto;
+  color: #8a8a96;
+  font-size: 11px;
+  background: #23232b;
+  border-radius: 9px;
+  padding: 1px 7px;
+}
+.sfx-rows {
+  display: none;
+}
+.sfx-group.open .sfx-rows {
+  display: block;
+}
+.sfx-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px 5px 28px;
+  cursor: pointer;
+}
+.sfx-row:hover {
+  background: #20202a;
+}
+.sfx-row.sfx-playing {
+  background: #1e2a24;
+}
+.sfx-ico {
+  flex: 0 0 auto;
+  width: 20px;
+  text-align: center;
+  color: #9aa0b0;
+  font-size: 16px;
+  font-family: "Material Symbols Outlined";
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 20;
+  line-height: 1;
+}
+.sfx-row.sfx-playing .sfx-ico {
+  color: #7ee0a0;
+}
+.sfx-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #cdd2de;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sfx-fmeta {
+  flex: 0 0 auto;
+  color: #6a6a78;
+  font-size: 11px;
+}
+
+/* Custom NPC rows reuse .sfx-row; the model id is the default (non-interactive) cursor. */
+.cn-row { cursor: default; }
+.cn-status {
+  flex: 0 0 auto;
+  max-width: 118px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid #3a3a48;
+  border-radius: 5px;
+  background: #15151c;
+  color: #b8becc;
+  font-size: 11px;
+  cursor: pointer;
+}
+.cn-status:hover, .cn-status:focus {
+  border-color: #5a5a6e;
+  outline: none;
+}
+.cn-del {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #6a6a78;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s, background .12s, color .12s;
+}
+.cn-row:hover .cn-del { opacity: 1; }
+.cn-del:hover { background: #3a2030; color: #ff8a8a; }
+/* Registry vs live-DB status drift marker (server restart pending). */
+.cn-drift { color: #e8b34a; font-size: 11px; cursor: help; }

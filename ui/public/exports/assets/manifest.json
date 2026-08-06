@@ -1,0 +1,4032 @@
+{
+  "size": 256,
+  "object_footprint": 5.0,
+  "renderer": "blender",
+  "objects_json_dir": "D:\\cexi-tools\\zone-data",
+  "categories": {
+    "terrain": 16,
+    "structure": 62,
+    "wall": 5,
+    "object": 65,
+    "floor": 6
+  },
+  "icon_count": 154,
+  "icons": {
+    "1a1a902b4d79e4e0": {
+      "file": "png/terrain/1a1a902b4d79e4e0.png",
+      "fbx": "fbx/terrain/block03.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        80.0,
+        45.0,
+        52.0
+      ]
+    },
+    "1ea893f86cf68cb1": {
+      "file": "png/terrain/1ea893f86cf68cb1.png",
+      "fbx": "fbx/terrain/block01.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 56.0,
+      "dims": [
+        56.0,
+        30.0,
+        35.0
+      ]
+    },
+    "d5a0cf069b0fc49f": {
+      "file": "png/structure/d5a0cf069b0fc49f.png",
+      "fbx": "fbx/structure/b_low01.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "b_low01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 40.0,
+      "dims": [
+        40.0,
+        30.0,
+        35.0
+      ]
+    },
+    "a5fe1a8ce7c8336d": {
+      "file": "png/structure/a5fe1a8ce7c8336d.png",
+      "fbx": "fbx/structure/b_low02.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "b_low02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 40.0,
+      "dims": [
+        40.0,
+        88.0,
+        32.0
+      ]
+    },
+    "af5a416dcf2b74fe": {
+      "file": "png/structure/af5a416dcf2b74fe.png",
+      "fbx": "fbx/structure/step01.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "step01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 24.201,
+      "dims": [
+        16.0,
+        14.002,
+        24.201
+      ]
+    },
+    "c4713ef66de9b5fc": {
+      "file": "png/structure/c4713ef66de9b5fc.png",
+      "fbx": "fbx/structure/step02.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "step02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 18.0,
+      "dims": [
+        18.0,
+        11.065,
+        17.101
+      ]
+    },
+    "4469c187b3ac24ab": {
+      "file": "png/structure/4469c187b3ac24ab.png",
+      "fbx": "fbx/structure/hasi.fbx",
+      "category": "structure",
+      "kind": "bridge",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasi",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 32.0,
+      "dims": [
+        32.0,
+        5.101,
+        6.401
+      ]
+    },
+    "ef064db245a0a2e0": {
+      "file": "png/structure/ef064db245a0a2e0.png",
+      "fbx": "fbx/structure/gete03.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gete03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 22.201,
+      "dims": [
+        13.015,
+        18.996,
+        22.201
+      ]
+    },
+    "830c6b35159758cf": {
+      "file": "png/structure/830c6b35159758cf.png",
+      "fbx": "fbx/structure/tower_f1.fbx",
+      "category": "structure",
+      "kind": "tower",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tower_f1",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 56.349,
+      "dims": [
+        49.68,
+        62.545,
+        56.349
+      ]
+    },
+    "2e0ad71d27850f33": {
+      "file": "png/structure/2e0ad71d27850f33.png",
+      "fbx": "fbx/structure/tower_f2.fbx",
+      "category": "structure",
+      "kind": "tower",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tower_f2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 49.777,
+      "dims": [
+        42.987,
+        40.16,
+        49.777
+      ]
+    },
+    "38bcbebeb9245d59": {
+      "file": "png/structure/38bcbebeb9245d59.png",
+      "fbx": "fbx/structure/gete02.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gete02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 25.839,
+      "dims": [
+        14.897,
+        18.001,
+        25.839
+      ]
+    },
+    "9aae7c2e3dd05336": {
+      "file": "png/structure/9aae7c2e3dd05336.png",
+      "fbx": "fbx/structure/gete01.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gete01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 12.464,
+      "dims": [
+        4.6,
+        14.0,
+        12.464
+      ]
+    },
+    "2badb90316a28b64": {
+      "file": "png/structure/2badb90316a28b64.png",
+      "fbx": "fbx/structure/kaidan.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kaidan",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 73.728,
+      "dims": [
+        29.233,
+        18.348,
+        73.728
+      ]
+    },
+    "2e482f799bdfec09": {
+      "file": "png/structure/2e482f799bdfec09.png",
+      "fbx": "fbx/structure/kaidan2.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kaidan2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 73.631,
+      "dims": [
+        29.157,
+        18.209,
+        73.631
+      ]
+    },
+    "3c720f510773e3f0": {
+      "file": "png/structure/3c720f510773e3f0.png",
+      "fbx": "fbx/structure/tower_b1.fbx",
+      "category": "structure",
+      "kind": "tower",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tower_b1",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 77.133,
+      "dims": [
+        58.931,
+        74.539,
+        77.133
+      ]
+    },
+    "5324f6951a1948d3": {
+      "file": "png/structure/5324f6951a1948d3.png",
+      "fbx": "fbx/structure/tower_b2.fbx",
+      "category": "structure",
+      "kind": "tower",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tower_b2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 76.482,
+      "dims": [
+        76.482,
+        83.835,
+        69.531
+      ]
+    },
+    "eec3ab0a18f28431": {
+      "file": "png/structure/eec3ab0a18f28431.png",
+      "fbx": "fbx/structure/tower_a1.fbx",
+      "category": "structure",
+      "kind": "tower",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tower_a1",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 65.153,
+      "dims": [
+        49.209,
+        140.0,
+        65.153
+      ]
+    },
+    "e042962fda62c36c": {
+      "file": "png/structure/e042962fda62c36c.png",
+      "fbx": "fbx/structure/tower_a2.fbx",
+      "category": "structure",
+      "kind": "tower",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tower_a2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 84.123,
+      "dims": [
+        84.123,
+        140.0,
+        77.961
+      ]
+    },
+    "3c444b849cd281a2": {
+      "file": "png/wall/3c444b849cd281a2.png",
+      "fbx": "fbx/wall/my_room1.fbx",
+      "category": "wall",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "my_room1",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 72.153,
+      "dims": [
+        30.248,
+        72.0,
+        72.153
+      ]
+    },
+    "e9c153c6868b7911": {
+      "file": "png/object/e9c153c6868b7911.png",
+      "fbx": "fbx/object/porl.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "porl",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.477,
+      "dims": [
+        0.477,
+        1.25,
+        0.477
+      ]
+    },
+    "6d490c04b11ead54": {
+      "file": "png/structure/6d490c04b11ead54.png",
+      "fbx": "fbx/structure/funsui.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "funsui",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 10.973,
+      "dims": [
+        10.973,
+        7.185,
+        10.445
+      ]
+    },
+    "524c039d70de004c": {
+      "file": "png/structure/524c039d70de004c.png",
+      "fbx": "fbx/structure/syoukou.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "syoukou",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 26.001,
+      "dims": [
+        26.001,
+        7.988,
+        23.999
+      ]
+    },
+    "a6ecc0fa746d7b2d": {
+      "file": "png/structure/a6ecc0fa746d7b2d.png",
+      "fbx": "fbx/structure/iriguti.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "iriguti",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 6.0,
+      "dims": [
+        6.0,
+        5.0,
+        2.0
+      ]
+    },
+    "cc52541081035650": {
+      "file": "png/structure/cc52541081035650.png",
+      "fbx": "fbx/structure/uranai.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "uranai",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 6.0,
+      "dims": [
+        6.0,
+        5.0,
+        4.244
+      ]
+    },
+    "e85d47dbe37da1f0": {
+      "file": "png/object/e85d47dbe37da1f0.png",
+      "fbx": "fbx/object/gaitou01.fbx",
+      "category": "object",
+      "kind": "light",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gaitou01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.516,
+      "dims": [
+        0.9,
+        7.632,
+        1.516
+      ]
+    },
+    "8bc29fb280ae4499": {
+      "file": "png/structure/8bc29fb280ae4499.png",
+      "fbx": "fbx/structure/auc_hasi.fbx",
+      "category": "structure",
+      "kind": "bridge",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "auc_hasi",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.601,
+      "dims": [
+        1.601,
+        5.4,
+        1.101
+      ]
+    },
+    "6cd5a0fea32e811b": {
+      "file": "png/object/6cd5a0fea32e811b.png",
+      "fbx": "fbx/object/auc_uke.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "auc_uke",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 3.422,
+      "dims": [
+        3.422,
+        5.409,
+        1.657
+      ]
+    },
+    "7e2808e571780ed0": {
+      "file": "png/structure/7e2808e571780ed0.png",
+      "fbx": "fbx/structure/hasira01.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 10.519,
+      "dims": [
+        2.2,
+        28.049,
+        10.519
+      ]
+    },
+    "953dae138034219b": {
+      "file": "png/structure/953dae138034219b.png",
+      "fbx": "fbx/structure/hasira00.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira00",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 10.419,
+      "dims": [
+        2.2,
+        28.049,
+        10.419
+      ]
+    },
+    "8176e3ce24c05e1a": {
+      "file": "png/structure/8176e3ce24c05e1a.png",
+      "fbx": "fbx/structure/hasira02.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 8.0,
+      "dims": [
+        8.0,
+        13.7,
+        2.4
+      ]
+    },
+    "fc8aa2196457fa6c": {
+      "file": "png/structure/fc8aa2196457fa6c.png",
+      "fbx": "fbx/structure/hasira03.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 8.0,
+      "dims": [
+        8.0,
+        13.7,
+        2.4
+      ]
+    },
+    "5bdf2db24cc8fabc": {
+      "file": "png/structure/5bdf2db24cc8fabc.png",
+      "fbx": "fbx/structure/hasira05.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira05",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 8.0,
+      "dims": [
+        8.0,
+        19.702,
+        2.399
+      ]
+    },
+    "4c1ddb6d4f190928": {
+      "file": "png/structure/4c1ddb6d4f190928.png",
+      "fbx": "fbx/structure/hasira04.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira04",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 8.0,
+      "dims": [
+        8.0,
+        19.702,
+        2.399
+      ]
+    },
+    "0768a9425abcc87f": {
+      "file": "png/object/0768a9425abcc87f.png",
+      "fbx": "fbx/object/gaitou02.fbx",
+      "category": "object",
+      "kind": "light",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gaitou02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.839,
+      "dims": [
+        0.561,
+        2.085,
+        1.839
+      ]
+    },
+    "4c8d7231ab8c2f35": {
+      "file": "png/structure/4c8d7231ab8c2f35.png",
+      "fbx": "fbx/structure/hasira06.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira06",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 18.7,
+      "dims": [
+        0.8,
+        8.801,
+        18.7
+      ]
+    },
+    "8c8163e62de73a58": {
+      "file": "png/object/8c8163e62de73a58.png",
+      "fbx": "fbx/object/mado.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "mado",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 4.247,
+      "dims": [
+        4.247,
+        2.113,
+        0.397
+      ]
+    },
+    "fda6f552cf82d564": {
+      "file": "png/object/fda6f552cf82d564.png",
+      "fbx": "fbx/object/kanban01.fbx",
+      "category": "object",
+      "kind": "sign",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kanban01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.897,
+      "dims": [
+        1.897,
+        0.827,
+        0.266
+      ]
+    },
+    "d4c875341ba8303a": {
+      "file": "png/object/d4c875341ba8303a.png",
+      "fbx": "fbx/object/kanban02.fbx",
+      "category": "object",
+      "kind": "sign",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kanban02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.759,
+      "dims": [
+        1.759,
+        0.843,
+        0.282
+      ]
+    },
+    "0361c7861bb0acfe": {
+      "file": "png/object/0361c7861bb0acfe.png",
+      "fbx": "fbx/object/sikii.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "sikii",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.199,
+      "dims": [
+        1.199,
+        2.095,
+        0.085
+      ]
+    },
+    "9ba79cf078d0124f": {
+      "file": "png/object/9ba79cf078d0124f.png",
+      "fbx": "fbx/object/kazari1.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kazari1",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 3.7,
+      "dims": [
+        3.7,
+        0.611,
+        0.093
+      ]
+    },
+    "3b9c123e1a415aec": {
+      "file": "png/object/3b9c123e1a415aec.png",
+      "fbx": "fbx/object/kazari2.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kazari2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 3.699,
+      "dims": [
+        3.699,
+        0.539,
+        0.19
+      ]
+    },
+    "ef8cba3d08bb1e87": {
+      "file": "png/object/ef8cba3d08bb1e87.png",
+      "fbx": "fbx/object/obj02.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "obj02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.341,
+      "dims": [
+        0.341,
+        0.476,
+        0.182
+      ]
+    },
+    "d2ba49ada19606fe": {
+      "file": "png/object/d2ba49ada19606fe.png",
+      "fbx": "fbx/object/obj03.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "obj03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.303,
+      "dims": [
+        0.303,
+        0.39,
+        0.134
+      ]
+    },
+    "3d583a0a4b6f16c1": {
+      "file": "png/object/3d583a0a4b6f16c1.png",
+      "fbx": "fbx/object/obj04.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "obj04",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.181,
+      "dims": [
+        0.181,
+        0.291,
+        0.181
+      ]
+    },
+    "17c38a2fbb1762b2": {
+      "file": "png/floor/17c38a2fbb1762b2.png",
+      "fbx": "fbx/floor/annai.fbx",
+      "category": "floor",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "annai",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 6.002,
+      "dims": [
+        6.0,
+        1.751,
+        6.002
+      ]
+    },
+    "a0f2b320f9e45cbf": {
+      "file": "png/structure/a0f2b320f9e45cbf.png",
+      "fbx": "fbx/structure/door01.fbx",
+      "category": "structure",
+      "kind": "door",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "door01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.2,
+      "dims": [
+        1.2,
+        3.1,
+        0.297
+      ]
+    },
+    "15bbacc3dc76f2e4": {
+      "file": "png/object/15bbacc3dc76f2e4.png",
+      "fbx": "fbx/object/futa.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "futa",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.199,
+      "dims": [
+        1.199,
+        3.651,
+        0.0
+      ]
+    },
+    "5d4fba0c4ef8c6d9": {
+      "file": "png/structure/5d4fba0c4ef8c6d9.png",
+      "fbx": "fbx/structure/door02.fbx",
+      "category": "structure",
+      "kind": "door",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "door02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.5,
+      "dims": [
+        1.5,
+        3.0,
+        0.139
+      ]
+    },
+    "e559a57246765178": {
+      "file": "png/object/e559a57246765178.png",
+      "fbx": "fbx/object/an_myro.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "an_myro",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.0,
+      "dims": [
+        1.0,
+        0.1,
+        1.0
+      ]
+    },
+    "fdd9311c49f78d61": {
+      "file": "png/object/fdd9311c49f78d61.png",
+      "fbx": "fbx/object/an_kougy.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "an_kougy",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.0,
+      "dims": [
+        1.0,
+        0.1,
+        1.0
+      ]
+    },
+    "9f1355f554f39a91": {
+      "file": "png/object/9f1355f554f39a91.png",
+      "fbx": "fbx/object/an_hikuu.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "an_hikuu",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.0,
+      "dims": [
+        1.0,
+        0.1,
+        1.0
+      ]
+    },
+    "df330f6fb211bce2": {
+      "file": "png/object/df330f6fb211bce2.png",
+      "fbx": "fbx/object/lamp.fbx",
+      "category": "object",
+      "kind": "light",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "lamp",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.763,
+      "dims": [
+        0.275,
+        1.051,
+        0.763
+      ]
+    },
+    "dc06ed4ab6eb2fc6": {
+      "file": "png/object/dc06ed4ab6eb2fc6.png",
+      "fbx": "fbx/object/k_choko.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_choko",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.244,
+      "dims": [
+        0.274,
+        2.101,
+        2.244
+      ]
+    },
+    "ac2ab51d95b6639e": {
+      "file": "png/object/ac2ab51d95b6639e.png",
+      "fbx": "fbx/object/k_maho.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_maho",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.228,
+      "dims": [
+        0.274,
+        1.847,
+        2.228
+      ]
+    },
+    "ff739de37c43d1ed": {
+      "file": "png/object/ff739de37c43d1ed.png",
+      "fbx": "fbx/object/k_yado.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_yado",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.1,
+      "dims": [
+        0.603,
+        1.565,
+        2.1
+      ]
+    },
+    "a13ba9f6c2c12f19": {
+      "file": "png/object/a13ba9f6c2c12f19.png",
+      "fbx": "fbx/object/saku03.fbx",
+      "category": "object",
+      "kind": "fence",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "saku03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.509,
+      "dims": [
+        0.421,
+        1.299,
+        0.509
+      ]
+    },
+    "750c56b07daeb3d1": {
+      "file": "png/structure/750c56b07daeb3d1.png",
+      "fbx": "fbx/structure/chokobo.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "chokobo",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 14.2,
+      "dims": [
+        14.2,
+        5.5,
+        9.825
+      ]
+    },
+    "0d85c7cba4db0df6": {
+      "file": "png/object/0d85c7cba4db0df6.png",
+      "fbx": "fbx/object/saku01.fbx",
+      "category": "object",
+      "kind": "fence",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "saku01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.023,
+      "dims": [
+        2.023,
+        1.214,
+        0.201
+      ]
+    },
+    "3da6eb7b728e81c3": {
+      "file": "png/object/3da6eb7b728e81c3.png",
+      "fbx": "fbx/object/c_mizuok.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_mizuok",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 4.215,
+      "dims": [
+        1.049,
+        1.073,
+        4.215
+      ]
+    },
+    "8af77e77f2e1c10c": {
+      "file": "png/object/8af77e77f2e1c10c.png",
+      "fbx": "fbx/object/c_kago.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_kago",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.387,
+      "dims": [
+        1.387,
+        0.616,
+        1.387
+      ]
+    },
+    "8160659744cdac07": {
+      "file": "png/object/8160659744cdac07.png",
+      "fbx": "fbx/object/c_baketu.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_baketu",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.635,
+      "dims": [
+        0.626,
+        0.453,
+        0.635
+      ]
+    },
+    "17eb4959bc1599de": {
+      "file": "png/object/17eb4959bc1599de.png",
+      "fbx": "fbx/object/c_kai.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_kai",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.099,
+      "dims": [
+        1.033,
+        2.04,
+        1.099
+      ]
+    },
+    "85712684959c0b2a": {
+      "file": "png/object/85712684959c0b2a.png",
+      "fbx": "fbx/object/c_talu.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_talu",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.111,
+      "dims": [
+        1.111,
+        1.292,
+        1.111
+      ]
+    },
+    "3adb80c83d2bf55c": {
+      "file": "png/structure/3adb80c83d2bf55c.png",
+      "fbx": "fbx/structure/hasi_low.fbx",
+      "category": "structure",
+      "kind": "bridge",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasi_low",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 9.099,
+      "dims": [
+        2.511,
+        29.5,
+        9.099
+      ]
+    },
+    "527fb0ad0590ade1": {
+      "file": "png/object/527fb0ad0590ade1.png",
+      "fbx": "fbx/object/c_tana.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_tana",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.931,
+      "dims": [
+        1.931,
+        0.479,
+        0.6
+      ]
+    },
+    "a0b714a46ac33bdb": {
+      "file": "png/object/a0b714a46ac33bdb.png",
+      "fbx": "fbx/object/c_tubo.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_tubo",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.508,
+      "dims": [
+        0.385,
+        0.438,
+        0.508
+      ]
+    },
+    "f2ea9b793822ece6": {
+      "file": "png/object/f2ea9b793822ece6.png",
+      "fbx": "fbx/object/c_wara.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "c_wara",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 4.669,
+      "dims": [
+        4.669,
+        0.106,
+        4.415
+      ]
+    },
+    "6f9433faed34f9af": {
+      "file": "png/structure/6f9433faed34f9af.png",
+      "fbx": "fbx/structure/step03.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "step03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 45.501,
+      "dims": [
+        45.501,
+        12.649,
+        12.0
+      ]
+    },
+    "e435087aabeed388": {
+      "file": "png/object/e435087aabeed388.png",
+      "fbx": "fbx/object/k_sake.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_sake",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.1,
+      "dims": [
+        0.603,
+        1.565,
+        2.1
+      ]
+    },
+    "ebcce11d79521e16": {
+      "file": "png/object/ebcce11d79521e16.png",
+      "fbx": "fbx/object/k_zakka.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_zakka",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.228,
+      "dims": [
+        0.274,
+        1.847,
+        2.228
+      ]
+    },
+    "baa9b2bfbb530567": {
+      "file": "png/object/baa9b2bfbb530567.png",
+      "fbx": "fbx/object/box01.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "box01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.711,
+      "dims": [
+        1.711,
+        1.566,
+        1.566
+      ]
+    },
+    "1ccaff0ac444b433": {
+      "file": "png/object/1ccaff0ac444b433.png",
+      "fbx": "fbx/object/box02.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "box02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.971,
+      "dims": [
+        1.971,
+        1.3,
+        1.971
+      ]
+    },
+    "7b976c33754d847f": {
+      "file": "png/object/7b976c33754d847f.png",
+      "fbx": "fbx/object/box03.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "box03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.143,
+      "dims": [
+        1.143,
+        0.365,
+        0.715
+      ]
+    },
+    "c8ed5b388f46d322": {
+      "file": "png/object/c8ed5b388f46d322.png",
+      "fbx": "fbx/object/_ju_w03_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w03_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 3.817,
+      "dims": [
+        3.817,
+        1.35,
+        1.021
+      ]
+    },
+    "d03e5010a4586df8": {
+      "file": "png/object/d03e5010a4586df8.png",
+      "fbx": "fbx/object/tubo1.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tubo1",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.053,
+      "dims": [
+        1.053,
+        1.305,
+        1.053
+      ]
+    },
+    "e0b21a6efe8d77b6": {
+      "file": "png/object/e0b21a6efe8d77b6.png",
+      "fbx": "fbx/object/bord02.fbx",
+      "category": "object",
+      "kind": "sign",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "bord02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.803,
+      "dims": [
+        0.803,
+        1.795,
+        0.793
+      ]
+    },
+    "cef2b3c0646a78c3": {
+      "file": "png/object/cef2b3c0646a78c3.png",
+      "fbx": "fbx/object/t_obj01.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "t_obj01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 10.0,
+      "dims": [
+        3.747,
+        10.064,
+        10.0
+      ]
+    },
+    "72bbfb2f01f20e3e": {
+      "file": "png/object/72bbfb2f01f20e3e.png",
+      "fbx": "fbx/object/t_obj02.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "t_obj02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 4.346,
+      "dims": [
+        3.955,
+        13.591,
+        4.346
+      ]
+    },
+    "0f5694dc85781bbf": {
+      "file": "png/object/0f5694dc85781bbf.png",
+      "fbx": "fbx/object/t_obj03.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "t_obj03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 4.366,
+      "dims": [
+        3.251,
+        16.018,
+        4.366
+      ]
+    },
+    "af92d26aaa6c1e67": {
+      "file": "png/object/af92d26aaa6c1e67.png",
+      "fbx": "fbx/object/t_obj05.fbx",
+      "category": "object",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "t_obj05",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 3.415,
+      "dims": [
+        3.415,
+        10.147,
+        2.456
+      ]
+    },
+    "992891a179446173": {
+      "file": "png/structure/992891a179446173.png",
+      "fbx": "fbx/structure/t_obj04.fbx",
+      "category": "structure",
+      "kind": "prop",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "t_obj04",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 15.98,
+      "dims": [
+        2.038,
+        4.238,
+        15.98
+      ]
+    },
+    "dd5acc859d994f12": {
+      "file": "png/terrain/dd5acc859d994f12.png",
+      "fbx": "fbx/terrain/block02.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 56.0,
+      "dims": [
+        56.0,
+        36.0,
+        33.2
+      ]
+    },
+    "0c028e46a1d3dfae": {
+      "file": "png/structure/0c028e46a1d3dfae.png",
+      "fbx": "fbx/structure/r_choko.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_choko",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 34.5,
+      "dims": [
+        34.5,
+        6.0,
+        20.0
+      ]
+    },
+    "2e014c07040f7b86": {
+      "file": "png/structure/2e014c07040f7b86.png",
+      "fbx": "fbx/structure/r_min2.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_min2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 18.5,
+      "dims": [
+        18.5,
+        5.0,
+        12.0
+      ]
+    },
+    "376cd2c14e890353": {
+      "file": "png/structure/376cd2c14e890353.png",
+      "fbx": "fbx/structure/r_shop.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_shop",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 20.7,
+      "dims": [
+        20.7,
+        6.7,
+        12.4
+      ]
+    },
+    "539b0ce24dcc1467": {
+      "file": "png/structure/539b0ce24dcc1467.png",
+      "fbx": "fbx/structure/r_g_zaka.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_g_zaka",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 20.701,
+      "dims": [
+        20.701,
+        6.7,
+        12.4
+      ]
+    },
+    "8de0094d389c1f54": {
+      "file": "png/structure/8de0094d389c1f54.png",
+      "fbx": "fbx/structure/yk_roka_b.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "yk_roka_b",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 23.999,
+      "dims": [
+        4.751,
+        5.809,
+        23.999
+      ]
+    },
+    "7334a89410a04e3c": {
+      "file": "png/structure/7334a89410a04e3c.png",
+      "fbx": "fbx/structure/r_g_sake.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_g_sake",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 20.7,
+      "dims": [
+        20.7,
+        6.7,
+        12.4
+      ]
+    },
+    "956cf5fc84154561": {
+      "file": "png/structure/956cf5fc84154561.png",
+      "fbx": "fbx/structure/r_syoku.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_syoku",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 17.15,
+      "dims": [
+        17.15,
+        5.2,
+        11.95
+      ]
+    },
+    "1d194de2c2720961": {
+      "file": "png/structure/1d194de2c2720961.png",
+      "fbx": "fbx/structure/r_yado.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_yado",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 28.0,
+      "dims": [
+        18.5,
+        5.5,
+        28.0
+      ]
+    },
+    "532ee9e6fbc32f9d": {
+      "file": "png/structure/532ee9e6fbc32f9d.png",
+      "fbx": "fbx/structure/yk_roka_a.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "yk_roka_a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 21.147,
+      "dims": [
+        21.147,
+        10.201,
+        8.897
+      ]
+    },
+    "32f2af9b55643441": {
+      "file": "png/structure/32f2af9b55643441.png",
+      "fbx": "fbx/structure/r_honbu.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_honbu",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 24.01,
+      "dims": [
+        18.733,
+        7.748,
+        24.01
+      ]
+    },
+    "c950d8b938b5d387": {
+      "file": "png/structure/c950d8b938b5d387.png",
+      "fbx": "fbx/structure/r_syuryo.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_syuryo",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 12.0,
+      "dims": [
+        8.25,
+        5.0,
+        12.0
+      ]
+    },
+    "ae973ab3712bcaad": {
+      "file": "png/structure/ae973ab3712bcaad.png",
+      "fbx": "fbx/structure/door03.fbx",
+      "category": "structure",
+      "kind": "door",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "door03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.2,
+      "dims": [
+        0.1,
+        3.1,
+        1.2
+      ]
+    },
+    "40c060e65ce52b96": {
+      "file": "png/structure/40c060e65ce52b96.png",
+      "fbx": "fbx/structure/door04.fbx",
+      "category": "structure",
+      "kind": "door",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "door04",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.2,
+      "dims": [
+        0.1,
+        3.1,
+        1.2
+      ]
+    },
+    "1a72a4b1799fffe9": {
+      "file": "png/structure/1a72a4b1799fffe9.png",
+      "fbx": "fbx/structure/tower_f3.fbx",
+      "category": "structure",
+      "kind": "tower",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "tower_f3",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 38.019,
+      "dims": [
+        7.119,
+        40.0,
+        38.019
+      ]
+    },
+    "a581d2601ced38c9": {
+      "file": "png/object/a581d2601ced38c9.png",
+      "fbx": "fbx/object/k_sitate.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_sitate",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.228,
+      "dims": [
+        0.274,
+        1.847,
+        2.228
+      ]
+    },
+    "e2c5c4f4c494192e": {
+      "file": "png/object/e2c5c4f4c494192e.png",
+      "fbx": "fbx/object/k_housyo.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_housyo",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.228,
+      "dims": [
+        0.274,
+        1.847,
+        2.228
+      ]
+    },
+    "9bfa35bc469fca1c": {
+      "file": "png/object/9bfa35bc469fca1c.png",
+      "fbx": "fbx/object/bord01.fbx",
+      "category": "object",
+      "kind": "sign",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "bord01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.096,
+      "dims": [
+        1.096,
+        1.294,
+        0.145
+      ]
+    },
+    "020507109ab0a9e3": {
+      "file": "png/object/020507109ab0a9e3.png",
+      "fbx": "fbx/object/auc_kan.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "auc_kan",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.398,
+      "dims": [
+        2.398,
+        1.602,
+        0.101
+      ]
+    },
+    "91da55c8c62b3a3a": {
+      "file": "png/object/91da55c8c62b3a3a.png",
+      "fbx": "fbx/object/trot.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "trot",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.148,
+      "dims": [
+        1.148,
+        0.0,
+        0.354
+      ]
+    },
+    "498b7272b07c725b": {
+      "file": "png/object/498b7272b07c725b.png",
+      "fbx": "fbx/object/k_haiso.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "k_haiso",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.228,
+      "dims": [
+        0.274,
+        1.847,
+        2.228
+      ]
+    },
+    "72bdbe1344aa4136": {
+      "file": "png/object/72bdbe1344aa4136.png",
+      "fbx": "fbx/object/kn_maho.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kn_maho",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.086,
+      "dims": [
+        1.086,
+        1.826,
+        1.053
+      ]
+    },
+    "da30f90b6396ea5f": {
+      "file": "png/structure/da30f90b6396ea5f.png",
+      "fbx": "fbx/structure/en_hasi.fbx",
+      "category": "structure",
+      "kind": "bridge",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_hasi",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 60.0,
+      "dims": [
+        60.0,
+        109.0,
+        26.0
+      ]
+    },
+    "5ae8e76737dc95af": {
+      "file": "png/floor/5ae8e76737dc95af.png",
+      "fbx": "fbx/floor/en_a01.fbx",
+      "category": "floor",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_a01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 71.88,
+      "dims": [
+        68.872,
+        21.952,
+        71.88
+      ]
+    },
+    "0d8eee1aad425b24": {
+      "file": "png/terrain/0d8eee1aad425b24.png",
+      "fbx": "fbx/terrain/en_a02.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_a02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        68.872,
+        24.477,
+        80.0
+      ]
+    },
+    "c99497a192742ba9": {
+      "file": "png/terrain/c99497a192742ba9.png",
+      "fbx": "fbx/terrain/en_a03.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_a03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.145,
+      "dims": [
+        79.552,
+        26.001,
+        80.145
+      ]
+    },
+    "2d32ce9457a0ac6f": {
+      "file": "png/terrain/2d32ce9457a0ac6f.png",
+      "fbx": "fbx/terrain/en_a04.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_a04",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        72.245,
+        26.001,
+        80.0
+      ]
+    },
+    "343efb7b47f0ee45": {
+      "file": "png/terrain/343efb7b47f0ee45.png",
+      "fbx": "fbx/terrain/en_a05.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_a05",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        48.48,
+        23.887,
+        80.0
+      ]
+    },
+    "fbd505662424d6e3": {
+      "file": "png/terrain/fbd505662424d6e3.png",
+      "fbx": "fbx/terrain/en_a06.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_a06",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        64.969,
+        24.117,
+        80.0
+      ]
+    },
+    "41b43670ede52355": {
+      "file": "png/terrain/41b43670ede52355.png",
+      "fbx": "fbx/terrain/en_a07.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_a07",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        57.414,
+        24.117,
+        80.0
+      ]
+    },
+    "759da0091e72c715": {
+      "file": "png/floor/759da0091e72c715.png",
+      "fbx": "fbx/floor/en_b03.fbx",
+      "category": "floor",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_b03",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        80.0,
+        20.0,
+        80.0
+      ]
+    },
+    "0579371853d0dfc8": {
+      "file": "png/floor/0579371853d0dfc8.png",
+      "fbx": "fbx/floor/en_b01.fbx",
+      "category": "floor",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_b01",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        80.0,
+        20.0,
+        80.0
+      ]
+    },
+    "46502d098bb66331": {
+      "file": "png/floor/46502d098bb66331.png",
+      "fbx": "fbx/floor/en_b02.fbx",
+      "category": "floor",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_b02",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        80.0,
+        0.0,
+        80.0
+      ]
+    },
+    "10487df3fadc50ed": {
+      "file": "png/terrain/10487df3fadc50ed.png",
+      "fbx": "fbx/terrain/en_yama3.fbx",
+      "category": "terrain",
+      "kind": "terrain",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_yama3",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 83.936,
+      "dims": [
+        48.747,
+        32.048,
+        83.936
+      ]
+    },
+    "5b139090ae738c66": {
+      "file": "png/terrain/5b139090ae738c66.png",
+      "fbx": "fbx/terrain/en_yama5.fbx",
+      "category": "terrain",
+      "kind": "terrain",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_yama5",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        74.341,
+        48.977,
+        80.0
+      ]
+    },
+    "ef48e5e7c4d9868a": {
+      "file": "png/terrain/ef48e5e7c4d9868a.png",
+      "fbx": "fbx/terrain/en_yama4.fbx",
+      "category": "terrain",
+      "kind": "terrain",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_yama4",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        74.899,
+        59.216,
+        80.0
+      ]
+    },
+    "43ca5b54fe35eda1": {
+      "file": "png/terrain/43ca5b54fe35eda1.png",
+      "fbx": "fbx/terrain/en_yama1.fbx",
+      "category": "terrain",
+      "kind": "terrain",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_yama1",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 76.136,
+      "dims": [
+        43.084,
+        23.086,
+        76.136
+      ]
+    },
+    "e876d024f2fc5d0d": {
+      "file": "png/terrain/e876d024f2fc5d0d.png",
+      "fbx": "fbx/terrain/en_yama2.fbx",
+      "category": "terrain",
+      "kind": "terrain",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "en_yama2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 80.0,
+      "dims": [
+        73.039,
+        42.547,
+        80.0
+      ]
+    },
+    "b6a1a5fc1490b2c0": {
+      "file": "png/object/b6a1a5fc1490b2c0.png",
+      "fbx": "fbx/object/lamp2.fbx",
+      "category": "object",
+      "kind": "light",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "lamp2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.754,
+      "dims": [
+        0.345,
+        0.96,
+        0.754
+      ]
+    },
+    "3e464610ddde99fb": {
+      "file": "png/object/3e464610ddde99fb.png",
+      "fbx": "fbx/object/_ju_w031_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w031_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.514,
+      "dims": [
+        1.514,
+        1.333,
+        1.497
+      ]
+    },
+    "f61d2f59f1c0fc20": {
+      "file": "png/object/f61d2f59f1c0fc20.png",
+      "fbx": "fbx/object/_ju_w01_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w01_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.469,
+      "dims": [
+        1.469,
+        1.672,
+        1.469
+      ]
+    },
+    "c478402c04316a6f": {
+      "file": "png/object/c478402c04316a6f.png",
+      "fbx": "fbx/object/_ju_w02_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w02_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.323,
+      "dims": [
+        1.323,
+        4.477,
+        1.308
+      ]
+    },
+    "64ffc6234f66e351": {
+      "file": "png/object/64ffc6234f66e351.png",
+      "fbx": "fbx/object/_ju_w021_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w021_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.296,
+      "dims": [
+        1.287,
+        3.626,
+        1.296
+      ]
+    },
+    "87f5b3e33a446a60": {
+      "file": "png/structure/87f5b3e33a446a60.png",
+      "fbx": "fbx/structure/mini_ie.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "mini_ie",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 18.834,
+      "dims": [
+        18.834,
+        13.129,
+        11.909
+      ]
+    },
+    "3d200bbfc2e776a0": {
+      "file": "png/object/3d200bbfc2e776a0.png",
+      "fbx": "fbx/object/_ju_w011_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w011_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.389,
+      "dims": [
+        1.317,
+        0.803,
+        1.389
+      ]
+    },
+    "b1e494800cd3adca": {
+      "file": "png/structure/b1e494800cd3adca.png",
+      "fbx": "fbx/structure/r_syouko.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "r_syouko",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 20.752,
+      "dims": [
+        20.752,
+        4.001,
+        10.3
+      ]
+    },
+    "6b0bc103315c2b61": {
+      "file": "png/object/6b0bc103315c2b61.png",
+      "fbx": "fbx/object/kasa.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "kasa",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 3.432,
+      "dims": [
+        2.972,
+        3.76,
+        3.432
+      ]
+    },
+    "591169b402df4e6c": {
+      "file": "png/object/591169b402df4e6c.png",
+      "fbx": "fbx/object/lamp3.fbx",
+      "category": "object",
+      "kind": "light",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "lamp3",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.408,
+      "dims": [
+        0.399,
+        0.829,
+        0.408
+      ]
+    },
+    "ca3e159d7437b49d": {
+      "file": "png/structure/ca3e159d7437b49d.png",
+      "fbx": "fbx/structure/gete03a.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gete03a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 24.201,
+      "dims": [
+        12.4,
+        14.001,
+        24.201
+      ]
+    },
+    "cd55e24f1c5493b0": {
+      "file": "png/object/cd55e24f1c5493b0.png",
+      "fbx": "fbx/object/_ju_w09_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w09_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.388,
+      "dims": [
+        0.385,
+        0.479,
+        0.388
+      ]
+    },
+    "59103b124e445e1d": {
+      "file": "png/object/59103b124e445e1d.png",
+      "fbx": "fbx/object/_ju_w10_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w10_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 0.438,
+      "dims": [
+        0.438,
+        0.474,
+        0.38
+      ]
+    },
+    "89a90b47935a0cf6": {
+      "file": "png/wall/89a90b47935a0cf6.png",
+      "fbx": "fbx/wall/block02a.fbx",
+      "category": "wall",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block02a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 56.0,
+      "dims": [
+        56.0,
+        55.001,
+        22.2
+      ]
+    },
+    "8c1bb792b9fb2ce2": {
+      "file": "png/terrain/8c1bb792b9fb2ce2.png",
+      "fbx": "fbx/terrain/block03a.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block03a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 72.0,
+      "dims": [
+        72.0,
+        55.0,
+        32.0
+      ]
+    },
+    "ff8bd2278888e788": {
+      "file": "png/wall/ff8bd2278888e788.png",
+      "fbx": "fbx/wall/block01a.fbx",
+      "category": "wall",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block01a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 56.0,
+      "dims": [
+        56.0,
+        55.0,
+        24.0
+      ]
+    },
+    "c3fac6dbffd94e48": {
+      "file": "png/wall/c3fac6dbffd94e48.png",
+      "fbx": "fbx/wall/b_low01a.fbx",
+      "category": "wall",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "b_low01a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 40.0,
+      "dims": [
+        40.0,
+        55.0,
+        24.0
+      ]
+    },
+    "ed4390d0132cc8de": {
+      "file": "png/wall/ed4390d0132cc8de.png",
+      "fbx": "fbx/wall/block04.fbx",
+      "category": "wall",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block04",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 21.967,
+      "dims": [
+        6.598,
+        17.949,
+        21.967
+      ]
+    },
+    "13c2fd5b4f0868a5": {
+      "file": "png/object/13c2fd5b4f0868a5.png",
+      "fbx": "fbx/object/hata.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hata",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.993,
+      "dims": [
+        0.243,
+        4.598,
+        2.993
+      ]
+    },
+    "3b0e26161d64c75d": {
+      "file": "png/object/3b0e26161d64c75d.png",
+      "fbx": "fbx/object/_ju_w11b_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w11b_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.714,
+      "dims": [
+        1.714,
+        1.106,
+        0.984
+      ]
+    },
+    "5df1fc88fc74430b": {
+      "file": "png/object/5df1fc88fc74430b.png",
+      "fbx": "fbx/object/_ju_w11a_h.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "_ju_w11a_h",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.714,
+      "dims": [
+        1.714,
+        1.106,
+        0.984
+      ]
+    },
+    "756e7ee35f0c338b": {
+      "file": "png/object/756e7ee35f0c338b.png",
+      "fbx": "fbx/object/an_syou.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "an_syou",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 1.0,
+      "dims": [
+        1.0,
+        0.1,
+        1.0
+      ]
+    },
+    "c7f3a51d3e8eed26": {
+      "file": "png/object/c7f3a51d3e8eed26.png",
+      "fbx": "fbx/object/auc_uke2.fbx",
+      "category": "object",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "auc_uke2",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 2.139,
+      "dims": [
+        2.139,
+        2.464,
+        0.9
+      ]
+    },
+    "3e96b5aad821676c": {
+      "file": "png/structure/3e96b5aad821676c.png",
+      "fbx": "fbx/structure/step_mak.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "step_mak",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 3.303,
+      "dims": [
+        0.0,
+        3.299,
+        3.303
+      ]
+    },
+    "45972d4edee92b03": {
+      "file": "png/structure/45972d4edee92b03.png",
+      "fbx": "fbx/structure/ent_step.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "ent_step",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 16.0,
+      "dims": [
+        8.0,
+        14.002,
+        16.0
+      ]
+    },
+    "8e2e7c5c1356c3a2": {
+      "file": "png/structure/8e2e7c5c1356c3a2.png",
+      "fbx": "fbx/structure/ent_gete.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "ent_gete",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 10.601,
+      "dims": [
+        8.5,
+        11.401,
+        10.601
+      ]
+    },
+    "a9327893a08c2ccd": {
+      "file": "png/structure/a9327893a08c2ccd.png",
+      "fbx": "fbx/structure/ent_hasi.fbx",
+      "category": "structure",
+      "kind": "bridge",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "ent_hasi",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 24.0,
+      "dims": [
+        24.0,
+        5.101,
+        6.401
+      ]
+    },
+    "aca2900a56bf4b33": {
+      "file": "png/structure/aca2900a56bf4b33.png",
+      "fbx": "fbx/structure/hasira00a.fbx",
+      "category": "structure",
+      "kind": "pillar",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "hasira00a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 9.001,
+      "dims": [
+        2.0,
+        8.0,
+        9.001
+      ]
+    },
+    "ccdcb02e1f27f565": {
+      "file": "png/structure/ccdcb02e1f27f565.png",
+      "fbx": "fbx/structure/gete01a.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gete01a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 7.999,
+      "dims": [
+        4.201,
+        9.699,
+        7.999
+      ]
+    },
+    "df20f1c8b5a31cc6": {
+      "file": "png/structure/df20f1c8b5a31cc6.png",
+      "fbx": "fbx/structure/gete02a.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gete02a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 14.88,
+      "dims": [
+        12.397,
+        11.5,
+        14.88
+      ]
+    },
+    "29b8f68de0da6a3c": {
+      "file": "png/terrain/29b8f68de0da6a3c.png",
+      "fbx": "fbx/terrain/block02b.fbx",
+      "category": "terrain",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block02b",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 56.0,
+      "dims": [
+        56.0,
+        18.649,
+        24.0
+      ]
+    },
+    "b1aef24d548a233b": {
+      "file": "png/structure/b1aef24d548a233b.png",
+      "fbx": "fbx/structure/block01b.fbx",
+      "category": "structure",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block01b",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 24.0,
+      "dims": [
+        24.0,
+        8.523,
+        9.0
+      ]
+    },
+    "a8e6c09fb74c8b6f": {
+      "file": "png/floor/a8e6c09fb74c8b6f.png",
+      "fbx": "fbx/floor/block03b.fbx",
+      "category": "floor",
+      "kind": null,
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "block03b",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 72.0,
+      "dims": [
+        72.0,
+        12.649,
+        24.0
+      ]
+    },
+    "f6bade3a83c3817d": {
+      "file": "png/structure/f6bade3a83c3817d.png",
+      "fbx": "fbx/structure/gete03b.fbx",
+      "category": "structure",
+      "kind": "gate",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "gete03b",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 9.2,
+      "dims": [
+        7.302,
+        8.0,
+        9.2
+      ]
+    },
+    "2ec16405f60563e6": {
+      "file": "png/structure/2ec16405f60563e6.png",
+      "fbx": "fbx/structure/step01a.fbx",
+      "category": "structure",
+      "kind": "stairs",
+      "sample_zone": "Lower Jeuno",
+      "sample_mesh": "step01a",
+      "sample_dat": "ROM/1/41.DAT",
+      "sample_json": "objects_ROM_1_41.json",
+      "footprint": 16.0,
+      "dims": [
+        8.0,
+        0.002,
+        16.0
+      ]
+    }
+  },
+  "objects": [
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block03",
+      "hash": "1a1a902b4d79e4e0",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block01",
+      "hash": "1ea893f86cf68cb1",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "b_low01",
+      "hash": "d5a0cf069b0fc49f",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "b_low02",
+      "hash": "a5fe1a8ce7c8336d",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "step01",
+      "hash": "af5a416dcf2b74fe",
+      "category": "structure",
+      "kind": "stairs"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "step02",
+      "hash": "c4713ef66de9b5fc",
+      "category": "structure",
+      "kind": "stairs"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasi",
+      "hash": "4469c187b3ac24ab",
+      "category": "structure",
+      "kind": "bridge"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gete03",
+      "hash": "ef064db245a0a2e0",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tower_f1",
+      "hash": "830c6b35159758cf",
+      "category": "structure",
+      "kind": "tower"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tower_f2",
+      "hash": "2e0ad71d27850f33",
+      "category": "structure",
+      "kind": "tower"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gete02",
+      "hash": "38bcbebeb9245d59",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gete01",
+      "hash": "9aae7c2e3dd05336",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kaidan",
+      "hash": "2badb90316a28b64",
+      "category": "structure",
+      "kind": "stairs"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kaidan2",
+      "hash": "2e482f799bdfec09",
+      "category": "structure",
+      "kind": "stairs"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tower_b1",
+      "hash": "3c720f510773e3f0",
+      "category": "structure",
+      "kind": "tower"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tower_b2",
+      "hash": "5324f6951a1948d3",
+      "category": "structure",
+      "kind": "tower"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tower_a1",
+      "hash": "eec3ab0a18f28431",
+      "category": "structure",
+      "kind": "tower"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tower_a2",
+      "hash": "e042962fda62c36c",
+      "category": "structure",
+      "kind": "tower"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "my_room1",
+      "hash": "3c444b849cd281a2",
+      "category": "wall",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "porl",
+      "hash": "e9c153c6868b7911",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "funsui",
+      "hash": "6d490c04b11ead54",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "syoukou",
+      "hash": "524c039d70de004c",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "iriguti",
+      "hash": "a6ecc0fa746d7b2d",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "uranai",
+      "hash": "cc52541081035650",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gaitou01",
+      "hash": "e85d47dbe37da1f0",
+      "category": "object",
+      "kind": "light"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "auc_hasi",
+      "hash": "8bc29fb280ae4499",
+      "category": "structure",
+      "kind": "bridge"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "auc_uke",
+      "hash": "6cd5a0fea32e811b",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira01",
+      "hash": "7e2808e571780ed0",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira00",
+      "hash": "953dae138034219b",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira02",
+      "hash": "8176e3ce24c05e1a",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira03",
+      "hash": "fc8aa2196457fa6c",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira05",
+      "hash": "5bdf2db24cc8fabc",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira04",
+      "hash": "4c1ddb6d4f190928",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gaitou02",
+      "hash": "0768a9425abcc87f",
+      "category": "object",
+      "kind": "light"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira06",
+      "hash": "4c8d7231ab8c2f35",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "mado",
+      "hash": "8c8163e62de73a58",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kanban01",
+      "hash": "fda6f552cf82d564",
+      "category": "object",
+      "kind": "sign"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kanban02",
+      "hash": "d4c875341ba8303a",
+      "category": "object",
+      "kind": "sign"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "sikii",
+      "hash": "0361c7861bb0acfe",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kazari1",
+      "hash": "9ba79cf078d0124f",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kazari2",
+      "hash": "3b9c123e1a415aec",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "obj02",
+      "hash": "ef8cba3d08bb1e87",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "obj03",
+      "hash": "d2ba49ada19606fe",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "obj04",
+      "hash": "3d583a0a4b6f16c1",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "annai",
+      "hash": "17c38a2fbb1762b2",
+      "category": "floor",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "door01",
+      "hash": "a0f2b320f9e45cbf",
+      "category": "structure",
+      "kind": "door"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "futa",
+      "hash": "15bbacc3dc76f2e4",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "door02",
+      "hash": "5d4fba0c4ef8c6d9",
+      "category": "structure",
+      "kind": "door"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "an_myro",
+      "hash": "e559a57246765178",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "an_kougy",
+      "hash": "fdd9311c49f78d61",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "an_hikuu",
+      "hash": "9f1355f554f39a91",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "lamp",
+      "hash": "df330f6fb211bce2",
+      "category": "object",
+      "kind": "light"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_choko",
+      "hash": "dc06ed4ab6eb2fc6",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_maho",
+      "hash": "ac2ab51d95b6639e",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_yado",
+      "hash": "ff739de37c43d1ed",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "saku03",
+      "hash": "a13ba9f6c2c12f19",
+      "category": "object",
+      "kind": "fence"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "chokobo",
+      "hash": "750c56b07daeb3d1",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "saku01",
+      "hash": "0d85c7cba4db0df6",
+      "category": "object",
+      "kind": "fence"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_mizuok",
+      "hash": "3da6eb7b728e81c3",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_kago",
+      "hash": "8af77e77f2e1c10c",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_baketu",
+      "hash": "8160659744cdac07",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_kai",
+      "hash": "17eb4959bc1599de",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_talu",
+      "hash": "85712684959c0b2a",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasi_low",
+      "hash": "3adb80c83d2bf55c",
+      "category": "structure",
+      "kind": "bridge"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_tana",
+      "hash": "527fb0ad0590ade1",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_tubo",
+      "hash": "a0b714a46ac33bdb",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "c_wara",
+      "hash": "f2ea9b793822ece6",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "step03",
+      "hash": "6f9433faed34f9af",
+      "category": "structure",
+      "kind": "stairs"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_sake",
+      "hash": "e435087aabeed388",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_zakka",
+      "hash": "ebcce11d79521e16",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_shop",
+      "hash": "ebcce11d79521e16",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "box01",
+      "hash": "baa9b2bfbb530567",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "box02",
+      "hash": "1ccaff0ac444b433",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "box03",
+      "hash": "7b976c33754d847f",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w03_h",
+      "hash": "c8ed5b388f46d322",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tubo1",
+      "hash": "d03e5010a4586df8",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "bord02",
+      "hash": "e0b21a6efe8d77b6",
+      "category": "object",
+      "kind": "sign"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "t_obj01",
+      "hash": "cef2b3c0646a78c3",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "t_obj02",
+      "hash": "72bbfb2f01f20e3e",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "t_obj03",
+      "hash": "0f5694dc85781bbf",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "t_obj05",
+      "hash": "af92d26aaa6c1e67",
+      "category": "object",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "t_obj04",
+      "hash": "992891a179446173",
+      "category": "structure",
+      "kind": "prop"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block02",
+      "hash": "dd5acc859d994f12",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_choko",
+      "hash": "0c028e46a1d3dfae",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_min2",
+      "hash": "2e014c07040f7b86",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_shop",
+      "hash": "376cd2c14e890353",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_g_zaka",
+      "hash": "539b0ce24dcc1467",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "yk_roka_b",
+      "hash": "8de0094d389c1f54",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_g_sake",
+      "hash": "7334a89410a04e3c",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_syoku",
+      "hash": "956cf5fc84154561",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_yado",
+      "hash": "1d194de2c2720961",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "yk_roka_a",
+      "hash": "532ee9e6fbc32f9d",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_honbu",
+      "hash": "32f2af9b55643441",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_syuryo",
+      "hash": "c950d8b938b5d387",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "door03",
+      "hash": "ae973ab3712bcaad",
+      "category": "structure",
+      "kind": "door"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "door04",
+      "hash": "40c060e65ce52b96",
+      "category": "structure",
+      "kind": "door"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "tower_f3",
+      "hash": "1a72a4b1799fffe9",
+      "category": "structure",
+      "kind": "tower"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_sitate",
+      "hash": "a581d2601ced38c9",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_housyo",
+      "hash": "e2c5c4f4c494192e",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "bord01",
+      "hash": "9bfa35bc469fca1c",
+      "category": "object",
+      "kind": "sign"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "auc_kan",
+      "hash": "020507109ab0a9e3",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "trot",
+      "hash": "91da55c8c62b3a3a",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "k_haiso",
+      "hash": "498b7272b07c725b",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kn_maho",
+      "hash": "72bdbe1344aa4136",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_hasi",
+      "hash": "da30f90b6396ea5f",
+      "category": "structure",
+      "kind": "bridge"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_a01",
+      "hash": "5ae8e76737dc95af",
+      "category": "floor",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_a02",
+      "hash": "0d8eee1aad425b24",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_a03",
+      "hash": "c99497a192742ba9",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_a04",
+      "hash": "2d32ce9457a0ac6f",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_a05",
+      "hash": "343efb7b47f0ee45",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_a06",
+      "hash": "fbd505662424d6e3",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_a07",
+      "hash": "41b43670ede52355",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_b03",
+      "hash": "759da0091e72c715",
+      "category": "floor",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_b01",
+      "hash": "0579371853d0dfc8",
+      "category": "floor",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_b02",
+      "hash": "46502d098bb66331",
+      "category": "floor",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_yama3",
+      "hash": "10487df3fadc50ed",
+      "category": "terrain",
+      "kind": "terrain"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_yama5",
+      "hash": "5b139090ae738c66",
+      "category": "terrain",
+      "kind": "terrain"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_yama4",
+      "hash": "ef48e5e7c4d9868a",
+      "category": "terrain",
+      "kind": "terrain"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_yama1",
+      "hash": "43ca5b54fe35eda1",
+      "category": "terrain",
+      "kind": "terrain"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "en_yama2",
+      "hash": "e876d024f2fc5d0d",
+      "category": "terrain",
+      "kind": "terrain"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "lamp2",
+      "hash": "b6a1a5fc1490b2c0",
+      "category": "object",
+      "kind": "light"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w031_h",
+      "hash": "3e464610ddde99fb",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w01_h",
+      "hash": "f61d2f59f1c0fc20",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w02_h",
+      "hash": "c478402c04316a6f",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w021_h",
+      "hash": "64ffc6234f66e351",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "mini_ie",
+      "hash": "87f5b3e33a446a60",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w011_h",
+      "hash": "3d200bbfc2e776a0",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "r_syouko",
+      "hash": "b1e494800cd3adca",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "kasa",
+      "hash": "6b0bc103315c2b61",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "lamp3",
+      "hash": "591169b402df4e6c",
+      "category": "object",
+      "kind": "light"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gete03a",
+      "hash": "ca3e159d7437b49d",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w09_h",
+      "hash": "cd55e24f1c5493b0",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w10_h",
+      "hash": "59103b124e445e1d",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block02a",
+      "hash": "89a90b47935a0cf6",
+      "category": "wall",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block03a",
+      "hash": "8c1bb792b9fb2ce2",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block01a",
+      "hash": "ff8bd2278888e788",
+      "category": "wall",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "b_low01a",
+      "hash": "c3fac6dbffd94e48",
+      "category": "wall",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block04",
+      "hash": "ed4390d0132cc8de",
+      "category": "wall",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hata",
+      "hash": "13c2fd5b4f0868a5",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w11b_h",
+      "hash": "3b0e26161d64c75d",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "_ju_w11a_h",
+      "hash": "5df1fc88fc74430b",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "an_syou",
+      "hash": "756e7ee35f0c338b",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "auc_uke2",
+      "hash": "c7f3a51d3e8eed26",
+      "category": "object",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "step_mak",
+      "hash": "3e96b5aad821676c",
+      "category": "structure",
+      "kind": "stairs"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "ent_step",
+      "hash": "45972d4edee92b03",
+      "category": "structure",
+      "kind": "stairs"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "ent_gete",
+      "hash": "8e2e7c5c1356c3a2",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "ent_hasi",
+      "hash": "a9327893a08c2ccd",
+      "category": "structure",
+      "kind": "bridge"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "hasira00a",
+      "hash": "aca2900a56bf4b33",
+      "category": "structure",
+      "kind": "pillar"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gete01a",
+      "hash": "ccdcb02e1f27f565",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gete02a",
+      "hash": "df20f1c8b5a31cc6",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block02b",
+      "hash": "29b8f68de0da6a3c",
+      "category": "terrain",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block01b",
+      "hash": "b1aef24d548a233b",
+      "category": "structure",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "block03b",
+      "hash": "a8e6c09fb74c8b6f",
+      "category": "floor",
+      "kind": null
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "gete03b",
+      "hash": "f6bade3a83c3817d",
+      "category": "structure",
+      "kind": "gate"
+    },
+    {
+      "zone": "Lower Jeuno",
+      "dat": "ROM/1/41.DAT",
+      "dat_key": "ROM_1_41",
+      "json": "objects_ROM_1_41.json",
+      "mesh": "step01a",
+      "hash": "2ec16405f60563e6",
+      "category": "structure",
+      "kind": "stairs"
+    }
+  ]
+}

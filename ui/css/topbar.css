@@ -1,0 +1,466 @@
+.topbar {
+  position: absolute;
+  top: 12px;
+  left: 86px;
+  z-index: 10;
+  height: 40px;
+  display: flex;
+  overflow: hidden;
+  background: #232329dd;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.topbar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 15px;
+  color: #ddd;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  text-shadow: 0 0 3px #000;
+}
+
+.topbar button + button {
+  border-left: 1px solid #3a3a44;
+}
+.topbar button:hover {
+  color: #fff;
+  background: #2f2f38ee;
+}
+
+/* Quick-action bar — a separate pill (Publish / Navmesh / GLB / Export), right of the topbar */
+.quick-bar {
+  position: absolute;
+  top: 12px;
+  right: 360px;
+  z-index: 10;
+  height: 40px;
+  display: flex;
+  overflow: hidden;
+  background: #232329dd;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+.quick-bar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font: 600 14px Roboto, sans-serif;
+  color: #ddd;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  text-shadow: 0 0 3px #000;
+}
+.quick-bar button + button {
+  border-left: 1px solid #3a3a44;
+}
+.quick-bar button span:first-child {
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.85;
+  margin-bottom: -2px;
+}
+.quick-bar button:hover {
+  color: #fff;
+  background: #2f2f38ee;
+}
+.quick-bar #quick-publish:hover {
+  background: #228b37ee;
+} /* publish = green tint */
+.quick-bar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: transparent;
+}
+
+/* Mode dropdown button (topbar) — background matches the active mode */
+.mode-btn {
+  font-weight: 600;
+  color: #fff;
+}
+.mode-btn.mode-edit {
+  box-shadow: inset 0 0 0 1px #3a9d5daa, inset 0 0 21px #3a9d5daa;
+} /* edit = green */
+.mode-btn.mode-view {
+  box-shadow: inset 0 0 0 1px #2f86ffaa, inset 0 0 21px #2f86ffaa;
+} /* view = blue */
+.mode-btn.mode-production {
+  box-shadow: inset 0 0 0 1px #cf4040aa, inset 0 0 21px #cf4040aa;
+} /* prod = red */
+.mode-btn.mode-base {
+  box-shadow: inset 0 0 0 1px #e0852baa, inset 0 0 21px #e0852baa;
+} /* base = orange */
+.mode-btn.mode-hd {
+  box-shadow: inset 0 0 0 1px #8c50e6aa, inset 0 0 21px #8c50e6aa;
+} /* HD = violet */
+.mode-menu button.active {
+  color: #fff;
+  background: #34415c;
+}
+.mode-menu button[data-mode="view"].active {
+  background: #2f86ff;
+}
+.mode-menu button[data-mode="production"].active {
+  background: #cf4040;
+}
+.mode-menu button[data-mode="base"].active {
+  background: #e0852b;
+}
+
+/* Backend (WebSocket bridge) status icon — wifi glyph, green connected / red off.
+   flex + line-height:1 centre the glyph: the Material Symbols class forces
+   display:inline-block, so without these the glyph pins to the top of the 40px bar. */
+.bridge-dot {
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0 12px;
+  font-size: 19px;
+  color: #57d06a; /* connected = green */
+  text-shadow: 0 0 6px #57d06a; /* green glow when connected */
+  cursor: default;
+  border-left: 1px solid #3a3a44;
+}
+.bridge-dot.off {
+  color: #b04a4a;
+  text-shadow: 0 0 6px #b04a4a;
+} /* disconnected = red */
+
+/* Centered error toast — selectable text, X to dismiss (not click-to-dismiss). */
+.error-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  display: none;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(480px, calc(100% - 48px));
+  max-height: min(50vh, 360px);
+  padding: 14px 14px 14px 16px;
+  color: #f3e8e8;
+  background: linear-gradient(165deg, #3a1a1c 0%, #2a1214 100%);
+  border: 1px solid #7a3538;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 18px 48px -12px rgba(0, 0, 0, 0.75),
+    0 0 40px -8px rgba(192, 57, 43, 0.35);
+  cursor: default;
+  user-select: text;
+  -webkit-user-select: text;
+  animation: error-banner-in 0.18s ease-out;
+}
+.error-banner.show {
+  display: flex;
+}
+.error-banner[hidden] {
+  display: none !important;
+}
+@keyframes error-banner-in {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(0.98); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.error-banner-ico {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(224, 82, 82, 0.18);
+  color: #ff8a8a;
+}
+.error-banner-ico .material-symbols-outlined {
+  font-size: 22px;
+}
+.error-banner-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+.error-banner-title {
+  font: 600 13px/1.3 Roboto, system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #ffc9c9;
+}
+.error-banner-msg {
+  font: 12.5px/1.45 "Roboto Mono", ui-monospace, monospace;
+  color: #f0dede;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: min(36vh, 280px);
+  margin: 0;
+  padding: 0;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+.error-banner-close {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  margin: -4px -4px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #c4a0a0;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.error-banner-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.error-banner-close .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Inset blue border drawn over the viewport while in View (read-only) mode.
+   Sized in JS (syncViewFrame) to exactly cover the canvas, so it never overlaps
+   the side panel. */
+.view-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 9;
+  display: none;
+  box-sizing: border-box;
+  border: 3px solid #2f86ff;
+  box-shadow: inset 0 0 22px rgba(47, 134, 255, 0.3);
+}
+.app.readonly #view-frame {
+  display: block;
+}
+/* Production mode reuses the frame in red instead of blue. */
+.app.production-mode #view-frame {
+  border-color: #ff6a6a;
+  box-shadow: inset 0 0 22px rgba(207, 64, 64, 0.32);
+}
+.app.production-mode #view-mode-label {
+  background: #cf4040;
+}
+/* Base mode (pristine .base DAT) reuses the frame in orange. */
+.app.base-mode #view-frame {
+  border-color: #ffae4d;
+  box-shadow: inset 0 0 22px rgba(224, 133, 43, 0.34);
+}
+.app.base-mode #view-mode-label {
+  background: #e0852b;
+}
+/* HD Zone mode (read-only HD asset-pack DAT) reuses the frame in violet. */
+.app.hd-mode #view-frame {
+  border-color: #b07dff;
+  box-shadow: inset 0 0 22px rgba(140, 80, 230, 0.34);
+}
+.app.hd-mode #view-mode-label {
+  background: #8c50e6;
+}
+
+/* "VIEWING MODE" pill at the bottom-centre of the viewport (matches the frame blue) */
+.view-mode-label {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #fff;
+  background: #2f86ff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+/* Gizmo toolbar + edit-only list actions are inert in any read-only mode (View / Production) */
+.app.readonly .gizmo-tools {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.app.readonly #marker-add {
+  opacity: 0.4;
+  pointer-events: none;
+}
+/* Edit-only affordances: selection inspectors + the hotkey spawn bar are hidden
+   in any non-edit mode (View / Production / Base / HD). */
+.app.readonly .sel-panel {
+  display: none;
+}
+.app.readonly .hotkey-bar {
+  display: none;
+}
+/* Edit-only topbar panels: Asset Browser, Database, Changes — disabled when read-only. */
+.app.readonly #assets-btn,
+.app.readonly #database-btn,
+.app.readonly #changes-btn {
+  opacity: 0.4;
+  pointer-events: none;
+}
+/* Quick-action bar (Publish / Navmesh / GLB / SFX) — edit actions, disabled when read-only. */
+.app.readonly .quick-btn {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.changes-badge {
+  /* min-width: 17px; */
+  /* height: 17px; */
+  /* padding: 1px 5px; */
+  font-size: 15px;
+  /* line-height: 17px; */
+  color: #fff;
+  /* text-align: center; */
+  /* background: #3c82dc; */
+  /* border-radius: 5px; */
+  margin-left: 2px;
+  color: #fff555;
+  /* font-style: italic; */
+  font-weight: 600;
+}
+
+.changes-badge.hidden {
+  display: none;
+}
+
+/* File dropdown menu — lightweight popover; closes on outside click (see main.js). */
+.menu {
+  position: absolute;
+  z-index: 25;
+  display: none;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 4px;
+  background: #232329f7;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  box-shadow: 0 10px 36px #000b;
+  backdrop-filter: blur(6px);
+}
+.menu.open {
+  display: flex;
+}
+.menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #ddd;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap; /* keep multi-word items (e.g. "Clear Version History") on one line */
+}
+.menu button:hover {
+  color: #fff;
+  background: #2f2f38;
+}
+.menu button .material-symbols-outlined {
+  font-size: 16px;
+  opacity: 0.7;
+}
+.menu button:disabled,
+.menu button.menu-grayed {
+  opacity: 0.38;
+  cursor: default;
+  pointer-events: none;
+}
+.menu-kbd {
+  margin-left: auto;
+  padding-left: 16px;
+  font-size: 10px;
+  opacity: 0.45;
+}
+.menu .menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: #3a3a44;
+}
+.menu .menu-label {
+  padding: 6px 12px 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  user-select: none;
+}
+.menu button.active {
+  color: #7eb8f7;
+}
+.menu button.active:hover {
+  color: #fff;
+}
+.menu button.menu-danger {
+  color: #f07070;
+}
+.menu button.menu-danger:hover {
+  color: #fff;
+  background: #6a2828;
+}
+.menu button.menu-danger:disabled {
+  color: #f07070;
+}
+
+/* Submenu (flyout) — a menu-item with .has-submenu reveals .submenu to its right on hover. */
+.menu .menu-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.menu .submenu-parent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.menu .submenu-arrow {
+  font-size: 18px;
+  margin-left: 8px;
+  opacity: 0.55;
+}
+.menu .menu-item:hover > .submenu-parent {
+  color: #fff;
+  background: #2f2f38;
+}
+.menu .submenu {
+  position: absolute;
+  left: 100%;
+  top: -5px; /* align first item with the parent (offsets submenu padding + border) */
+  display: none;
+  flex-direction: column;
+  min-width: 170px;
+  padding: 4px;
+  background: #232329f7;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  box-shadow: 0 10px 36px #000b;
+  backdrop-filter: blur(6px);
+  z-index: 26;
+}
+.menu .menu-item.has-submenu:hover > .submenu {
+  display: flex;
+}

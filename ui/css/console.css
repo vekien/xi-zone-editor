@@ -1,0 +1,195 @@
+/* Live backend-log console popup (Publish / long bridge ops) */
+.console-modal {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 10001;
+  display: none;
+  flex-direction: column;
+  max-width: 75%;
+  max-height: 70vh;
+  background: #18181c;
+  border: 1px solid #4b4b58;
+  border-radius: 6px;
+  box-shadow: 0 12px 40px #000a;
+  overflow: hidden;
+}
+.console-modal .cm-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: #232329;
+  border-bottom: 1px solid #34343c;
+}
+.console-modal .cm-title {
+  flex: 1;
+  font: 500 15px/1.3 ui-monospace, monospace;
+  color: #d8d8e2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Indeterminate marquee loading bar — visible only while an op is running. */
+.console-modal .cm-loading {
+  display: none;
+  height: 3px;
+  background: #131316;
+  overflow: hidden;
+}
+.console-modal.cm-running .cm-loading,
+.console-modal.cm-done .cm-loading,
+.console-modal.cm-fail .cm-loading {
+  display: block;
+}
+.console-modal .cm-loading-bar {
+  width: 100%;
+  height: 100%;
+}
+/* publishing → bright-blue marquee (moving bar) */
+.console-modal.cm-running .cm-loading-bar {
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #2f86ff 30%,
+    #8fc6ff,
+    #2f86ff 70%,
+    transparent
+  );
+  animation: cm-marquee 1.05s linear infinite;
+}
+/* published → solid green */
+.console-modal.cm-done .cm-loading-bar {
+  background: #43c06a;
+  box-shadow: 0 0 8px #43c06a88;
+}
+/* failed → solid red */
+.console-modal.cm-fail .cm-loading-bar {
+  background: #cf4040;
+  box-shadow: 0 0 8px #cf404088;
+}
+@keyframes cm-marquee {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+.console-modal .cm-head button {
+  padding: 3px 5px;
+  font: 400 18px/1 ui-monospace, monospace;
+  color: #8e8e9a;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.console-modal .cm-head button:hover {
+  color: #fff;
+}
+/* Stop/cancel button — red so it reads as a destructive action; shown only while running */
+.console-modal .cm-stop {
+  color: #e06464;
+}
+.console-modal .cm-stop:hover {
+  color: #ff7676;
+}
+.console-modal .cm-stop span {
+  font-size: 19px;
+}
+.console-modal .cm-copy span {
+  font-size: 18px;
+}
+.console-modal .cm-stop span,
+.console-modal .cm-copy span,
+.console-modal .cm-close span {
+  vertical-align: bottom;
+}
+.console-modal .cm-body {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: 300px;
+  font-size: 12px;
+  line-height: 1.25;
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  color: #c6c6c6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #131316;
+}
+/* Per-line syntax highlighting — append() classes each line by its leading [tag]. */
+.console-modal .cm-body .cm-debug {
+  color: #7b7b7b;
+}
+.console-modal .cm-body .cm-texture {
+  color: #81d6fd;
+}
+.console-modal .cm-body .cm-object {
+  color: #81fd84;
+}
+
+/* Editable pos/rot/scale rows in the selection inspector */
+.trs-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 3px 0;
+}
+.trs-row > .k {
+  flex: 0 0 38px;
+  width: 38px;
+  white-space: nowrap;
+  cursor: context-menu;
+  user-select: none;
+  transition: color 0.1s;
+}
+.trs-row > .k:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.trs-in {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: right;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  font-size: 10px !important;
+  height: 20px !important;
+}
+.trs-in:focus {
+  border-color: #5aa37a;
+  outline: none;
+}
+.trs-in:disabled {
+  opacity: 0.5;
+}
+.trs-in::-webkit-outer-spin-button,
+.trs-in::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.trs-reset {
+  flex: 0 0 auto;
+  padding: 0 0 4px 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: #9a9aa6;
+  cursor: pointer;
+}
+.trs-reset .material-symbols-outlined {
+  font-size: 14px;
+  line-height: 1;
+  vertical-align: middle;
+}
+.trs-reset:hover:not(:disabled) {
+  color: #fff;
+  background: none;
+}
+.trs-reset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

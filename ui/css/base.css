@@ -1,0 +1,246 @@
+* {
+  box-sizing: border-box;
+}
+
+/* Form controls don't inherit the page font by default — force them to. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* ── Base button theme ───────────────────────────────────────────────────────
+   Components override colour/padding/font-weight; keep layout-only rules there. */
+button {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #ccc;
+  background: #484857;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background: #565669;
+  color: #eee;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Semantic button colours — Primary (blue), Success (green), Delete/Danger (red).
+   White text; hover brightens. Use class="btn-primary | btn-success | btn-danger". */
+.btn-primary { background: #2f6fed; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #4680f5; color: #fff; }
+.btn-success { background: #2ea05b; color: #fff; }
+.btn-success:hover:not(:disabled) { background: #38b869; color: #fff; }
+.btn-danger { background: #d84a4a; color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #e85e5e; color: #fff; }
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="range"] {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  accent-color: #7fd6e6;
+  margin: 0;
+}
+
+/* ── Base form-control theme ─────────────────────────────────────────────────
+   All text-like inputs / selects / textareas share the same visual DNA.
+   Components override ONLY layout-relevant properties (width, flex, etc.).     */
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not(
+    [type="color"]
+  ):not([type="file"]):not([type="hidden"]),
+select {
+  padding: 8px;
+  font-size: 13px;
+  color: #ddd;
+  background-color: #0d0e12;
+  border: none;
+  border-radius: 8px;
+}
+/* ONLY <select> gets the custom chevron — inputs must not show a down arrow. */
+select {
+  padding-right: 26px;                  /* room for the chevron */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1.5 1.5L6 6l4.5-4.5' fill='none' stroke='%23bbbbbb' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center; /* arrow sits 5px from the edge */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ── .form context: enforce 30px fixed-height row alignment ─────────────── */
+.form button,
+.form
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not(
+    [type="color"]
+  ):not([type="file"]):not([type="hidden"]),
+.form select {
+  height: 30px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+textarea {
+  padding: 6px 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #ddd;
+  background: #0d0e12;
+  border: none;
+  border-radius: 8px;
+}
+/* Fields are borderless — focus shows as the shared accent ring, not a border. */
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not(
+    [type="color"]
+  ):not([type="file"]):not([type="hidden"]):focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #7fd6e6 18%, transparent);
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Roboto", system-ui, "Segoe UI", sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #ddd;
+  background: #1a1a1f;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #6f6f76 #1a1a1f;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1a1a1f;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #5f5f66;
+  border: 2px solid #1a1a1f;
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #777780;
+}
+
+*::-webkit-scrollbar-corner {
+  background: #1a1a1f;
+}
+
+.app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1f;
+}
+.app-loader.hidden {
+  display: none;
+}
+.app-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #6a6a78;
+}
+.app-loader-icon {
+  font-size: 48px;
+  color: #6a6a78;
+  animation: app-loader-pulse 2s ease-in-out infinite;
+}
+@keyframes app-loader-pulse {
+  0%,
+  100% {
+    color: #4a4a55;
+  }
+  50% {
+    color: #ffffff;
+  }
+}
+.app-loader-text {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+/* "Loading Changes" overlay — translucent backdrop that blocks viewport interaction while a
+   project's saved change-set replays, with a centered card. */
+.changes-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10100; /* above the projects launcher (10040-10060) so it shows the instant a project is opened */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 16, 20, 0.55);
+  backdrop-filter: blur(2px);
+}
+.changes-loader.hidden {
+  display: none;
+}
+.changes-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 36px;
+  color: #cdd2de;
+  background: #232329f2;
+  border: 1px solid #3a3a44;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px #000a;
+}
+.changes-loader-icon {
+  font-size: 40px;
+  color: #5fe6ff;
+  animation: changes-loader-spin 1.1s linear infinite;
+}
+@keyframes changes-loader-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+.changes-loader-text {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.app {
+  display: flex;
+  position: relative;
+  height: 100%;
+}
+
+.view {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  cursor: default;
+  outline: none;
+}

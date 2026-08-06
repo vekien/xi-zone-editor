@@ -1,0 +1,330 @@
+/* Gizmo toolbar — styled by CLASS, not id, so specificity is driven by depth.
+   The ids stay on the elements (JS hooks via getElementById); CSS never selects them.
+   Key payoff: `.gizmo-tools .flyout` (0,2,0) out-specifies `.gizmo-tools button`
+   (0,1,1) on its own, so the side buttons size correctly without !important. */
+.gizmo-tools {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gizmo-tools button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 62px;
+  height: 54px;
+  padding: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #ccc;
+  background: #232329dd;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.gizmo-tools button span:first-child {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.gizmo-tools button:hover:not(:disabled) {
+  color: #fff;
+  background: #2f2f38ee;
+}
+
+.gizmo-tools button.active {
+  box-shadow: inset 0 0 0 1px #2f6fd0, inset 0 0 21px #2f6fd0cc;
+}
+.gizmo-tools button.active span:first-child {
+  color: #fff;
+}
+
+/* Active transform tool (move/rotate/scale — not space/local) glows cyan */
+.gizmo-tools .xform.active {
+  color: #aef3ff;
+}
+
+.gizmo-tools button.action:hover {
+  background: #2c4030ee;
+  border-color: #4a7a55;
+}
+.gizmo-tools button.danger:hover {
+  color: #fda;
+  background: #45252aee;
+  border-color: #8a4450;
+}
+.gizmo-tools button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.gizmo-tools .mode-group {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #232329dd;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.gizmo-tools .mode-group button {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+}
+
+.gizmo-tools .mode-group button + button {
+  border-top: 1px solid #3a3a44;
+}
+
+/* Isolate buttons fly out to the right of their row — Collision / Nav;
+   each shown only while its overlay is on (toggled in JS) */
+.collision-cluster {
+  position: relative;
+}
+.collision-cluster .flyout-top {
+  position: absolute;
+  top: 111px;
+  left: calc(100% + 8px);
+}
+.collision-cluster .flyout-bottom {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + 8px);
+}
+/* "Baked" sits beside "Isolate" on the Collision row — both are collision-isolation modes.
+    Isolate is 48px wide at left:100%+8px, so Baked starts 48+4px further right. */
+.collision-cluster .flyout-baked {
+  position: absolute;
+  top: 111px;
+  left: calc(100% + 8px + 52px);
+}
+
+/* "Uniform" flies out beside Scale (3rd of 4 in the column → top: 50%);
+   shown only in scale mode (toggled in JS) */
+.transform-cluster {
+  position: relative;
+}
+.transform-cluster .flyout-mid {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+}
+
+/* Fly-out side buttons are smaller than the main column. Two classes
+   (.gizmo-tools .flyout = 0,2,0) beat the .gizmo-tools button base (0,1,1)
+   on their own, so width/height land without !important. Dimmed till hover/active. */
+.gizmo-tools .flyout {
+  width: 48px;
+  height: 48px;
+  gap: 3px;
+  padding: 0 2px;
+  font-size: 11px;
+  opacity: 0.6;
+  transition: opacity 0.12s ease;
+}
+.gizmo-tools .flyout span:first-child {
+  font-size: 16px;
+}
+.gizmo-tools .flyout:hover:not(:disabled),
+.gizmo-tools .flyout.active {
+  opacity: 1;
+}
+.gizmo-tools .flyout:disabled {
+  opacity: 0.28;
+}
+
+.fps-counter {
+  position: absolute;
+  bottom: 12px;
+  right: 312px;
+  z-index: 90;
+  width: 170px;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  text-align: center;
+  color: #cfd6e6;
+  background: #232329dd;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.fps-counter b {
+  color: #fff;
+  font-weight: 700;
+}
+.fps-counter .sep {
+  display: inline-block;
+  padding: 0 9px;
+  color: #555562;
+}
+
+/* Hotkey bar — bottom-centre row of remembered objects; each chip stamps a fresh copy. */
+.hotkey-bar {
+  position: absolute;
+  bottom: 12px;
+  /* Centre within the VIEWPORT, not the page — shift left by half the 300px side panel. */
+  left: calc(50% - 150px);
+  transform: translateX(-50%);
+  z-index: 11;
+  display: flex;
+  gap: 7px;
+}
+.hotkey-bar[hidden] {
+  display: none;
+}
+.hotkey-chip {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  cursor: pointer;
+  color: #cfd6e6;
+  background: #2b2b33;
+  border: 1px solid #3f3f4a;
+  border-radius: 24px;
+}
+.hotkey-chip:hover {
+  color: #fff;
+  background: #34415c;
+  border-color: #5a7ab0;
+}
+.hotkey-chip .hk-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: #1a1a20;
+  overflow: hidden;
+}
+.hotkey-chip .hk-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.hotkey-chip .hk-thumb .material-symbols-outlined {
+  font-size: 26px;
+  color: #7f8aa3;
+}
+/* Name shown only on hover, as a floating label above the chip (bar sits at the bottom). */
+.hotkey-chip .hk-name {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  max-width: 160px;
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #e6e9f2;
+  background: #1b1b22;
+  border: 1px solid #3f3f4a;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 5;
+}
+.hotkey-chip:hover .hk-name {
+  display: block;
+}
+.hotkey-chip .hk-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  line-height: 1;
+  color: #fff;
+  background: #8a4450;
+  border: 1px solid #c0455a;
+  border-radius: 50%;
+}
+.hotkey-chip:hover .hk-remove {
+  display: flex;
+}
+.hotkey-chip .hk-remove:hover {
+  background: #c0455a;
+}
+
+/* Live transform readout that floats by the gizmo while dragging (left/top set in JS) */
+.transform-hud {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 15;
+  transform: translate(
+    -50%,
+    calc(-100% - 16px)
+  ); /* centre above the anchor point */
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  pointer-events: none;
+  white-space: nowrap;
+  color: #fff;
+  background: #232329ee;
+  border: 1px solid #3a3a44;
+  border-radius: 5px;
+  backdrop-filter: blur(4px);
+  user-select: none;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 3px 12px #000a;
+}
+/* display:flex above would override [hidden]'s display:none — restore it explicitly */
+.transform-hud[hidden] {
+  display: none;
+}
+.transform-hud .axis {
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #15151a;
+  color: #cfd6e6;
+}
+.transform-hud .axis.x {
+  color: #ff6a6a;
+}
+.transform-hud .axis.y {
+  color: #6aff8a;
+}
+.transform-hud .axis.z {
+  color: #6a9aff;
+}
+.transform-hud .val {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.transform-hud .snap-tag {
+  font-size: 11px;
+  color: #9ad;
+}

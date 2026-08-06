@@ -1,0 +1,39 @@
+/* Instant app tooltips (see core/tooltips.js). Fixed-position, on-demand element. */
+.app-tooltip {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  z-index: 10000;
+  max-width: 280px;
+  padding: 6px 9px;
+  font: 500 12px/1.4 Roboto, sans-serif;
+  color: #eef1f6;
+  background: #14161d;
+  border: 1px solid #3a3a44;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  white-space: normal;
+  pointer-events: none;          /* never intercept the mouse */
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.09s ease, transform 0.09s ease;
+}
+.app-tooltip.below { transform: translateY(-3px); }
+.app-tooltip.show { opacity: 1; transform: translateY(0); }
+
+/* Little caret pointing at the anchor (down when above, up when below). */
+.app-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+}
+.app-tooltip:not(.below)::after {
+  top: 100%;
+  border-top-color: #14161d;
+}
+.app-tooltip.below::after {
+  bottom: 100%;
+  border-bottom-color: #14161d;
+}

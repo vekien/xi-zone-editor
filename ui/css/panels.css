@@ -1,0 +1,2992 @@
+.panel select,
+.panel input {
+  height: 30px;
+}
+
+.panel {
+  flex-shrink: 0;
+  width: 300px;
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden; /* each list pane scrolls itself */
+  background: #1f1f1f;
+  background: linear-gradient(
+    90deg,
+    rgba(31, 31, 31, 1) 0%,
+    rgba(38, 38, 38, 1) 100%
+  );
+  border-left: 1px solid #000;
+  border-right: solid 1px #000;
+  z-index: 9888;                       /* above the full-screen framing crosshair, below app-loader */
+}
+
+/* ── Right-side vertical tabs (ZONE / OBJS / VFX / SFX / MKRS) ──
+   Floats over the viewport's right edge, mirroring .gizmo-tools on the left. */
+.side-tabs {
+  position: absolute;
+  top: 12px;
+  right: 312px; /* 12px gap left of the 300px panel (mirror of left:12px) */
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.side-tab {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: 700 14px/1 Roboto, sans-serif;
+  /* letter-spacing: .08em; */
+  color: #898989;
+  background: #232329dd;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+.side-tab .material-symbols-outlined {
+  font-size: 22px;
+}
+.side-tab:hover {
+  color: #fff;
+  background: #2f2f38ee;
+}
+.side-tab.active {
+  color: #fff;
+  border-color: #2f6fd0aa;
+  box-shadow: inset 0 0 0 1px #2f6fd0aa, inset 0 0 21px #2f6fd0aa;
+}
+
+/* Tab panes: only the active one shows, and it fills the panel height. */
+.tab-pane {
+  display: none;
+}
+.tab-pane.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: 15px;
+  padding-bottom: 20px;
+}
+.tab-pane[data-pane="zone"].active {
+  overflow-y: auto;
+  padding-right: 10px;
+  margin-right: -14px;
+}
+/* Zone pane scrolls: keep each section its natural height so tall content overflows
+   into the scrollbar instead of flex-shrinking children (e.g. the search box/results)
+   down to nothing. */
+.tab-pane[data-pane="zone"].active > * {
+  flex: 0 0 auto;
+}
+.list-pane .pane-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+.pane-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cdd2e0;
+}
+.pane-title span {
+  color: #8a8a96;
+  font-weight: 400;
+}
+.pane-title .pane-icon {
+  font-size: 15px;
+  vertical-align: middle;
+  line-height: 1;
+  color: inherit;
+}
+/* Event count drops to its own line under the "Events" title (it's long: "(N actors • N events)"). */
+.pane-title #evtcount {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+}
+.list-pane .section-actions {
+  margin-left: auto;
+}
+.list-pane input.list-search {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+}
+.panel-block {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #1a1a1f;
+  border-radius: 4px;
+}
+.panel-block-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: #9aa0b4;
+  text-transform: uppercase;
+}
+.panel-block-label .panel-block-icon {
+  font-size: 14px;
+  line-height: 1;
+  color: #82aaff;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.panel-block select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* TEXT tab — the auto-generated baked-GLB sub-list (collapsed + read-only by default). */
+.text-baked {
+  margin-top: 10px;
+  border-top: 1px solid #2a2a33;
+  padding-top: 6px;
+}
+.text-baked > summary {
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a8a96;
+  list-style: none;
+  user-select: none;
+  padding: 2px 0;
+}
+.text-baked > summary::-webkit-details-marker {
+  display: none;
+}
+.text-baked > summary::before {
+  content: "▸ ";
+  color: #6a6a78;
+}
+.text-baked[open] > summary::before {
+  content: "▾ ";
+}
+.text-baked > summary span {
+  color: #6a6a78;
+  font-weight: 400;
+}
+.text-baked-hint {
+  margin: 4px 0 6px;
+  font-size: 11px;
+  color: #6a6a78;
+  line-height: 1.4;
+}
+.text-baked #textbakedlist li {
+  opacity: 0.7;
+}
+
+/* SFX Play/Stop bar — under the SFX search box; acts on the selected sound emitter. */
+.sfx-playbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sfx-playbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 9px;
+  font: 600 11px/1 Roboto, sans-serif;
+  color: #cfcfd8;
+  background: #2a2a31;
+  border: 1px solid #44444f;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.sfx-playbar button .material-symbols-outlined {
+  font-size: 16px;
+}
+.sfx-playbar button:hover:not(:disabled) {
+  color: #fff;
+  background: #353541;
+}
+.sfx-playbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.sfx-playbar #sfx-play:not(:disabled) {
+  color: #6fd08a;
+  border-color: #3f7a52;
+}
+.sfx-playbar #sfx-play:not(:disabled):hover {
+  color: #fff;
+  background: #28323b;
+}
+.sfx-now {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #b9c0cf;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sfx-now:empty {
+  display: none;
+} /* no reserved gap when nothing is playing */
+.zone-info {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #aeb4c2;
+}
+.zone-info .section-title {
+  border-bottom: 1px solid #32323e;
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+.zone-info .zi-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 0;
+  border-bottom: 1px solid #2a2a31;
+}
+.zone-info .zi-k {
+  color: #8a8a96;
+}
+.zone-info .zi-v {
+  color: #d6dae6;
+  text-align: right;
+  word-break: break-all;
+}
+.zone-info .zi-copy {
+  cursor: pointer;
+  text-decoration: underline dotted #5a6a8a;
+}
+.zone-info .zi-copy:hover {
+  color: #7eb8f7;
+}
+
+/* ── ZONE tab: background-music player (zone_settings BGM) ──────────────────── */
+.zone-music {
+  font-size: 12px;
+  color: #aeb4c2;
+}
+.zone-music .bgm-select {
+  width: 100%;
+  box-sizing: border-box;
+}
+.zone-music .bgm-select:disabled {
+  opacity: 0.5;
+}
+.zone-music .bgm-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.zone-music .bgm-btn {
+  width: 32px;
+  height: 26px;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  background: #23232b;
+  color: #cdd2de;
+  cursor: pointer;
+  font-size: 12px;
+}
+.zone-music .bgm-btn:hover:not(:disabled) {
+  background: #2e2e38;
+  color: #7eb8f7;
+  border-color: #4a5a7a;
+}
+.zone-music .bgm-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.zone-music .bgm-btn.active {
+  color: #7ee0a0;
+  border-color: #3a6a4a;
+}
+.zone-music .bgm-time {
+  margin-left: auto;
+  color: #8a8a96;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.zone-music .bgm-seek {
+  width: 100%;
+  margin-top: 8px;
+  accent-color: #7eb8f7;
+  cursor: pointer;
+}
+.zone-music .bgm-seek:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.zone-music .bgm-now {
+  margin-top: 6px;
+  min-height: 14px;
+  color: #8a8a96;
+  font-size: 11px;
+  word-break: break-word;
+}
+.zone-music .bgm-msg {
+  color: #6a6a76;
+  font-style: italic;
+  padding: 3px 0;
+}
+.zone-music .bgm-manage {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid #3a5a7a;
+  border-radius: 4px;
+  background: #23323f;
+  color: #cfe3ff;
+  cursor: pointer;
+}
+.zone-music .bgm-manage:hover {
+  background: #2e4456;
+  border-color: #5a86b8;
+  color: #fff;
+}
+/* Music tab: player bar + per-slot dropdown rows */
+.zone-music .bgm-player {
+  padding: 10px 12px;
+  background: #1c1c24;
+  border: 1px solid #2c2c36;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.zone-music .bgm-now-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e6e9f2;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+.zone-music .bgm-player .bgm-controls {
+  margin-top: 0;
+}
+.zone-music .bgm-vol-ico {
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+}
+.zone-music .bgm-vol {
+  width: 54px;
+  accent-color: #7eb8f7;
+  cursor: pointer;
+}
+.zone-music .bgm-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.zone-music .bgm-slot-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.zone-music .bgm-slot-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.zone-music .bgm-slot-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #9aa0b4;
+}
+.zone-music .bgm-slot-select {
+  min-width: 0;
+  box-sizing: border-box;
+  background-color: #0d0e12;   /* longhand so the base select chevron survives */
+  color: #d6dae6;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.zone-music .bgm-slot-select.changed {
+  background-color: #1f2b3f;
+  color: #cfe0ff;
+}
+.zone-music .bgm-slot-play {
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  line-height: 1;
+  color: #cdd2e0;
+  background: #26262e;
+  border: 1px solid #3a3a46;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.zone-music .bgm-slot-play:hover {
+  color: #7eb8f7;
+  border-color: #4a5a7a;
+  background: #2e2e38;
+}
+
+/* ── ZONE tab: sub-areas (building interiors / shops linked to this zone) ───── */
+.zone-subareas {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #aeb4c2;
+}
+.zone-subareas .section-title #subarea-count {
+  color: #6a6a76;
+  font-weight: 400;
+}
+.subarea-strip-btn {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 11px;
+  background: #3a2a2a;
+  border-color: #5a3a3a;
+}
+.subarea-strip-btn:hover {
+  background: #4a3030;
+  border-color: #7a4a4a;
+  color: #fff;
+}
+.subarea-strip-btn.active {
+  background: #2f4030;
+  border-color: #5a7a4a;
+  color: #cfe;
+}
+.change-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #ccd;
+  border-bottom: 1px solid #2a2a33;
+}
+.change-strip-row .change-strip-undo {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: #ddd;
+  background: #30303a;
+  border: 1px solid #494956;
+  border-radius: 3px;
+}
+.change-strip-row .change-strip-undo:hover {
+  background: #3a4a66;
+  border-color: #5a7ab0;
+}
+.subarea-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.subarea-list .subarea-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  border-bottom: 1px solid #2a2a31;
+}
+.subarea-list .subarea-vis {
+  accent-color: #7eb8f7;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.subarea-list .subarea-vis:disabled {
+  cursor: default;
+}
+.subarea-list .subarea-id {
+  color: #d6dae6;
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.subarea-list .subarea-dat {
+  color: #8a8a96;
+  font-size: 11px;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+.subarea-list .subarea-dat-link {
+  cursor: pointer;
+}
+.subarea-list .subarea-dat-link:hover {
+  color: #7eb8f7;
+  text-decoration: underline;
+}
+.subarea-list .subarea-focus {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  background: #23232b;
+  color: #cdd2de;
+  cursor: pointer;
+}
+.subarea-list .subarea-focus:hover:not(:disabled) {
+  background: #2e2e38;
+  color: #7eb8f7;
+  border-color: #4a5a7a;
+}
+.subarea-list .subarea-focus:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+/* Parent-zone backlink (shown when the open DAT is itself a building interior) */
+.subarea-parent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  background: #23262f;
+  border: 1px solid #34384a;
+  border-left: 3px solid #5a7ab0;
+  border-radius: 4px;
+}
+.subarea-parent .subarea-parent-label {
+  font-size: 12px;
+  color: #aeb4c2;
+  min-width: 0;
+}
+.subarea-parent .subarea-parent-label b {
+  color: #d6dae6;
+}
+.subarea-parent .subarea-parent-dat {
+  color: #8a8a96;
+  font-size: 11px;
+}
+.subarea-parent .subarea-parent-load {
+  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #cfe3ff;
+  background: #2b3a4f;
+  border: 1px solid #3a5a7a;
+  border-radius: 4px;
+}
+.subarea-parent .subarea-parent-load:hover {
+  background: #34506e;
+  border-color: #5a86b8;
+  color: #fff;
+}
+
+/* ── Manage Zone Music modal ──────────────────────────────────────────────── */
+.zmm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+.zmm-box {
+  width: min(440px, calc(100vw - 40px));
+  background: #1b1b22;
+  border: 1px solid #34343e;
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+.zmm-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #20202a;
+  border-bottom: 1px solid #2a2a31;
+}
+.zmm-title {
+  color: #d6dae6;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.zmm-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.zmm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #aeb4c2;
+  font-size: 12px;
+}
+.zmm-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #18181e;
+  color: #ddd;
+  border: 1px solid #38383f;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.zmm-row {
+  justify-content: space-between;
+}
+.zmm-row > select {
+  flex: 0 1 260px;
+}
+.zmm-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid #2a2a31;
+}
+.zmm-status {
+  color: #8a8a96;
+  font-size: 11px;
+}
+.zmm-save {
+  padding: 6px 14px;
+  font-size: 12px;
+  border: 1px solid #3a6a4a;
+  border-radius: 4px;
+  background: #23402e;
+  color: #cfead8;
+  cursor: pointer;
+}
+.zmm-save:hover {
+  background: #2c5239;
+  border-color: #4a8a5f;
+  color: #fff;
+}
+
+/* Zone panel label alignment */
+.tab-pane[data-pane="zone"] .row label {
+  flex: 0 0 72px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: #8a8a96;
+}
+.tab-pane[data-pane="zone"] .row select,
+.tab-pane[data-pane="zone"] .row input[type="text"] {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Zone search results list */
+.zone-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+}
+.zone-search-results:empty {
+  display: none;
+}
+.zsr-item {
+  padding: 5px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #d6dae6;
+  border-bottom: 1px solid #1e1e24;
+}
+.zsr-item:last-child {
+  border-bottom: none;
+}
+.zsr-item:hover {
+  background: #2a3a56;
+  color: #fff;
+}
+
+/* Pinned zones quick-switch list (above the zone dropdown). */
+.pinned-zones-label::before {
+  content: "push_pin";
+  font-family: "Material Symbols Outlined";
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  color: #82aaff;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+}
+.pinned-zones {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #1c1c22;
+}
+.pz-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #d6dae6;
+  border-bottom: 1px solid #24242c;
+}
+.pz-item:last-child {
+  border-bottom: none;
+}
+.pz-item:hover {
+  background: #2a3a56;
+  color: #fff;
+}
+.pz-item.active {
+  background: #1f3357;
+  color: #fff;
+  box-shadow: inset 2px 0 0 #5a7ab0;
+}
+.pz-item .pz-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pz-item .pz-unpin {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  line-height: 14px;
+  font-size: 13px;
+  color: #8a8a96;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+}
+.pz-item:hover .pz-unpin {
+  opacity: 1;
+}
+.pz-item .pz-unpin:hover {
+  color: #fff;
+  background: #6b3030;
+}
+
+/* Project Zones — zones with edits in the active project (mirrors Pinned Zones) */
+.project-zones-label::before {
+  content: "layers";
+  font-family: "Material Symbols Outlined";
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  color: #82d4a0;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+}
+.project-zones {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #1c1c22;
+}
+.pz-item .pz-count {
+  flex-shrink: 0;
+  min-width: 16px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: #cdd6e8;
+  background: #2c3550;
+  border-radius: 8px;
+}
+.pz-item .pz-remove {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  line-height: 14px;
+  font-size: 13px;
+  color: #8a8a96;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+}
+.pz-item:hover .pz-remove {
+  opacity: 1;
+}
+.pz-item .pz-remove:hover {
+  color: #fff;
+  background: #6b3030;
+}
+
+/* Persistent selection + status bars, above/below the swappable tab content */
+.panel > #selection {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+.panel > #status {
+  flex: 0 0 auto;
+  margin-top: 10px;
+}
+.panel[data-active-tab="zone"] > #selection,
+.panel[data-active-tab="zone"] > #selection-transform {
+  display: none;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #34343c;
+}
+.logo img {
+  max-width: 100%;
+  max-height: 40px;
+  object-fit: contain;
+}
+.panel h2 {
+  margin: 18px 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #8a8a96;
+  text-transform: uppercase;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: #8a8a96;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.section-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.section-title button {
+  padding: 2px 7px;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ddd;
+  text-transform: uppercase;
+  background: #30303a;
+  border: 1px solid #494956;
+  border-radius: 4px;
+}
+.section-title button:hover {
+  color: #fff;
+  background: #3a4a66;
+  border-color: #5a7ab0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.row label {
+  color: #8a8a96;
+}
+.load-btn {
+  flex-shrink: 0;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.load-btn:hover {
+  color: #fff;
+  background: #3a4a66;
+}
+.zone-hd-bar .load-btn {
+  flex: 1;
+}
+.hd-na {
+  flex: 1;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #777;
+  text-align: center;
+  background: #26262e;
+  border: 1px dashed #44444f;
+  border-radius: 4px;
+}
+.mode-menu button[data-mode="hd"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.status {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #9ad;
+  background: #1d1d23;
+  border-radius: 4px;
+}
+.status.error {
+  color: #f88;
+}
+/* ── General-purpose key-value table ──────────────────────────────────── */
+.kv {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 11px;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  word-break: break-all;
+}
+.kv .k {
+  color: #888;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  text-transform: lowercase;
+}
+
+.selection {
+  position: relative;
+  padding: 8px 12px;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  word-break: break-all;
+}
+.selection .sel-multi {
+  color: #888;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.selection .name-in {
+  height: 30px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+.selection .name-in:hover:not(:disabled) {
+  border-color: #3a3a44;
+  background: #222229;
+}
+.selection .name-in:focus {
+  border-color: #5aa37a;
+  background: #131318;
+  color: #ffe9c8;
+  outline: none;
+}
+.selection .name-in:disabled {
+  opacity: 0.8;
+}
+.selection .lock-icon {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  font-size: 14px;
+  line-height: 1;
+}
+.selection-transform {
+  padding: 8px 12px;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  font-size: 11px;
+}
+.selection-transform:empty {
+  display: none;
+}
+.objlist,
+.vfxlist,
+.markerlist,
+.soundlist,
+.moblist,
+.colslist,
+.textlist,
+.textbakedlist {
+  padding: 0;
+  margin: 6px 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.objlist,
+.vfxlist,
+.markerlist,
+.soundlist,
+.moblist,
+.colslist,
+.textlist {
+  max-height: 26vh;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+}
+.vfxlist,
+.markerlist,
+.soundlist,
+.moblist,
+.colslist,
+.textlist {
+  max-height: 22vh;
+}
+/* In the tabbed layout the active list fills the panel height instead of a vh cap. */
+.list-pane #objlist,
+.list-pane #vfxlist,
+.list-pane #soundlist,
+.list-pane #markerlist,
+.list-pane #moblist,
+.list-pane #colslist,
+.list-pane #textlist {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+}
+.objlist li,
+.vfxlist li,
+.markerlist li,
+.soundlist li,
+.moblist li,
+.colslist li,
+.textlist li,
+.textbakedlist li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #26262c;
+  list-style: none;
+}
+.objlist li input.vis,
+.vfxlist li input.vis,
+.markerlist li input.vis,
+.soundlist li input.vis,
+.moblist li input.vis,
+.colslist li input.vis,
+.textlist li input.vis,
+.textbakedlist li input.vis {
+  flex-shrink: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.objlist li .obj-name,
+.vfxlist li .obj-name,
+.markerlist li .obj-name,
+.soundlist li .obj-name,
+.moblist li .obj-name,
+.colslist li .obj-name,
+.textlist li .obj-name,
+.textbakedlist li .obj-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.objlist li:hover,
+.vfxlist li:hover,
+.markerlist li:hover,
+.soundlist li:hover,
+.moblist li:hover,
+.colslist li:hover,
+.textlist li:hover,
+.textbakedlist li:hover {
+  background: #2c2c34;
+}
+.objlist li.sel,
+.vfxlist li.sel,
+.markerlist li.sel,
+.soundlist li.sel,
+.moblist li.sel,
+.colslist li.sel,
+.textlist li.sel {
+  color: #fff;
+  background: #3a4a66;
+}
+.objlist li.locked .obj-name,
+.vfxlist li.locked .obj-name,
+.markerlist li.locked .obj-name,
+.soundlist li.locked .obj-name,
+.moblist li.locked .obj-name,
+.colslist li.locked .obj-name,
+.textlist li.locked .obj-name {
+  color: #8f96a8;
+  font-style: italic;
+}
+.objlist li .group-dot,
+.vfxlist li .group-dot,
+.markerlist li .group-dot,
+.soundlist li .group-dot,
+.moblist li .group-dot,
+.colslist li .group-dot,
+.textlist li .group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.rt-badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #a0b0c8;
+  background: #1e2a3a;
+  border: 1px solid #3a5070;
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1.4;
+  cursor: default;
+}
+
+/* List category section headers — collapsible "▾ NAME ──────── (n)" spacers (all lists).
+   Enumerated per-list so each rule out-specifies the id-scoped "#<list> li" row styling above. */
+.objlist li.cat-header,
+.vfxlist li.cat-header,
+.soundlist li.cat-header,
+.markerlist li.cat-header,
+.moblist li.cat-header,
+.colslist li.cat-header,
+.textlist li.cat-header,
+.skylist li.cat-header {
+  gap: 6px;
+  padding: 9px 8px 4px;
+  border-bottom: none;
+  cursor: pointer;
+  user-select: none;
+}
+.objlist li.cat-header:first-child,
+.vfxlist li.cat-header:first-child,
+.soundlist li.cat-header:first-child,
+.markerlist li.cat-header:first-child,
+.moblist li.cat-header:first-child,
+.colslist li.cat-header:first-child,
+.textlist li.cat-header:first-child,
+.skylist li.cat-header:first-child {
+  padding-top: 4px;
+}
+.objlist li.cat-header:hover,
+.vfxlist li.cat-header:hover,
+.soundlist li.cat-header:hover,
+.markerlist li.cat-header:hover,
+.moblist li.cat-header:hover,
+.colslist li.cat-header:hover,
+.textlist li.cat-header:hover,
+.skylist li.cat-header:hover {
+  background: transparent;
+}
+.objlist li.cat-header:hover .cat-name,
+.vfxlist li.cat-header:hover .cat-name,
+.soundlist li.cat-header:hover .cat-name,
+.markerlist li.cat-header:hover .cat-name,
+.moblist li.cat-header:hover .cat-name,
+.colslist li.cat-header:hover .cat-name,
+.textlist li.cat-header:hover .cat-name,
+.skylist li.cat-header:hover .cat-name {
+  color: #aab2c6;
+}
+.objlist li.cat-header:hover .cat-caret,
+.vfxlist li.cat-header:hover .cat-caret,
+.soundlist li.cat-header:hover .cat-caret,
+.markerlist li.cat-header:hover .cat-caret,
+.moblist li.cat-header:hover .cat-caret,
+.colslist li.cat-header:hover .cat-caret,
+.textlist li.cat-header:hover .cat-caret,
+.skylist li.cat-header:hover .cat-caret {
+  color: #aab2c6;
+}
+.cat-header .cat-caret {
+  flex-shrink: 0;
+  width: 14px;
+  font-size: 17px;
+  line-height: 1;
+  color: #6c7385;
+  text-align: center;
+}
+.cat-header .cat-name {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8cbbfb;
+}
+.cat-header .cat-line {
+  flex: 1;
+  height: 0;
+  border-top: 1px dashed #3a3f4c;
+}
+.cat-header .cat-count {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #5d6475;
+}
+.cat-header.collapsed .cat-name {
+  color: #6a7080;
+}
+
+/* Google Material Symbols — the Fonts CSS link only ships the @font-face, so the utility class lives here */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+}
+
+.cols-tris {
+  font-size: 11px;
+  color: #8a8a96;
+  margin: 2px 0 8px;
+}
+.cols-add-btns {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.cols-add-btns button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 4px;
+  font-size: 12px;
+  color: #ccc;
+  background: #1e1e26;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cols-add-btns button:hover {
+  color: #fff;
+  background: #2a2a36;
+  border-color: #cc2222;
+}
+.cols-add-btns button span {
+  font-size: 18px;
+  color: #cc3333;
+}
+/* Sky list reuses the shared list styling */
+.skylist {
+  max-height: 26vh;
+  padding: 0;
+  margin: 6px 0 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+}
+.list-pane #skylist {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+}
+.skylist li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #26262c;
+}
+.skylist li input.vis {
+  flex-shrink: 0;
+  margin: 0;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #4f6f9f;
+}
+.skylist li .obj-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.skylist li:hover {
+  background: #2c2c34;
+}
+.skylist li.sel {
+  color: #fff;
+  background: #3a4a66;
+}
+#row-context-menu,
+.row-context-menu {
+  position: fixed;
+  z-index: 10000;
+  display: none;
+  width: 220px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px #000000ab;
+  background: linear-gradient(
+    270deg,
+    rgba(56, 56, 56, 1) 0%,
+    rgba(48, 48, 48, 1) 100%
+  );
+  padding: 8px 0;
+}
+#row-context-menu.open,
+.row-context-menu.open {
+  display: block;
+}
+#row-context-menu button,
+.row-context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #ddd;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
+}
+#row-context-menu .ctx-ico,
+.row-context-menu .ctx-ico {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+#row-context-menu button:hover,
+.row-context-menu button:hover {
+  color: #fff;
+  background: #34415c;
+  box-shadow: inset 0 0 0 1px #2f6fd0aa, inset 0 0 21px #2f6fd0aa;
+}
+#row-context-menu .divider,
+.row-context-menu .divider {
+  height: 1px;
+  margin: 3px 0;
+  background: #4e4e4e;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  color: #cdd2e0;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.check:hover { color: #eef1f8; }
+.check.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.swatch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  color: #cdd2e0;
+}
+.swatch-row button {
+  padding: 6px 11px;
+  font-size: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #aab1c2;
+  text-transform: uppercase;
+  background: #1a1b21;
+  border: 1px solid #33343d;
+  border-radius: 7px;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.swatch-row button:hover {
+  color: #eef1f8;
+  background: #20222b;
+  border-color: #454652;
+}
+input[type="color"].swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid #3a3b45;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+input[type="color"].swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 2px;
+}
+input[type="color"].swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+input[type="color"].swatch::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+.setting-row {
+  display: grid;
+  grid-template-columns: 120px 36px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin: 9px 0 0;
+  color: #cdd2e0;
+}
+.setting-row span {
+  color: #7fd6e6;
+  text-align: right;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.setting-row input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: #7fd6e6;
+}
+.setting-row input[type="number"] {
+  width: 70px;
+}
+.setting-row.wide {
+  grid-template-columns: 120px 1fr;
+}
+.setting-row.wide input[type="number"],
+.setting-row.wide input[type="text"],
+.setting-row.wide input[type="password"] {
+  width: 100%;
+}
+/* DB password is a CSS-masked text field (not type=password) so Chrome's password manager ignores it — no save prompt / autofill / key icon */
+.setting-row.wide input.masked {
+  -webkit-text-security: disc;
+}
+.spane-database .setting-row.wide {
+  grid-template-columns: 80px 1fr;
+}
+.dev-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 9px 0 0;
+  color: #bbb;
+}
+.dev-range-row .dev-label {
+  flex: 0 0 110px;
+  font-size: 14px;
+}
+.dev-range-row .dev-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dev-range-row input[type="number"] {
+  width: 76px;
+  padding: 4px 7px;
+  font-size: 13px;
+  color: #ddd;
+  background: #1a1a1f;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+}
+.dev-range-row input[type="number"]:focus {
+  border-color: #6a5a28;
+  outline: none;
+}
+.dev-range-row .dev-dash {
+  color: #555;
+  font-size: 14px;
+}
+.settings-head {
+  margin: 14px 0 5px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #2b2b35;
+  color: #7fd6e6;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.check input[type="checkbox"],
+.objlist li input.vis,
+.vfxlist li input.vis,
+.markerlist li input.vis,
+.soundlist li input.vis,
+.moblist li input.vis,
+.colslist li input.vis,
+.textlist li input.vis,
+.textbakedlist li input.vis {
+  width: 16px;
+  height: 16px;
+  margin-left: 0;
+  accent-color: #4f6f9f;
+  color-scheme: dark;
+}
+/* Settings checkboxes pick up the premium accent (side-panel list checkboxes stay muted). */
+.settings-content .check input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #82aaff;
+}
+.panel select,
+.panel input {
+  height: 30px;
+}
+
+.panel {
+  flex-shrink: 0;
+  width: 300px;
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden; /* each list pane scrolls itself */
+  background: #1f1f1f;
+  background: linear-gradient(
+    90deg,
+    rgba(31, 31, 31, 1) 0%,
+    rgba(38, 38, 38, 1) 100%
+  );
+  border-left: 1px solid #000;
+  border-right: solid 1px #000;
+  z-index: 9888;                       /* above the full-screen framing crosshair, below app-loader */
+}
+
+/* ── Right-side vertical tabs (ZONE / OBJS / VFX / SFX / MKRS) ──
+   Floats over the viewport's right edge, mirroring .gizmo-tools on the left. */
+.side-tabs {
+  position: absolute;
+  top: 12px;
+  right: 312px; /* 12px gap left of the 300px panel (mirror of left:12px) */
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.side-tab {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: 700 14px/1 Roboto, sans-serif;
+  /* letter-spacing: .08em; */
+  color: #898989;
+  background: #232329dd;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+.side-tab .material-symbols-outlined {
+  font-size: 22px;
+}
+.side-tab:hover {
+  color: #fff;
+  background: #2f2f38ee;
+}
+.side-tab.active {
+  color: #fff;
+  border-color: #2f6fd0aa;
+  box-shadow: inset 0 0 0 1px #2f6fd0aa, inset 0 0 21px #2f6fd0aa;
+}
+
+/* Tab panes: only the active one shows, and it fills the panel height. */
+.tab-pane {
+  display: none;
+}
+.tab-pane.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: 15px;
+  padding-bottom: 20px;
+}
+.tab-pane[data-pane="zone"].active {
+  overflow-y: auto;
+  padding-right: 10px;
+  margin-right: -14px;
+}
+/* Zone pane scrolls: keep each section its natural height so tall content overflows
+   into the scrollbar instead of flex-shrinking children (e.g. the search box/results)
+   down to nothing. */
+.tab-pane[data-pane="zone"].active > * {
+  flex: 0 0 auto;
+}
+.list-pane .pane-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+.pane-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cdd2e0;
+}
+.pane-title span {
+  color: #8a8a96;
+  font-weight: 400;
+}
+.pane-title .pane-icon {
+  font-size: 15px;
+  vertical-align: middle;
+  line-height: 1;
+  color: inherit;
+}
+/* Event count drops to its own line under the "Events" title (it's long: "(N actors • N events)"). */
+.pane-title #evtcount {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+}
+.list-pane .section-actions {
+  margin-left: auto;
+}
+.list-pane input.list-search {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+}
+.panel-block {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #1a1a1f;
+  border-radius: 4px;
+}
+.panel-block-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: #9aa0b4;
+  text-transform: uppercase;
+}
+.panel-block-label .panel-block-icon {
+  font-size: 14px;
+  line-height: 1;
+  color: #82aaff;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.panel-block select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* TEXT tab — the auto-generated baked-GLB sub-list (collapsed + read-only by default). */
+.text-baked {
+  margin-top: 10px;
+  border-top: 1px solid #2a2a33;
+  padding-top: 6px;
+}
+.text-baked > summary {
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a8a96;
+  list-style: none;
+  user-select: none;
+  padding: 2px 0;
+}
+.text-baked > summary::-webkit-details-marker {
+  display: none;
+}
+.text-baked > summary::before {
+  content: "▸ ";
+  color: #6a6a78;
+}
+.text-baked[open] > summary::before {
+  content: "▾ ";
+}
+.text-baked > summary span {
+  color: #6a6a78;
+  font-weight: 400;
+}
+.text-baked-hint {
+  margin: 4px 0 6px;
+  font-size: 11px;
+  color: #6a6a78;
+  line-height: 1.4;
+}
+.text-baked #textbakedlist li {
+  opacity: 0.7;
+}
+
+/* SFX Play/Stop bar — under the SFX search box; acts on the selected sound emitter. */
+.sfx-playbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sfx-playbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 9px;
+  font: 600 11px/1 Roboto, sans-serif;
+  color: #cfcfd8;
+  background: #2a2a31;
+  border: 1px solid #44444f;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.sfx-playbar button .material-symbols-outlined {
+  font-size: 16px;
+}
+.sfx-playbar button:hover:not(:disabled) {
+  color: #fff;
+  background: #353541;
+}
+.sfx-playbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.sfx-playbar #sfx-play:not(:disabled) {
+  color: #6fd08a;
+  border-color: #3f7a52;
+}
+.sfx-playbar #sfx-play:not(:disabled):hover {
+  color: #fff;
+  background: #28323b;
+}
+.sfx-now {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #b9c0cf;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sfx-now:empty {
+  display: none;
+} /* no reserved gap when nothing is playing */
+.zone-info {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #aeb4c2;
+}
+.zone-info .section-title {
+  border-bottom: 1px solid #32323e;
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+.zone-info .zi-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 0;
+  border-bottom: 1px solid #2a2a31;
+}
+.zone-info .zi-k {
+  color: #8a8a96;
+}
+.zone-info .zi-v {
+  color: #d6dae6;
+  text-align: right;
+  word-break: break-all;
+}
+.zone-info .zi-copy {
+  cursor: pointer;
+  text-decoration: underline dotted #5a6a8a;
+}
+.zone-info .zi-copy:hover {
+  color: #7eb8f7;
+}
+
+/* ── ZONE tab: background-music player (zone_settings BGM) ──────────────────── */
+.zone-music {
+  font-size: 12px;
+  color: #aeb4c2;
+}
+.zone-music .bgm-select {
+  width: 100%;
+  box-sizing: border-box;
+}
+.zone-music .bgm-select:disabled {
+  opacity: 0.5;
+}
+.zone-music .bgm-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.zone-music .bgm-btn {
+  width: 32px;
+  height: 26px;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  background: #23232b;
+  color: #cdd2de;
+  cursor: pointer;
+  font-size: 12px;
+}
+.zone-music .bgm-btn:hover:not(:disabled) {
+  background: #2e2e38;
+  color: #7eb8f7;
+  border-color: #4a5a7a;
+}
+.zone-music .bgm-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.zone-music .bgm-btn.active {
+  color: #7ee0a0;
+  border-color: #3a6a4a;
+}
+.zone-music .bgm-time {
+  margin-left: auto;
+  color: #8a8a96;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.zone-music .bgm-seek {
+  width: 100%;
+  margin-top: 8px;
+  accent-color: #7eb8f7;
+  cursor: pointer;
+}
+.zone-music .bgm-seek:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.zone-music .bgm-now {
+  margin-top: 6px;
+  min-height: 14px;
+  color: #8a8a96;
+  font-size: 11px;
+  word-break: break-word;
+}
+.zone-music .bgm-msg {
+  color: #6a6a76;
+  font-style: italic;
+  padding: 3px 0;
+}
+.zone-music .bgm-manage {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid #3a5a7a;
+  border-radius: 4px;
+  background: #23323f;
+  color: #cfe3ff;
+  cursor: pointer;
+}
+.zone-music .bgm-manage:hover {
+  background: #2e4456;
+  border-color: #5a86b8;
+  color: #fff;
+}
+/* Music tab: player bar + per-slot dropdown rows */
+.zone-music .bgm-player {
+  padding: 10px 12px;
+  background: #1c1c24;
+  border: 1px solid #2c2c36;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.zone-music .bgm-now-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e6e9f2;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+.zone-music .bgm-player .bgm-controls {
+  margin-top: 0;
+}
+.zone-music .bgm-vol-ico {
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+}
+.zone-music .bgm-vol {
+  width: 54px;
+  accent-color: #7eb8f7;
+  cursor: pointer;
+}
+.zone-music .bgm-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.zone-music .bgm-slot-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.zone-music .bgm-slot-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.zone-music .bgm-slot-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #9aa0b4;
+}
+.zone-music .bgm-slot-select {
+  min-width: 0;
+  box-sizing: border-box;
+  background-color: #0d0e12;   /* longhand so the base select chevron survives */
+  color: #d6dae6;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.zone-music .bgm-slot-select.changed {
+  background-color: #1f2b3f;
+  color: #cfe0ff;
+}
+.zone-music .bgm-slot-play {
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  line-height: 1;
+  color: #cdd2e0;
+  background: #26262e;
+  border: 1px solid #3a3a46;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.zone-music .bgm-slot-play:hover {
+  color: #7eb8f7;
+  border-color: #4a5a7a;
+  background: #2e2e38;
+}
+
+/* ── ZONE tab: sub-areas (building interiors / shops linked to this zone) ───── */
+.zone-subareas {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #aeb4c2;
+}
+.zone-subareas .section-title #subarea-count {
+  color: #6a6a76;
+  font-weight: 400;
+}
+.subarea-strip-btn {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 11px;
+  background: #3a2a2a;
+  border-color: #5a3a3a;
+}
+.subarea-strip-btn:hover {
+  background: #4a3030;
+  border-color: #7a4a4a;
+  color: #fff;
+}
+.subarea-strip-btn.active {
+  background: #2f4030;
+  border-color: #5a7a4a;
+  color: #cfe;
+}
+.change-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #ccd;
+  border-bottom: 1px solid #2a2a33;
+}
+.change-strip-row .change-strip-undo {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: #ddd;
+  background: #30303a;
+  border: 1px solid #494956;
+  border-radius: 3px;
+}
+.change-strip-row .change-strip-undo:hover {
+  background: #3a4a66;
+  border-color: #5a7ab0;
+}
+.subarea-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.subarea-list .subarea-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  border-bottom: 1px solid #2a2a31;
+}
+.subarea-list .subarea-vis {
+  accent-color: #7eb8f7;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.subarea-list .subarea-vis:disabled {
+  cursor: default;
+}
+.subarea-list .subarea-id {
+  color: #d6dae6;
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.subarea-list .subarea-dat {
+  color: #8a8a96;
+  font-size: 11px;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+.subarea-list .subarea-dat-link {
+  cursor: pointer;
+}
+.subarea-list .subarea-dat-link:hover {
+  color: #7eb8f7;
+  text-decoration: underline;
+}
+.subarea-list .subarea-focus {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  background: #23232b;
+  color: #cdd2de;
+  cursor: pointer;
+}
+.subarea-list .subarea-focus:hover:not(:disabled) {
+  background: #2e2e38;
+  color: #7eb8f7;
+  border-color: #4a5a7a;
+}
+.subarea-list .subarea-focus:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+/* Parent-zone backlink (shown when the open DAT is itself a building interior) */
+.subarea-parent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  background: #23262f;
+  border: 1px solid #34384a;
+  border-left: 3px solid #5a7ab0;
+  border-radius: 4px;
+}
+.subarea-parent .subarea-parent-label {
+  font-size: 12px;
+  color: #aeb4c2;
+  min-width: 0;
+}
+.subarea-parent .subarea-parent-label b {
+  color: #d6dae6;
+}
+.subarea-parent .subarea-parent-dat {
+  color: #8a8a96;
+  font-size: 11px;
+}
+.subarea-parent .subarea-parent-load {
+  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #cfe3ff;
+  background: #2b3a4f;
+  border: 1px solid #3a5a7a;
+  border-radius: 4px;
+}
+.subarea-parent .subarea-parent-load:hover {
+  background: #34506e;
+  border-color: #5a86b8;
+  color: #fff;
+}
+
+/* ── Manage Zone Music modal ──────────────────────────────────────────────── */
+.zmm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+.zmm-box {
+  width: min(440px, calc(100vw - 40px));
+  background: #1b1b22;
+  border: 1px solid #34343e;
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+.zmm-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #20202a;
+  border-bottom: 1px solid #2a2a31;
+}
+.zmm-title {
+  color: #d6dae6;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.zmm-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.zmm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #aeb4c2;
+  font-size: 12px;
+}
+.zmm-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #18181e;
+  color: #ddd;
+  border: 1px solid #38383f;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.zmm-row {
+  justify-content: space-between;
+}
+.zmm-row > select {
+  flex: 0 1 260px;
+}
+.zmm-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid #2a2a31;
+}
+.zmm-status {
+  color: #8a8a96;
+  font-size: 11px;
+}
+.zmm-save {
+  padding: 6px 14px;
+  font-size: 12px;
+  border: 1px solid #3a6a4a;
+  border-radius: 4px;
+  background: #23402e;
+  color: #cfead8;
+  cursor: pointer;
+}
+.zmm-save:hover {
+  background: #2c5239;
+  border-color: #4a8a5f;
+  color: #fff;
+}
+
+/* Zone panel label alignment */
+.tab-pane[data-pane="zone"] .row label {
+  flex: 0 0 72px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: #8a8a96;
+}
+.tab-pane[data-pane="zone"] .row select,
+.tab-pane[data-pane="zone"] .row input[type="text"] {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Zone search results list */
+.zone-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+}
+.zone-search-results:empty {
+  display: none;
+}
+.zsr-item {
+  padding: 5px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #d6dae6;
+  border-bottom: 1px solid #1e1e24;
+}
+.zsr-item:last-child {
+  border-bottom: none;
+}
+.zsr-item:hover {
+  background: #2a3a56;
+  color: #fff;
+}
+
+/* Pinned zones quick-switch list (above the zone dropdown). */
+.pinned-zones-label::before {
+  content: "push_pin";
+  font-family: "Material Symbols Outlined";
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  color: #82aaff;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+}
+.pinned-zones {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #1c1c22;
+}
+.pz-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #d6dae6;
+  border-bottom: 1px solid #24242c;
+}
+.pz-item:last-child {
+  border-bottom: none;
+}
+.pz-item:hover {
+  background: #2a3a56;
+  color: #fff;
+}
+.pz-item.active {
+  background: #1f3357;
+  color: #fff;
+  box-shadow: inset 2px 0 0 #5a7ab0;
+}
+.pz-item .pz-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pz-item .pz-unpin {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  line-height: 14px;
+  font-size: 13px;
+  color: #8a8a96;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+}
+.pz-item:hover .pz-unpin {
+  opacity: 1;
+}
+.pz-item .pz-unpin:hover {
+  color: #fff;
+  background: #6b3030;
+}
+
+/* Project Zones — zones with edits in the active project (mirrors Pinned Zones) */
+.project-zones-label::before {
+  content: "layers";
+  font-family: "Material Symbols Outlined";
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  color: #82d4a0;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+}
+.project-zones {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #1c1c22;
+}
+.pz-item .pz-count {
+  flex-shrink: 0;
+  min-width: 16px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: #cdd6e8;
+  background: #2c3550;
+  border-radius: 8px;
+}
+.pz-item .pz-remove {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  line-height: 14px;
+  font-size: 13px;
+  color: #8a8a96;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+}
+.pz-item:hover .pz-remove {
+  opacity: 1;
+}
+.pz-item .pz-remove:hover {
+  color: #fff;
+  background: #6b3030;
+}
+
+/* Persistent selection + status bars, above/below the swappable tab content */
+.panel > #selection {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+.panel > #status {
+  flex: 0 0 auto;
+  margin-top: 10px;
+}
+.panel[data-active-tab="zone"] > #selection,
+.panel[data-active-tab="zone"] > #selection-transform {
+  display: none;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #34343c;
+}
+.logo img {
+  max-width: 100%;
+  max-height: 40px;
+  object-fit: contain;
+}
+.panel h2 {
+  margin: 18px 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #8a8a96;
+  text-transform: uppercase;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: #8a8a96;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.section-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.section-title button {
+  padding: 2px 7px;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ddd;
+  text-transform: uppercase;
+  background: #30303a;
+  border: 1px solid #494956;
+  border-radius: 4px;
+}
+.section-title button:hover {
+  color: #fff;
+  background: #3a4a66;
+  border-color: #5a7ab0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.row label {
+  color: #8a8a96;
+}
+.load-btn {
+  flex-shrink: 0;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.load-btn:hover {
+  color: #fff;
+  background: #3a4a66;
+}
+.zone-hd-bar .load-btn {
+  flex: 1;
+}
+.hd-na {
+  flex: 1;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #777;
+  text-align: center;
+  background: #26262e;
+  border: 1px dashed #44444f;
+  border-radius: 4px;
+}
+.mode-menu button[data-mode="hd"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.status {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #9ad;
+  background: #1d1d23;
+  border-radius: 4px;
+}
+.status.error {
+  color: #f88;
+}
+/* ── General-purpose key-value table ──────────────────────────────────── */
+.kv {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 11px;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  word-break: break-all;
+}
+.kv .k {
+  color: #888;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  text-transform: lowercase;
+}
+
+.selection {
+  position: relative;
+  padding: 8px 12px;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  word-break: break-all;
+}
+.selection .sel-multi {
+  color: #888;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.selection .name-in {
+  height: 30px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+.selection .name-in:hover:not(:disabled) {
+  border-color: #3a3a44;
+  background: #222229;
+}
+.selection .name-in:focus {
+  border-color: #5aa37a;
+  background: #131318;
+  color: #ffe9c8;
+  outline: none;
+}
+.selection .name-in:disabled {
+  opacity: 0.8;
+}
+.selection .lock-icon {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  font-size: 14px;
+  line-height: 1;
+}
+.selection-transform {
+  padding: 8px 12px;
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  font-size: 11px;
+}
+.selection-transform:empty {
+  display: none;
+}
+.objlist,
+.vfxlist,
+.markerlist,
+.soundlist,
+.moblist,
+.colslist,
+.textlist,
+.textbakedlist {
+  padding: 0;
+  margin: 6px 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.objlist,
+.vfxlist,
+.markerlist,
+.soundlist,
+.moblist,
+.colslist,
+.textlist {
+  max-height: 26vh;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+}
+.vfxlist,
+.markerlist,
+.soundlist,
+.moblist,
+.colslist,
+.textlist {
+  max-height: 22vh;
+}
+/* In the tabbed layout the active list fills the panel height instead of a vh cap. */
+.list-pane #objlist,
+.list-pane #vfxlist,
+.list-pane #soundlist,
+.list-pane #markerlist,
+.list-pane #moblist,
+.list-pane #colslist,
+.list-pane #textlist {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+}
+.objlist li,
+.vfxlist li,
+.markerlist li,
+.soundlist li,
+.moblist li,
+.colslist li,
+.textlist li,
+.textbakedlist li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #26262c;
+  list-style: none;
+}
+.objlist li input.vis,
+.vfxlist li input.vis,
+.markerlist li input.vis,
+.soundlist li input.vis,
+.moblist li input.vis,
+.colslist li input.vis,
+.textlist li input.vis,
+.textbakedlist li input.vis {
+  flex-shrink: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.objlist li .obj-name,
+.vfxlist li .obj-name,
+.markerlist li .obj-name,
+.soundlist li .obj-name,
+.moblist li .obj-name,
+.colslist li .obj-name,
+.textlist li .obj-name,
+.textbakedlist li .obj-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.objlist li:hover,
+.vfxlist li:hover,
+.markerlist li:hover,
+.soundlist li:hover,
+.moblist li:hover,
+.colslist li:hover,
+.textlist li:hover,
+.textbakedlist li:hover {
+  background: #2c2c34;
+}
+.objlist li.sel,
+.vfxlist li.sel,
+.markerlist li.sel,
+.soundlist li.sel,
+.moblist li.sel,
+.colslist li.sel,
+.textlist li.sel {
+  color: #fff;
+  background: #3a4a66;
+}
+.objlist li.locked .obj-name,
+.vfxlist li.locked .obj-name,
+.markerlist li.locked .obj-name,
+.soundlist li.locked .obj-name,
+.moblist li.locked .obj-name,
+.colslist li.locked .obj-name,
+.textlist li.locked .obj-name {
+  color: #8f96a8;
+  font-style: italic;
+}
+.objlist li .group-dot,
+.vfxlist li .group-dot,
+.markerlist li .group-dot,
+.soundlist li .group-dot,
+.moblist li .group-dot,
+.colslist li .group-dot,
+.textlist li .group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.rt-badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #a0b0c8;
+  background: #1e2a3a;
+  border: 1px solid #3a5070;
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1.4;
+  cursor: default;
+}
+
+/* List category section headers — collapsible "▾ NAME ──────── (n)" spacers (all lists).
+   Enumerated per-list so each rule out-specifies the id-scoped "#<list> li" row styling above. */
+.objlist li.cat-header,
+.vfxlist li.cat-header,
+.soundlist li.cat-header,
+.markerlist li.cat-header,
+.moblist li.cat-header,
+.colslist li.cat-header,
+.textlist li.cat-header,
+.skylist li.cat-header {
+  gap: 6px;
+  padding: 9px 8px 4px;
+  border-bottom: none;
+  cursor: pointer;
+  user-select: none;
+}
+.objlist li.cat-header:first-child,
+.vfxlist li.cat-header:first-child,
+.soundlist li.cat-header:first-child,
+.markerlist li.cat-header:first-child,
+.moblist li.cat-header:first-child,
+.colslist li.cat-header:first-child,
+.textlist li.cat-header:first-child,
+.skylist li.cat-header:first-child {
+  padding-top: 4px;
+}
+.objlist li.cat-header:hover,
+.vfxlist li.cat-header:hover,
+.soundlist li.cat-header:hover,
+.markerlist li.cat-header:hover,
+.moblist li.cat-header:hover,
+.colslist li.cat-header:hover,
+.textlist li.cat-header:hover,
+.skylist li.cat-header:hover {
+  background: transparent;
+}
+.objlist li.cat-header:hover .cat-name,
+.vfxlist li.cat-header:hover .cat-name,
+.soundlist li.cat-header:hover .cat-name,
+.markerlist li.cat-header:hover .cat-name,
+.moblist li.cat-header:hover .cat-name,
+.colslist li.cat-header:hover .cat-name,
+.textlist li.cat-header:hover .cat-name,
+.skylist li.cat-header:hover .cat-name {
+  color: #aab2c6;
+}
+.objlist li.cat-header:hover .cat-caret,
+.vfxlist li.cat-header:hover .cat-caret,
+.soundlist li.cat-header:hover .cat-caret,
+.markerlist li.cat-header:hover .cat-caret,
+.moblist li.cat-header:hover .cat-caret,
+.colslist li.cat-header:hover .cat-caret,
+.textlist li.cat-header:hover .cat-caret,
+.skylist li.cat-header:hover .cat-caret {
+  color: #aab2c6;
+}
+.cat-header .cat-caret {
+  flex-shrink: 0;
+  width: 14px;
+  font-size: 17px;
+  line-height: 1;
+  color: #6c7385;
+  text-align: center;
+}
+.cat-header .cat-name {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8cbbfb;
+}
+.cat-header .cat-line {
+  flex: 1;
+  height: 0;
+  border-top: 1px dashed #3a3f4c;
+}
+.cat-header .cat-count {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #5d6475;
+}
+.cat-header.collapsed .cat-name {
+  color: #6a7080;
+}
+
+/* Google Material Symbols — the Fonts CSS link only ships the @font-face, so the utility class lives here */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+}
+
+.cols-tris {
+  font-size: 11px;
+  color: #8a8a96;
+  margin: 2px 0 8px;
+}
+.cols-add-btns {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.cols-add-btns button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 4px;
+  font-size: 12px;
+  color: #ccc;
+  background: #1e1e26;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cols-add-btns button:hover {
+  color: #fff;
+  background: #2a2a36;
+  border-color: #cc2222;
+}
+.cols-add-btns button span {
+  font-size: 18px;
+  color: #cc3333;
+}
+/* Sky list reuses the shared list styling */
+.skylist {
+  max-height: 26vh;
+  padding: 0;
+  margin: 6px 0 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid #2c2c34;
+  border-radius: 4px;
+}
+.list-pane #skylist {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+}
+.skylist li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #26262c;
+}
+.skylist li input.vis {
+  flex-shrink: 0;
+  margin: 0;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #4f6f9f;
+}
+.skylist li .obj-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.skylist li:hover {
+  background: #2c2c34;
+}
+.skylist li.sel {
+  color: #fff;
+  background: #3a4a66;
+}
+#row-context-menu,
+.row-context-menu {
+  position: fixed;
+  z-index: 10000;
+  display: none;
+  width: 220px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px #000000ab;
+  background: linear-gradient(
+    270deg,
+    rgba(56, 56, 56, 1) 0%,
+    rgba(48, 48, 48, 1) 100%
+  );
+  padding: 8px 0;
+}
+#row-context-menu.open,
+.row-context-menu.open {
+  display: block;
+}
+#row-context-menu button,
+.row-context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #ddd;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
+}
+#row-context-menu .ctx-ico,
+.row-context-menu .ctx-ico {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+#row-context-menu button:hover,
+.row-context-menu button:hover {
+  color: #fff;
+  background: #34415c;
+  box-shadow: inset 0 0 0 1px #2f6fd0aa, inset 0 0 21px #2f6fd0aa;
+}
+#row-context-menu .divider,
+.row-context-menu .divider {
+  height: 1px;
+  margin: 3px 0;
+  background: #4e4e4e;
+}
+
+/* Custom-DAT loader button — fixed 30px so it lines up with its text field. */
+#custom-dat-load {
+  height: 30px;
+  padding-top: 0;
+  padding-bottom: 0;
+}

@@ -1,0 +1,449 @@
+/* ── New Zone dialog ─────────────────────────────────────────────────────── */
+.new-zone-panel {
+  width: 420px;
+  top: max(60px, calc(50% - 120px));
+  left: max(30px, calc(50% - 210px));
+  background: #191a20;   /* dark canvas to match the premium modals */
+}
+.nz-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 18px 16px;
+}
+.nz-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.nz-label {
+  font: 700 10px/1 Roboto, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7e8698;
+}
+/* !important beats the high-specificity base `input:not(...)` rule (six :not()s). */
+.nz-input {
+  flex: 1;
+  padding: 9px 12px !important;
+  font-size: 13px;
+  color: #eef1f8 !important;
+  background-color: #0d0e12 !important;   /* longhand so a select's themed chevron survives */
+  border: none !important;
+  border-radius: 8px !important;
+  outline: none;
+  width: 100%;
+  transition: box-shadow 0.12s;
+}
+.nz-input:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, #7fd6e6 18%, transparent);
+}
+.nz-input::placeholder {
+  color: #5f6675;
+}
+/* nz-template dropdown → themed select style (base select + chevron), full width. */
+.nz-select {
+  flex: 1;
+  width: 100%;
+}
+.nz-textarea {
+  resize: vertical;
+  min-height: 64px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.make-template-panel {
+  left: 50%;
+  transform: translateX(-50%);
+  top: 12vh;
+  width: 560px;
+}
+.mt-body {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  overflow: visible;
+}
+.mt-left {
+  flex: 1;
+  padding: 18px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-right: 1px solid #2a2a33;
+  min-width: 0;
+}
+.mt-right {
+  width: 200px;
+  flex-shrink: 0;
+  padding: 14px 12px;
+  font-size: 12px;
+  color: #aeb4c2;
+  overflow-y: auto;
+}
+.mt-right .section-title {
+  margin-bottom: 6px;
+}
+.mt-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid #22222a;
+  font-size: 11px;
+}
+.mt-info-k {
+  color: #8a8a96;
+}
+.mt-info-v {
+  color: #d6dae6;
+  text-align: right;
+  word-break: break-all;
+}
+/* Zone settings panel (zonetype + misc) */
+.zone-settings {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #aeb4c2;
+}
+.zs-select {
+  width: 100%;
+  margin-bottom: 12px;
+}
+.zs-flags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin-bottom: 10px;
+}
+.zs-flags .check {
+  font-size: 11.5px;
+  color: #aeb4c2;
+  margin: 0;
+}
+.zs-flags .check input {
+  accent-color: #7eb8f7;
+}
+.nz-sky-row {
+  display: flex;
+  gap: 6px;
+}
+.nz-sky-row .nz-input {
+  width: auto;
+}
+.nz-select {
+  flex-shrink: 0;
+  padding: 9px 28px 9px 12px;   /* right room for the chevron */
+  font-size: 13px;
+  color: #eef1f8;
+  background-color: #0d0e12;    /* longhand so the base select chevron survives */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  accent-color: #7fd6e6;        /* tints the native option highlight on newer Chromium */
+}
+.nz-select:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, #7fd6e6 18%, transparent);
+}
+/* Dark the native dropdown list (Chromium honours option bg/colour). */
+.nz-select option {
+  background-color: #16171c;
+  color: #eef1f8;
+}
+.nz-select option:checked {
+  background: color-mix(in srgb, #7fd6e6 30%, #16171c);
+}
+.nz-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+/* Add to Category / Manage Groups dialogs */
+.category-modal,
+.manage-groups-modal {
+  width: 360px;
+  top: max(60px, calc(50% - 140px));
+  left: max(30px, calc(50% - 180px));
+}
+.cat-note {
+  font-size: 12px;
+  color: #9aa0ad;
+}
+.cat-or {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: #5d6475;
+  text-transform: uppercase;
+}
+.cat-footer {
+  gap: 8px;
+}
+/* Affirmative create/OK actions — our success green (matches .btn-success). */
+.nz-create-btn {
+  padding: 9px 22px;
+  font-weight: 700;
+  color: #06180f;
+  background: linear-gradient(100deg, #86e0a0, #58c58c);
+  border: none;
+  border-radius: 9px;
+  box-shadow: 0 6px 16px -8px #46b47f;
+  transition: filter 0.14s, box-shadow 0.16s, transform 0.08s;
+}
+.nz-create-btn:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 8px 20px -8px #46b47f;
+}
+.nz-create-btn:active {
+  transform: translateY(1px);
+}
+
+/* Error message shown inline inside the New Zone panel */
+.nz-hint {
+  font-size: 11.5px;
+  color: #9aa;
+  line-height: 1.45;
+  margin: 0 0 4px;
+}
+.nz-hint b {
+  color: #cdd;
+}
+.nz-error {
+  font-size: 12px;
+  color: #ffb3b3;
+  background: linear-gradient(180deg, #201314, #16171c 60%);
+  border: 1px solid #4d2626;
+  border-left: 3px solid #ff8f8f;
+  border-radius: 9px;
+  padding: 9px 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+/* ── New Zone success toast ───────────────────────────────────────────────── */
+.new-zone-toast {
+  position: fixed;
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #232329f5;
+  border: 1px solid #3a7a50;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  padding: 14px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 300px;
+  text-align: center;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.new-zone-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.nzt-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4a9a64;
+}
+.nzt-detail {
+  font-size: 12px;
+  color: #aaaabd;
+}
+.nzt-db {
+  font-size: 11px;
+  color: #6a9a7a;
+  margin-top: 2px;
+}
+.nzt-warn {
+  color: #f59e0b !important;
+}
+
+/* ── Reset complete dialog ────────────────────────────────────────────────── */
+.reset-done-panel {
+  width: 380px;
+  top: max(60px, calc(50% - 120px));
+  left: max(30px, calc(50% - 190px));
+}
+.rd-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 20px 18px;
+}
+.rd-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  background: #43955f;
+  border-radius: 50%;
+  box-shadow: 0 0 0 6px rgba(67, 149, 95, 0.18);
+}
+.rd-msg {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #cfcfd8;
+  text-align: center;
+}
+.rd-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+.rd-footer .nz-create-btn {
+  min-width: 110px;
+}
+
+/* ── Generic confirm / alert dialog ──────────────────────────────────────── */
+.xi-dialog-panel {
+  width: 400px;
+  top: max(60px, calc(50% - 150px));
+  left: max(30px, calc(50% - 200px));
+}
+.xi-dlg-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 20px 18px;
+}
+.xi-dlg-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  background: #b06020;
+  box-shadow: 0 0 0 6px rgba(176, 96, 32, 0.2);
+  flex-shrink: 0;
+}
+.xi-dlg-icon.xi-dlg-info {
+  background: #2860a0;
+  box-shadow: 0 0 0 6px rgba(40, 96, 160, 0.2);
+}
+.xi-dlg-icon.xi-dlg-danger {
+  background: none;
+  box-shadow: none;
+  width: 64px;
+  height: 64px;
+}
+.xi-dlg-icon.xi-dlg-danger img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  display: block;
+  border-radius: 32px;
+}
+.xi-dialog-panel.xi-danger .modal-bar {
+  background: #3a0808;
+  border-bottom-color: #6a1414;
+}
+.xi-dialog-panel.xi-danger .modal-title {
+  color: #ff6868;
+}
+.xi-dlg-msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cfcfd8;
+  text-align: center;
+  white-space: pre-wrap;
+  max-width: 340px;
+}
+.xi-dlg-msg code {
+  padding: 1px 6px;
+  font: 600 12px/1.4 ui-monospace, monospace;
+  color: #e8e8f0;
+  background: #1a1a1f;
+  border: 1px solid #44444f;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.xi-dlg-footer {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.xi-dlg-footer .dz-cancel-btn,
+.xi-dlg-footer .dz-delete-btn,
+.xi-dlg-footer .nz-create-btn {
+  min-width: 90px;
+}
+
+/* ── Delete Zone dialog ───────────────────────────────────────────────────── */
+.delete-zone-panel {
+  width: 380px;
+}
+.dz-body {
+  padding: 18px 16px 14px;
+}
+.dz-hidden {
+  display: none;
+}
+.dz-warning {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: #e0a0a0;
+  line-height: 1.5;
+}
+.dz-countdown-msg {
+  margin: 0 0 18px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #f07070;
+  text-align: center;
+}
+.dz-counter {
+  font-size: 32px;
+}
+.dz-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.dz-cancel-btn {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ccc;
+  background: #30303a;
+  border: 1px solid #494956;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dz-cancel-btn:hover {
+  color: #fff;
+  background: #3a3a48;
+}
+.dz-delete-btn {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #7a2828;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dz-delete-btn:hover {
+  background: #9a3030;
+}

@@ -1,0 +1,354 @@
+/* ── unified selection panel ─────────────────────────────────────────── */
+.sel-panel {
+  position: absolute;
+  top: 56px;
+  right: 360px;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  width: 260px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  background: #232329dd;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+.sel-panel.open {
+  display: flex;
+}
+
+.sel-section {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.sel-section.open {
+  display: flex;
+}
+.mdet-head {
+  padding-bottom: 5px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #7fd6e6;
+  text-transform: uppercase;
+  border-bottom: 1px solid #7fd6e6;
+}
+.kv select,
+.kv input[type="text"] {
+  width: 100%;
+}
+.kv textarea {
+  width: 100%;
+  resize: vertical;
+  line-height: 1.4;
+}
+.mdet-desc-row { align-items: flex-start; }
+/* Markers use Material Symbols pin glyphs (same as cutscene position markers). */
+/* "Pin to floor" — drop the marker onto the zone floor (mirrors .glb-link-btn). */
+.mdet-pin-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #cfe9f0;
+  background: #2a3942;
+}
+.mdet-pin-btn:hover {
+  background: #34474f;
+  color: #fff;
+}
+.mdet-pin-btn .material-symbols-outlined { font-size: 15px; }
+
+/* Right-click "Add Position Marker" mini-menu (shown while editing a Position keyframe). */
+.pos-marker-menu {
+  position: fixed;
+  z-index: 400;
+  background: #1c1e26;
+  border: 1px solid #3a3a44;
+  border-radius: 6px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  padding: 4px;
+}
+.pos-marker-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px 7px 8px;
+  font: 500 12px/1 Roboto, sans-serif;
+  color: #dfe3ee;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pos-marker-menu button:hover { background: #2f3a52; }
+.pos-marker-menu .material-symbols-outlined { font-size: 18px; color: #42d9c8; }
+/* spacer between the detail list and the render toggles */
+.mdet-spacer {
+  height: 1px;
+  background: #7fd6e6;
+  margin: 3px 0;
+}
+.glb-details .glb-link-btn {
+  align-self: flex-start;
+  color: #cfe9f0;
+  background: #2a3942;
+}
+.glb-details .glb-link-btn:hover {
+  background: #34474f;
+  color: #fff;
+}
+/* render toggles in the GLB panel sit flush — the panel's own gap spaces them */
+.glb-details .check {
+  margin: 0;
+}
+/* Text-plane inspector */
+.textplane-details textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 48px;
+  font: 12px ui-monospace, Consolas, monospace;
+}
+.textplane-details .tp-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.textplane-details .tp-inline input[type="range"] {
+  flex: 1;
+}
+.textplane-details .tp-inline input[type="color"] {
+  width: 32px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: 1px solid #34343c;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.textplane-details #tp-size-val {
+  width: 24px;
+  text-align: right;
+  color: #c8c8d2;
+}
+.tp-note {
+  color: #6a6a78;
+  font-style: italic;
+  font-size: 10px;
+}
+/* Sound emitter inspector */
+.sdet-id {
+  font-family: "Roboto Mono", ui-monospace, Consolas, monospace;
+  color: #c8c8d2;
+  background: #20202a;
+  padding: 1px 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sdet-note {
+  color: #6a6a78;
+  font-style: italic;
+  font-size: 10px;
+}
+/* Collision subdivision inputs */
+.cdet-segs-inputs {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.cdet-segs-inputs label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #6a6a78;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.cdet-segs-inputs input[type="number"] {
+  width: 36px;
+  padding: 2px 3px;
+  text-align: center;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+}
+.cdet-segs-inputs input[type="number"]::-webkit-outer-spin-button,
+.cdet-segs-inputs input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.changes-panel .section-title {
+  margin: 18px 12px 8px;
+  padding: 13px 0 0;
+  border-top: 1px solid #24252c;
+  border-bottom: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #7e8698;
+}
+.slider {
+  display: block;
+  margin: 4px 0 10px;
+  color: #bbb;
+}
+.slider input[type="range"] {
+  width: 100%;
+}
+
+/* ── snap controls (Settings) ───────────────────────────────────────── */
+hr.sep {
+  border: none;
+  border-top: 1px solid #3a3a44;
+  margin: 10px 0;
+}
+.snap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  color: #bbb;
+}
+.snap-row label {
+  flex: 0 0 64px;
+}
+.snap-row input[type="number"] {
+  width: 70px;
+}
+
+/* ── asset palette (plot builder) ───────────────────────────────────── */
+.asset-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.asset-cats button,
+.section-actions button {
+  font-weight: 600;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+.asset-cats button.active,
+.section-actions button.active {
+  color: #fff;
+  background: #43955f;
+}
+.asset-cats button:hover,
+.section-actions button:hover {
+  background: #565669;
+}
+.palette {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+.palette .tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 58px;
+  padding: 6px 4px;
+  cursor: grab;
+  user-select: none;
+  background: #232329;
+  border: 1px solid #3a3a44;
+  border-radius: 6px;
+  text-align: center;
+}
+.palette .tile:hover {
+  border-color: #43955f;
+  background: #28323b;
+}
+.palette .tile:active {
+  cursor: grabbing;
+}
+.palette .tile .thumb {
+  width: 100%;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: auto;
+  margin-bottom: 4px;
+  background: #15151a;
+  border-radius: 4px;
+}
+.palette .tile .tile-name {
+  font: 500 10px/1.2 ui-monospace, monospace;
+  color: #c8c8d2;
+  word-break: break-all;
+}
+.palette .tile .tile-count {
+  color: #6f6f7a;
+}
+.hint {
+  font: 400 10px/1.4 Roboto, sans-serif;
+  color: #7a7a85;
+  margin-top: 6px;
+}
+.palette-empty {
+  grid-column: 1 / -1;
+  color: #7a7a85;
+  font-size: 11px;
+  padding: 8px 2px;
+}
+
+/* multi-selected object rows in the Objects list */
+.objlist li.multi {
+  background: #3a4a66;
+}
+
+/* active build piece tile */
+.palette .tile.active {
+  border-color: #c8694a;
+  background: #3a2a26;
+  box-shadow: 0 0 0 1px #c8694a inset;
+}
+
+/* first-person crosshair */
+.crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font: 700 20px/1 monospace;
+  color: #fff;
+  opacity: 0.7;
+  pointer-events: none;
+  text-shadow: 0 0 3px #000;
+  z-index: 5;
+}
+.crosshair.hidden {
+  display: none;
+}
+
+/* snap-build status banner */
+.build-indicator {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  font: 600 12px/1 Roboto, sans-serif;
+  color: #ffd9c8;
+  background: #45252aee;
+  border: 1px solid #8a4450;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 6;
+  white-space: nowrap;
+}
+.build-indicator.hidden {
+  display: none;
+}

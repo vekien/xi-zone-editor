@@ -1,0 +1,180 @@
+/* Version History modal — per-publish snapshots for the current zone. */
+.version-panel {
+  width: min(560px, calc(100vw - 40px));
+  height: 500px;
+  max-height: 1000px;
+  min-height: 220px;
+  resize: both;
+  overflow: hidden;
+  background: #191a20;   /* dark canvas to match the cutscene / events / settings modals */
+}
+.version-panel .modal-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 0;
+}
+.version-panel #vh-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 52px;   /* clearance so the last row scrolls above the floating status pill */
+}
+.vh-zone {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #868d9c;
+}
+.vh-zone strong {
+  color: #eef1f8;
+  font-weight: 700;
+}
+
+/* Rows are self-contained cards with a little breathing room between them. */
+.vh-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.vh-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #24252c;
+  border-radius: 10px;
+  background: #16171c;
+  transition: background 0.12s, border-color 0.12s;
+}
+.vh-row:hover {
+  background: #191b22;
+  border-color: #2f3039;
+}
+/* The live version — green-accented card + filled version badge. */
+.vh-row.current {
+  border-color: color-mix(in srgb, #7fd88f 42%, #24252c);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, #7fd88f 12%, transparent), transparent 55%),
+    #16171c;
+}
+
+/* Version tag → rounded chip; current version reads as a solid green badge. */
+.vh-ver {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font: 700 12px/1 "Roboto Mono", ui-monospace, monospace;
+  color: #aab1c2;
+  background: #1c1d24;
+  border: 1px solid #2f3039;
+}
+.vh-row.current .vh-ver {
+  color: #06180f;
+  background: #7fd88f;
+  border-color: #7fd88f;
+}
+.vh-ts {
+  flex: 0 0 auto;
+  color: #868d9c;
+  font-size: 12px;
+  font-family: "Roboto Mono", ui-monospace, monospace;
+}
+.vh-counts {
+  flex: 1 1 auto;
+  color: #9aa1b0;
+  font-size: 12px;
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Row action buttons — uniform premium ghost pills; Restore carries a cyan accent
+   since it's the primary per-row action. */
+.vh-log,
+.vh-restore {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  cursor: pointer;
+  font: 700 10px/1 Roboto, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 7px;
+  border: 1px solid #33343d;
+  background: #1a1b21;
+  color: #aab1c2;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.vh-log:hover {
+  color: #eef1f8;
+  background: #20222b;
+  border-color: #454652;
+}
+.vh-restore {
+  color: #7fd6e6;
+  border-color: color-mix(in srgb, #7fd6e6 30%, #33343d);
+}
+.vh-restore:hover {
+  color: #cbf2f9;
+  background: color-mix(in srgb, #7fd6e6 14%, transparent);
+  border-color: #7fd6e6;
+}
+
+.vh-empty {
+  padding: 26px 6px;
+  color: #868d9c;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.55;
+}
+.vh-empty code {
+  color: #cdd2e0;
+  background: #0e0f13;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Change-count op groups (+add -del ~mod), aligned to the accent palette. */
+.vh-op-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.vh-op-label { color: #6b7280; }
+.vh-add { color: #7fd88f; }
+.vh-del { color: #ff8f8f; }
+.vh-mod { color: #f7c873; }
+.vh-sep { color: #3a3a44; }
+
+/* ── Floating status pill ─────────────────────────────────────────────────────
+   Scoped to .version-panel so the database panel's shared .modal-status-bar keeps
+   its flush footer. Absolutely positioned inside the modal, centred, glassy. */
+.version-panel .modal-status-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: auto;
+  height: auto;
+  gap: 8px;
+  justify-content: center;
+  padding: 7px 15px 7px 13px;
+  border: 1px solid #2f3039;
+  border-radius: 999px;
+  background: color-mix(in srgb, #14151a 82%, transparent);
+  backdrop-filter: blur(9px);
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.7);
+  font: 600 11px/1 Roboto, sans-serif;
+  letter-spacing: 0.02em;
+  color: #9aa1b0;
+}
+/* Live-status dot leading the pill. */
+.version-panel .modal-status-bar::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7fd88f;
+  box-shadow: 0 0 7px color-mix(in srgb, #7fd88f 70%, transparent);
+}

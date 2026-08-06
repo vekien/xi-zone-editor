@@ -1,0 +1,454 @@
+.modal {
+  position: absolute;
+  top: 56px;
+  left: 40px;
+  z-index: 20;
+  display: none;
+  flex-direction: column;
+  width: 340px;
+  max-height: 70vh;
+  overflow: hidden;
+  background: #25252a;
+  border: 1px solid #34363f;
+  border-radius: 12px;
+  box-shadow: 0 20px 55px -14px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+}
+
+.modal.open {
+  display: flex;
+}
+
+/* Minimized state (title-bar minimize toggle) — collapse to just the bar. Hide every
+   non-bar child (some panels put a filter/status bar outside .modal-body), drop any fixed
+   height / resize grip. !important so a prior manual resize (inline height from resize:both)
+   and JS-set child display don't keep the body open. */
+.modal.is-minimized {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  resize: none !important;
+}
+.modal.is-minimized > *:not(.modal-bar) {
+  display: none !important;
+}
+.modal.is-minimized .modal-bar {
+  border-bottom: none;
+}
+.changes-panel {
+  width: min(920px, calc(100vw - 340px));
+  height: min(600px, 82vh);
+  min-width: 480px;
+  min-height: 260px;
+  max-width: calc(100vw - 40px);
+  max-height: min(1000px, calc(100vh - 24px));
+  resize: both;
+  overflow: hidden;
+  background: #191a20;   /* dark canvas to match the premium modals */
+}
+.perf-panel {
+  width: 280px;
+}
+.perf-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 16px;
+  padding: 14px 18px 6px;
+  font-size: 13.5px;
+}
+.perf-grid .perf-k {
+  color: #9a9aa8;
+}
+.perf-grid .perf-v {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  color: #e6e6ee;
+}
+.perf-hint {
+  padding: 10px 18px 16px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #7a7a88;
+}
+.perf-cull {
+  border-top: 1px solid #2e2e38;
+  margin-top: 6px;
+  padding: 6px 18px 16px;
+}
+.perf-cullrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 0;
+}
+.perf-cullcount {
+  margin-left: auto;
+  font-size: 12px;
+  color: #9a9aa8;
+  font-variant-numeric: tabular-nums;
+}
+.perf-slider {
+  padding: 4px 0 0;
+}
+.perf-slider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.perf-slider.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.help-panel {
+  width: min(760px, calc(100vw - 40px));
+}
+.settings-panel {
+  width: min(620px, calc(100vw - 40px));
+  max-height: 85vh;
+  background: #191a20;   /* dark canvas so the premium controls + hairline dividers read correctly (matches the cutscene/events modals) */
+}
+/* .modal-body.settings-layout (two classes) outranks the later .modal-body rule, so
+   padding:0 / overflow:hidden actually win — nav + content stay edge-to-edge. */
+.modal-body.settings-layout {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  min-height: 500px;
+}
+/* ── Common modal left-navigation ────────────────────────────────────────────
+   Shared by any modal with a left rail (Settings, Cutscene author, …). Use:
+     <nav class="modal-lnav">
+       <div class="lnav-cat">Section</div>
+       <button class="lnav-btn active"><span class="material-symbols-outlined lnav-ico">…</span>Label</button>
+   The legacy .settings-nav/.snav-* names alias these so Settings keeps working. */
+.modal-lnav, .settings-nav {
+  flex-shrink: 0;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-right: 1px solid #23242b;
+  padding: 12px;   /* top matches the content pane's top padding so the first pill aligns with the first card */
+  overflow-y: auto;
+}
+/* Category label = a quiet section separator: a muted uppercase label with a single hairline
+   rule above it (aligned to the pill width). No filled band — that read as "slapped on". */
+.lnav-cat, .snav-cat {
+  margin: 13px 0 3px;
+  padding: 13px 12px 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7e8698;
+  background: none;
+  border-top: 1px solid #282a33;
+}
+/* First category tops the rail — no rule above it. */
+.lnav-cat:first-child, .snav-cat:first-child {
+  margin-top: 0;
+  padding-top: 2px;
+  border-top: none;
+}
+/* Settings nav categories get their own accent tint so they read distinctly from the
+   grey content group heads (.spane-grouphead). */
+.snav-cat { color: #82c4d4; }
+/* Rounded, inset nav pills — no more square edge-flush accent bar. Active + hover use
+   translucent overlays so they read correctly on any modal canvas (dark or grey). */
+.lnav-btn, .snav-btn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-align: left;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  color: #9aa0ad;
+  cursor: pointer;
+  font: 500 13.5px/1.2 Roboto, sans-serif;
+  transition: color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+.lnav-btn:hover, .snav-btn:hover {
+  color: #e8ebf2;
+  background: #ffffff0e;
+}
+.lnav-btn.active, .snav-btn.active {
+  color: #7fd6e6;
+  background: color-mix(in srgb, #7fd6e6 15%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #7fd6e6 34%, transparent);
+  font-weight: 600;
+}
+.lnav-ico {
+  font-size: 19px;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+.lnav-btn.active .lnav-ico { opacity: 1; }
+/* .lnav-btn sets display:flex, which overrides the `hidden` attribute — restore it
+   so conditionally-hidden rail buttons (e.g. the event modal's Timeline/Lines tabs) stay hidden. */
+.lnav-btn[hidden], .snav-btn[hidden] { display: none; }
+/* A highlighted action button in the rail (e.g. the cutscene "Timeline" launcher). */
+.lnav-btn.lnav-action {
+  color: #9fd0ff;
+  background: color-mix(in srgb, #9fd0ff 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #9fd0ff 30%, transparent);
+  margin-top: 8px;
+}
+.lnav-btn.lnav-action:hover { background: color-mix(in srgb, #9fd0ff 20%, transparent); color: #dcecff; }
+.settings-content {
+  flex: 1;
+  padding: 15px 20px 50px 20px;
+  overflow-y: auto;
+  min-height: 0;
+  max-height: 640px;
+  font-size: 14px;
+}
+/* Sub-section heading inside a settings pane. A muted uppercase label with a single hairline
+   rule above it — a clean divider, not a filled band. */
+.spane-grouphead {
+  margin: 22px 0 10px;
+  padding: 13px 0 0;
+  border-top: 1px solid #24252c;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #7e8698;
+  background: none;
+}
+.spane-grouphead:first-child {
+  margin-top: 2px;
+  padding-top: 0;
+  border-top: none;
+}
+/* Label stacked above a full-width <select> (Project pane's HD-on-Publish dropdown). */
+.proj-select-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 4px 0 0;
+  color: #bbb;
+}
+.proj-select-row select {
+  width: 100%;
+  cursor: pointer;
+}
+.spane {
+  display: none;
+}
+.spane.active {
+  display: block;
+}
+.spane-hint {
+  margin: 4px 0 8px;
+  font-size: 11.5px;
+  color: #868d9c;
+  line-height: 1.5;
+}
+.setting-row textarea {
+  width: 100%;
+  resize: vertical;
+  line-height: 1.5;
+}
+/* .btn-primary/.btn-success/.btn-danger are now global (css/base.css). */
+.theme-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.form-row {
+  margin: 0 0 10px;
+}
+.form-row > .check,
+.form-row > .setting-row,
+.form-row > .swatch-row,
+.form-row > .proj-select-row {
+  margin: 0;
+}
+.form-row > .spane-hint {
+  margin: 5px 0 0;
+}
+.form-row:has(> .check) > .spane-hint,
+.form-row:has(> .check) > .spane-hint ~ .spane-hint {
+  padding-left: 26px;
+}
+.hint {
+  color: #6a6a78;
+  font-size: 11px;
+}
+
+.navmesh-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.navmesh-actions button {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #bbb;
+  background: #1e1e26;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.navmesh-actions button:hover:not(:disabled) {
+  color: #fff;
+  background: #2f2f38;
+  border-color: #555;
+}
+.navmesh-actions button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.navmesh-actions #navmesh-generate:hover:not(:disabled) {
+  color: #9fe;
+  border-color: #4a9;
+  background: #1a2a22;
+}
+
+/* Navmesh generate progress overlay */
+.navmesh-gen-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navmesh-gen-dialog {
+  background: #1e1e28;
+  border: 1px solid #3a3a50;
+  border-radius: 8px;
+  padding: 28px 32px 24px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+.navmesh-gen-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ddd;
+}
+.navmesh-gen-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #3a3a50;
+  border-top-color: #5fe6ff;
+  border-radius: 50%;
+  animation: navmesh-spin 0.8s linear infinite;
+}
+.navmesh-gen-spinner.done {
+  border-top-color: #4a9;
+  border-color: #4a9;
+  animation: none;
+}
+.navmesh-gen-spinner.error {
+  border-top-color: #d66;
+  border-color: #d66;
+  animation: none;
+}
+@keyframes navmesh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.navmesh-gen-status {
+  font-size: 13px;
+  color: #8a8a9a;
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.4;
+}
+.navmesh-gen-close {
+  padding: 7px 20px;
+  font-size: 13px;
+  color: #ccc;
+  background: #2a2a34;
+  border: 1px solid #44445a;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.navmesh-gen-close:hover {
+  color: #fff;
+  background: #34344a;
+}
+
+/* Hide workspace gate while the XI Tools boot modal is up */
+body.tools-booting #setup-overlay,
+body.tools-booting #env-setup-overlay { display: none !important; }
+
+/* -- xi-tools boot modal (download / update / bridge start) --------------- */
+.tools-boot-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 14, 0.78);
+  backdrop-filter: blur(8px);
+}
+.tools-boot-modal.hidden { display: none; }
+.tools-boot-card {
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px 26px 22px;
+  border-radius: 14px;
+  background: #1c1e24;
+  border: 1px solid #34363f;
+  box-shadow: 0 24px 60px -18px rgba(0,0,0,.75);
+  color: #e8eaed;
+  font-family: Roboto, system-ui, sans-serif;
+}
+.tools-boot-ico {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  background: #243038;
+  color: #42d9c8;
+  margin-bottom: 14px;
+}
+.tools-boot-ico .material-symbols-outlined { font-size: 28px; }
+.tools-boot-title { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
+.tools-boot-sub { margin: 0 0 10px; font-size: 13.5px; color: #a8b0bd; line-height: 1.45; }
+.tools-boot-meta { font-size: 12px; color: #6b7280; margin-bottom: 14px; min-height: 1.2em; word-break: break-all; }
+.tools-boot-bar {
+  height: 4px; border-radius: 2px; background: #2a2d36; overflow: hidden; margin-bottom: 16px;
+}
+.tools-boot-bar-fill {
+  height: 100%; width: 0%; background: linear-gradient(90deg, #2bbbad, #42d9c8);
+  transition: width .25s ease;
+}
+.tools-boot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tools-boot-btn {
+  border: 1px solid #3a3f4a; background: #2a2e38; color: #e8eaed;
+  border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer;
+}
+.tools-boot-btn:hover { background: #343945; }
+.tools-boot-btn.primary { background: #1f6f66; border-color: #2a8f84; }
+.tools-boot-btn.primary:hover { background: #258a7e; }
+.tools-boot-btn.ghost { background: transparent; color: #9aa3b2; }
+.tools-boot-log {
+  margin: 14px 0 0; max-height: 180px; overflow: auto;
+  font-size: 11px; color: #8b93a2; background: #12141a; border-radius: 8px;
+  padding: 8px 10px; white-space: pre-wrap; line-height: 1.4;
+  border: 1px solid #2a2d36;
+}
+.tools-boot-log.is-error {
+  color: #ffc9c9;
+  background: #2a1418;
+  border-color: #7a3038;
+  max-height: 240px;
+  font-size: 12px;
+}
+.tools-boot-sub:has(+ .tools-boot-meta) { /* keep layout stable */ }
+
