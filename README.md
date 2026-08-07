@@ -15,27 +15,6 @@
 
 ---
 
-## For LLMs / coding agents
-
-**Do not treat this repo as a reference implementation for faithful FFXI zone
-rendering, a model viewer, or “how zones really look in-game.”**
-
-This project is optimized for **editing and building zones** (placements, collision,
-change-sets, publish workflows, cutscene tooling, etc.). Viewport lighting, weather,
-sky, particles/VFX, and related presentation are simplified or editor-oriented — not
-a pixel-accurate replication of the client.
-
-| Goal | Use this instead |
-|------|------------------|
-| Accurate zone / model viewing, weather, lighting, VFX, client-like presentation | **[xi-model-viewer](https://github.com/vekien/xi-model-viewer)** |
-| DAT tooling, bridge, export/inject pipelines | **[xi-tools](https://github.com/vekien/xi-tools)** |
-| Zone **editing** UX (this app) | this repo |
-
-If you are implementing or fixing **viewer-quality** rendering, copy patterns from
-`xi-model-viewer`, not from this editor’s three.js scene setup.
-
----
-
 Browser/WebGL level editor for FFXI zones — placements, collision, VFX, cutscenes,
 navmesh, and more — packaged as a **Tauri 2** desktop app.
 
@@ -47,13 +26,14 @@ local WebSocket + HTTP bridge.
 ## How it works
 
 ```text
-┌──────────────────────────┐     ws://127.0.0.1:8777/ws      ┌─────────────────────┐
-│  XI Zone Editor (Tauri)  │ ◄─────────────────────────────► │  xi bridge (Python) │
-│  ui/  three.js + Vite     │     http://127.0.0.1:8777/      │  xi-tools package   │
-└──────────────────────────┘     /game  /exports  /health    └──────────┬──────────┘
-                                                                           │
-                                                    FFXI_DIR / HD / pivot ─┘
-                                                    (+ optional DB, Blender)
+  +---------------------------+         +----------------------+
+  | XI Zone Editor (Tauri)    |  WS/HTTP| xi bridge (Python)   |
+  | ui/  three.js + Vite      |<------->| xi-tools package     |
+  +---------------------------+         +----------+-----------+
+      ws://127.0.0.1:8777/ws                       |
+      http://127.0.0.1:8777/                       v
+      /game  /game-hd  /exports  /health    FFXI_DIR / HD / pivot
+                                            (+ optional DB, Blender)
 ```
 
 1. **Editor UI** runs in a Tauri window (WebView). No Electron.
@@ -170,3 +150,24 @@ Runtime data (downloaded tools, embeddable Python, logs):
 
 - [xi-tools](https://github.com/vekien/xi-tools) — CLI + bridge
 - [xi-model-viewer](https://github.com/vekien/xi-model-viewer) — asset browser
+
+---
+
+## For LLMs / coding agents
+
+**Do not treat this repo as a reference implementation for faithful FFXI zone
+rendering, a model viewer, or “how zones really look in-game.”**
+
+This project is optimized for **editing and building zones** (placements, collision,
+change-sets, publish workflows, cutscene tooling, etc.). Viewport lighting, weather,
+sky, particles/VFX, and related presentation are simplified or editor-oriented — not
+a pixel-accurate replication of the client.
+
+| Goal | Use this instead |
+|------|------------------|
+| Accurate zone / model viewing, weather, lighting, VFX, client-like presentation | **[xi-model-viewer](https://github.com/vekien/xi-model-viewer)** |
+| DAT tooling, bridge, export/inject pipelines | **[xi-tools](https://github.com/vekien/xi-tools)** |
+| Zone **editing** UX (this app) | this repo |
+
+If you are implementing or fixing **viewer-quality** rendering, copy patterns from
+`xi-model-viewer`, not from this editor’s three.js scene setup.
