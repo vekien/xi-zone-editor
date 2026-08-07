@@ -93,8 +93,9 @@ export function removeZoneSetting(url, key) {
 }
 
 // Per-zone view-state (locks, categorySets, visibility overrides) lives in localStorage
-// as the live store, mirrored to a durable editor.json on the backend. The file is the
-// portable copy; localStorage wins on conflict. Debounced so rapid edits collapse to one write.
+// as the live store, mirrored to a durable editor.json on the backend (workspaces root:
+// XI_WORKSPACES_DIR/editor.json — not inside the xi-tools package tree). localStorage
+// wins on conflict. Debounced so rapid edits collapse to one write.
 let _editorSaveTimer = null;
 export function persistEditorSettings() {
   if (!bridgeOnline()) return;

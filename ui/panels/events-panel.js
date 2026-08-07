@@ -2,7 +2,7 @@
 // Extracted from main.js. Import initEventsPanel and call it once all deps are ready.
 
 import { bridgeOnline, bridgeCall } from '../ffxi/bridge.js';
-import { loadZoneSetting, saveZoneSetting, loadSetting, saveSetting } from '../editor/settings.js';
+import { loadZoneSetting, saveZoneSetting } from '../editor/settings.js';
 import { csCloseSequencer, csStop, csIsAuthorMode, csAuthorRefresh, CS_BEAT_META, CS_LANE_ORDER, csLaneOf } from '../viewport/cutscene.js';
 import { openCutsceneAuthorFrom } from './cutscene-author.js';
 
@@ -530,14 +530,6 @@ function renderMergedInfo(key) {
         + `</div>`;
       html += `<button id="cs-edit-btn" class="evx-cta"><span class="material-symbols-outlined">movie_edit</span>`
         +   `<span>Open Timeline Sequencer</span><span class="material-symbols-outlined evx-cta-arrow">arrow_forward</span></button>`;
-      html += `<div class="evx-card">`
-        +   `<div class="evx-card-h">Server script</div>`
-        +   `<div class="evx-server-row">`
-        +     `<input id="cs-server-path" class="evx-input" spellcheck="false" value="${evtEsc(loadSetting('serverPath', 'D:\\\\xi-server'))}">`
-        +     `<button id="cs-server-find" class="evx-btn">Find script</button>`
-        +   `</div>`
-        +   `<div id="cs-server-out" class="cs-server-out"></div>`
-        + `</div>`;
     }
   }
 
@@ -630,38 +622,6 @@ function _wireCutsceneSection(key) {
     const name = actor?.name || null;
     openCutsceneAuthorFrom(cs, hex, name);
   });
-  csWireServerLookup(key);
-}
-
-async function csWireServerLookup(key) {
-  const pathInput = document.getElementById('cs-server-path');
-  const findBtn = document.getElementById('cs-server-find');
-  const out = document.getElementById('cs-server-out');
-  if (!pathInput || !findBtn || !out) return;
-  const eventId = Number(key.split(':')[1]);
-  async function doFind() {
-    const sp = pathInput.value.trim();
-    saveSetting('serverPath', sp);
-    out.innerHTML = `<div class="cs-server-msg">Searching…</div>`;
-    let r;
-    try { r = await bridgeCall('zone.serverEventInfo', { serverPath: sp, zoneId: _currentZoneId(), eventId }); }
-    catch (e) { out.innerHTML = `<div class="cs-server-msg err">${evtEsc(String(e))}</div>`; return; }
-    if (!r || !r.ok) { out.innerHTML = `<div class="cs-server-msg err">${evtEsc((r && r.error) || 'lookup failed')}</div>`; return; }
-    if (!r.matches.length) { out.innerHTML = `<div class="cs-server-msg">No script starts event ${eventId} in ${evtEsc(r.zoneName || ('zone ' + r.zoneId))}.</div>`; return; }
-    out.innerHTML = (r.name ? `<div class="cs-server-name">${evtEsc(r.name)}<span class="cs-server-kind">${evtEsc(r.kind || '')}</span></div>` : '')
-      + `<div class="cs-server-zone">${evtEsc(r.zoneName || ('zone ' + r.zoneId))} · event ${eventId}</div>`
-      + r.matches.map((m) =>
-        `<div class="cs-server-match${m.namesZone ? ' is-zone' : ''}">`
-        + `<div class="cs-server-file">${evtEsc(m.file)}</div>`
-        + m.lines.map((l) => `<div class="cs-server-line"><span class="ln">L${l.n}</span>${evtEsc(l.text)}</div>`).join('')
-        + (m.movement.length
-            ? `<div class="cs-server-mvh">NPC movement</div>` + m.movement.map((l) => `<div class="cs-server-line mv"><span class="ln">L${l.n}</span>${evtEsc(l.text)}</div>`).join('')
-            : '')
-        + `</div>`).join('');
-  }
-  findBtn.addEventListener('click', doFind);
-  pathInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doFind(); });
-  doFind();
 }
 
 export function closeEventDialog() {

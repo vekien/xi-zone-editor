@@ -3,54 +3,70 @@
 > ## WORK IN PROGRESS
 >
 > This project is under active development and **not production-ready**.
-> Expect rough edges, missing setup steps, and features that only work on a
-> fully configured dev machine.
+> Expect rough edges, bugs, incomplete features, and the occasional game or
+> editor crash — save often and keep backups of anything you care about.
+
+> ## Who this is for
 >
-> **Not in the first-run setup yet:** database credentials (`XI_DB_*`) and some
-> server/navmesh paths. Anything that talks to the game DB (zone music writes,
-> custom NPC SQL, certain publish helpers, etc.) needs those values in the
-> xi-tools `.env` manually for now.
+> This is intended for **advanced FFXI modders** who already know the quirks of
+> the client, DATs, and private-server tooling. You are expected to have a
+> LandSandBoat (or compatible) server set up — locally or remote — be comfortable
+> editing the database and writing server Lua, and to use a **separate, sandboxed
+> game install** for experimentation rather than your main client.
 
 ![ss](ss.png)
+![ss2](ss2.png)
 
 ---
 
-Browser/WebGL level editor for FFXI zones — placements, collision, VFX, cutscenes,
-navmesh, and more — packaged as a **Tauri 2** desktop app.
+**XI Zone Editor** is a desktop level editor for Final Fantasy XI zones. Load a zone
+DAT, move placements in a 3D viewport, edit collision and navmesh, author cutscenes,
+and publish change-sets back into the game files — all from a **Tauri 2** app with a
+WebGL (three.js) frontend.
 
-Backend DAT work is handled by **[xi-tools](https://github.com/vekien/xi-tools)** over a
-local WebSocket + HTTP bridge.
+Heavy lifting (DAT I/O, publish, DB lookups, file serving) is done by
+**[xi-tools](https://github.com/vekien/xi-tools)** over a local WebSocket + HTTP bridge
+the app starts for you on first launch.
 
----
+## Download
 
-## How it works
+**[Releases](https://github.com/vekien/xi-zone-editor/releases)** — grab the latest Windows build and run it. No Node, Rust, or Python install required.
 
-```text
-  +---------------------------+         +----------------------+
-  | XI Zone Editor (Tauri)    |  WS/HTTP| xi bridge (Python)   |
-  | ui/  three.js + Vite      |<------->| xi-tools package     |
-  +---------------------------+         +----------+-----------+
-      ws://127.0.0.1:8777/ws                       |
-      http://127.0.0.1:8777/                       v
-      /game  /game-hd  /exports  /health    FFXI_DIR / HD / pivot
-                                            (+ optional DB, Blender)
-```
+On first launch the app will:
 
-1. **Editor UI** runs in a Tauri window (WebView). No Electron.
-2. On boot it ensures **xi-tools** is available (download from GitHub Releases, or a local folder you pick).
-3. It ensures a **real Python** is available (system install, or auto-download of the official Windows embeddable build from python.org — Store stubs are ignored).
-4. It starts **`xi bridge`**, which:
-   - accepts editor commands over **WebSocket** (`/ws`)
-   - serves game files from **`FFXI_DIR`** at `/game/…` (and HD at `/game-hd/…`)
-   - serves optional tool exports at `/exports/…` (pre-decoded audio, etc.)
-5. First-run wizards collect:
-   - **Workspace folder** — where project JSON / zone change-sets are saved (git optional)
-   - **Game paths** — `FFXI_DIR` (required), HD / pivot / Blender (optional)
-6. Closing the app stops the bridge (Windows Job Object kill-on-close + idle timeout).
+1. Download the latest **[xi-tools](https://github.com/vekien/xi-tools)** release (or let you point at a local checkout)
+2. Fetch an embeddable **Python 3.12** if no suitable system Python is found
+3. Start the bridge and walk you through Setup (workspace, game paths, optional server/DB)
 
-Asset Browser **icons / sprites / manifests** are **bundled** in the UI
-(`ui/public/exports/assets`). You do **not** need a `game/` or `exports/` junction
-next to the editor anymore.
+Runtime files land under `%LOCALAPPDATA%\XiZoneEditor\`. You still need an FFXI install path and (for full features) a private-server / DB setup — see **Who this is for** above.
+
+### First launch flow
+
+Every launch starts with a **minimal splash** (logo + progress). First run continues into a framed **Setup** wizard; later launches skip the wizard once setup is marked complete.
+
+1. **Splash (every launch)** — checks/downloads **xi-tools**, shows live download progress (bytes / %), then bootstraps Python + pip if needed and starts the bridge on `127.0.0.1:8777`.  
+   Optional actions if something fails: **Use local folder…**, retry, or continue offline.
+2. **If setup is already done** → splash dismisses and the **Projects** launcher opens.
+3. **If first run** → Setup wizard steps:
+   - **Workspace** — folder for projects / zone change-sets (Skip uses a default under your profile)
+   - **Game paths** — `FFXI_DIR` required; optional HD pack and pivot/override DATs  
+     Green ticks when paths look valid (`FFXiMain.dll`, etc.)
+   - **Server & database** *(optional)* — LSB server folder (`XI_SERVER_DIR`; can autofill DB login from `settings/network.lua`) + host/port/user/password/database with **Test**
+   - **Desktop icon** *(optional)*
+   - **Finish** — summary, then open the editor
+4. **Projects** launcher — open or create a project and load a zone
+
+All of the above (except the splash tools check) can be changed later under **Settings → Setup**.
+
+### `.env` location
+
+xi-tools settings are written to the tools install’s `.env`, e.g.
+
+`%LOCALAPPDATA%\XiZoneEditor\xi-tools\.env`
+
+or your local checkout’s `.env` if you used **Use local folder…**.
+
+The Setup wizard / Settings UI own `FFXI_*`, `XI_SERVER_DIR`, and `XI_DB_*`. You can still edit `.env` by hand for extras such as `XI_NAVMESH_DIR` or `XI_EXPORTS_DIR`. Path and DB changes from the UI hot-reload when the bridge is up; other hand-edited keys may need a relaunch.
 
 ---
 
@@ -58,11 +74,14 @@ next to the editor anymore.
 
 ### Prerequisites
 
+These are for **building/running from source** (`Start.bat`). Release `.exe` users do not need them — the app bootstraps xi-tools and Python itself.
+
 | Tool | Required? | Notes |
 |------|-----------|--------|
-| **Node.js** | For building/running dev UI | Vite |
-| **Rust + VS C++ Build Tools** | For Tauri | Needs `rc.exe` / Windows SDK |
-| **Python 3.11+** | Runtime for the bridge | **3.12+ recommended.** If missing, the app downloads the official embeddable build automatically. |
+| **Node.js 18+** | Yes | Vite frontend (`ui/`) |
+| **Rust** (stable) | Yes | Tauri 2 / `cargo tauri dev` |
+| **VS C++ Build Tools + Windows SDK** | Yes | Provides `rc.exe` and the MSVC linker `Start.bat` looks for |
+| **Python** | No | Bridge runtime only. If no system Python is found, the app auto-downloads the official **3.12** embeddable build (Windows Store stubs are ignored). |
 
 ### Run
 
@@ -73,68 +92,63 @@ Start.bat
 That installs UI deps if needed, ensures the Tauri CLI, and runs `cargo tauri dev`
 (hot reload for the frontend).
 
-### First launch flow
-
-1. **XI Tools** modal — download/update xi-tools (or **Use local folder…** → e.g. `D:\xi-tools`)
-2. Python bootstrap if needed (may take a bit on first run; pip installs requirements)
-3. Bridge starts on `127.0.0.1:8777`
-4. **Workspace Setup** — pick a folder for projects / change-sets
-5. **Game Paths** — set `FFXI_DIR` (browse); optional HD, pivot, Blender  
-   Green ticks when paths look valid (`FFXiMain.dll` found, etc.)
-6. **Projects** launcher — open or create a project and load a zone
-
-### Manual `.env` (until DB setup is in the UI)
-
-xi-tools settings live in the tools install’s `.env`, e.g.
-
-`%LOCALAPPDATA%\XiZoneEditor\xi-tools\.env`
-
-or your local checkout’s `.env` if you used **Use local folder…**.
-
-For DB-backed features, add (example):
-
-```env
-XI_DB_HOST=127.0.0.1
-XI_DB_PORT=3306
-XI_DB_USER=root
-XI_DB_PASSWORD=xi
-XI_DB_NAME=tpzdb
-```
-
-Optional extras: `XI_SERVER_DIR`, `XI_NAVMESH_DIR`, `XI_EXPORTS_DIR` (if pre-decoded audio lives outside the tools tree).
-
-Restart the editor (or let the bridge restart) after editing `.env` if values were already loaded — path setup via the UI hot-reloads; hand-edited DB keys may need a relaunch.
-
----
-
-## Production build
+### Production build
 
 ```bat
 Build.bat
 ```
 
 Produces `src-tauri\target\release\xi-zone-editor.exe`.  
-End users of the `.exe` do **not** need Node; they still need the bridge stack
-(xi-tools + Python), which the app bootstraps on first run.
+End users of the `.exe` do **not** need Node, Rust, or a preinstalled Python — xi-tools and Python are bootstrapped on first run.
 
 ---
 
-## Layout
+## How it works
+
+```text
+  +-----------------------------+         +------------------------+
+  | XI Zone Editor (Tauri 2)    |  WS/HTTP| xi bridge (Python)     |
+  |  splash → setup → projects  |<------->| xi-tools package       |
+  |  ui/  three.js + Vite       |         +-----------+------------+
+  +-----------------------------+                     |
+      ws://127.0.0.1:8777/ws                          v
+      http://127.0.0.1:8777/               FFXI_DIR / HD / pivot DATs
+      /game  /game-hd  /exports  /health   workspace folder (projects)
+                                           optional LSB server + MariaDB
+```
+
+| Layer | Owns |
+|-------|------|
+| **Tauri shell** (`src-tauri/`) | Window, download/update xi-tools, embeddable Python + pip, spawn/kill bridge, folder pickers, desktop shortcut |
+| **Editor UI** (`ui/`) | three.js viewport, zone editing, projects launcher, Setup wizard / Settings |
+| **xi bridge** (xi-tools) | DAT read/write, publish, navmesh, DB lookups, cutscene NPC data, file serve under `/game` |
+
+1. Splash paints immediately; tools boot can start before the heavy three.js bundle finishes loading.
+2. Ensures **xi-tools** + **Python**, installs requirements, starts the bridge on `127.0.0.1:8777`.
+3. First run → Setup wizard; later launches → splash → Projects.
+4. Opening a project points the bridge at that folder. Change-sets live under the configured **workspaces** directory (`XI_WORKSPACES_DIR`), not inside the app install.
+5. Zone DAT parsing for the viewport is **client-side** (`ui/ffxi/zone.js`); the bridge is required for save/publish, workspaces, DB, and server-backed features.
+6. Closing the app stops the bridge (Windows Job Object kill-on-close + bridge idle timeout).
+
+Asset Browser icons / sprites / manifests are **bundled** in the UI (`ui/public/exports/assets`). No `game/` or `exports/` junction next to the editor is required.
+
+### Layout
 
 | Path | Role |
 |------|------|
 | `ui/` | Frontend (Vite + three.js) |
-| `ui/public/exports/assets/` | Bundled Asset Browser manifests, sprites, PNG thumbs |
-| `src-tauri/` | Tauri shell: download tools, Python bootstrap, spawn/kill bridge |
+| `ui/panels/setup-wizard.js` | Splash + first-run Setup / Settings → Setup |
+| `ui/js/tools-boot.js` | xi-tools install/update + bridge connect |
+| `ui/public/exports/assets/` | Bundled Asset Browser data |
+| `src-tauri/` | Tauri shell |
 | `Start.bat` / `Build.bat` | Dev / release |
 
-Runtime data (downloaded tools, embeddable Python, logs):
+| Runtime | Location |
+|---------|----------|
+| Downloaded tools, embed Python, bridge log | `%LOCALAPPDATA%\XiZoneEditor\` |
+| Projects / change-sets | Workspace folder chosen at setup (e.g. `…\xi-tools-workspaces\`) |
 
-`%LOCALAPPDATA%\XiZoneEditor\`
-
----
-
-## Bridge reference
+### Bridge reference
 
 | Endpoint | Purpose |
 |----------|---------|
@@ -148,8 +162,8 @@ Runtime data (downloaded tools, embeddable Python, logs):
 
 ## Related
 
-- [xi-tools](https://github.com/vekien/xi-tools) — CLI + bridge
-- [xi-model-viewer](https://github.com/vekien/xi-model-viewer) — asset browser
+- [xi-tools](https://github.com/vekien/xi-tools) — CLI + bridge backend
+- [xi-model-viewer](https://github.com/vekien/xi-model-viewer) — faithful zone / model viewing (not this editor)
 
 ---
 

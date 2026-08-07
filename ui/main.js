@@ -320,24 +320,11 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-// Editor viewport backdrop — a soft vertical gradient (top → bottom) baked into a
-// tiny canvas texture. scene.background can't take a CSS gradient, but it takes a texture.
-function makeBackdropTexture() {
-  const c = document.createElement('canvas');
-  c.width = 2; c.height = 256;
-  const cx = c.getContext('2d');
-  const g = cx.createLinearGradient(0, 0, 0, 256);
-  g.addColorStop(0, '#edffd1');   // top
-  g.addColorStop(1, '#bfe1ff');   // bottom
-  cx.fillStyle = g; cx.fillRect(0, 0, 2, 256);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-const backdropTexture = makeBackdropTexture();
-let customBgColor = loadSetting('bgColor', '');  // '' = use gradient
+// Default viewport backdrop — flat dark gray. Settings → bgColor overrides.
+const DEFAULT_BG = 0x151515;
+let customBgColor = loadSetting('bgColor', '');  // '' = default gray
 function applyBackdrop() {
-  scene.background = customBgColor ? new THREE.Color(customBgColor) : backdropTexture;
+  scene.background = new THREE.Color(customBgColor || DEFAULT_BG);
 }
 applyBackdrop();
 
@@ -4407,7 +4394,7 @@ if (wireColorEl) {
 const bgColorEl = document.getElementById('bg-color');
 const bgResetEl = document.getElementById('bg-reset');
 if (bgColorEl) {
-  if (customBgColor) bgColorEl.value = customBgColor;
+  bgColorEl.value = customBgColor || '#151515';
   bgColorEl.oninput = (e) => { customBgColor = e.target.value; saveSetting('bgColor', customBgColor); applyBackdrop(); };
 }
 if (bgResetEl) {
@@ -4415,7 +4402,7 @@ if (bgResetEl) {
     customBgColor = '';
     saveSetting('bgColor', '');
     applyBackdrop();
-    if (bgColorEl) bgColorEl.value = '#edffd1';
+    if (bgColorEl) bgColorEl.value = '#151515';
   };
 }
 if (skyToggle) { skyToggle.checked = showSkybox; skyToggle.onchange = (e) => { showSkybox = e.target.checked; saveProjectSetting('skybox', showSkybox); setSkyVisible(showSkybox); }; }

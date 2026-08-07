@@ -39,10 +39,19 @@ export function projectRoot(project) {
   return (base && project && project.id) ? `${base}/${project.id}` : '';
 }
 
-// Point the backend's workspace reads/writes at a project folder ('' = legacy default).
+// Point the backend's workspace reads/writes at a project folder ('' = clear project).
 async function setBackendProjectRoot(root) {
   if (!bridgeOnline()) return;
   try { await bridgeCall('workspace.setActiveProject', { root: root || '' }); } catch {}
+}
+
+/** Tell the bridge where the shared workspaces folder is (writes XI_WORKSPACES_DIR).
+ *  Without this, caches like subarea_index.json land under web/leveleditor/workspaces
+ *  inside the xi-tools checkout and keep showing up as untracked files. */
+async function ensureBackendWorkspacesDir() {
+  const path = workspacePath();
+  if (!path || !bridgeOnline()) return;
+  try { await bridgeCall('workspace.setup', { path }); } catch { /* best-effort */ }
 }
 
 // Per-project last-viewed zone — editor-local (localStorage), NOT committed to the workspace.
@@ -562,7 +571,14 @@ export function initProjectsLauncher(deps) {
   const wov = document.getElementById('welcome-overlay');
   wov?.addEventListener('click', (e) => { if (e.target === wov) hideWelcome(); });
   // The boot version fetch + project list can race the socket — refresh once connected.
-  onBridgeStatus((online) => { if (online) { fillLauncherVersion(); if (launcherState.launcherActive) refreshProjectsList(); } });
+  onBridgeStatus((online) => {
+    if (!online) return;
+    ensureBackendWorkspacesDir();
+    fillLauncherVersion();
+    if (launcherState.launcherActive) refreshProjectsList();
+  });
+  // Already online when the launcher mounts (common after setup splash).
+  ensureBackendWorkspacesDir();
 
   // Dev helpers (xiResetSetup lives in setup-wizard.js — it owns the setup keys)
   window.xiMarkAllProjectsMine = async () => {
