@@ -911,6 +911,22 @@ export function csRefreshOpenKeyframe() {
 
 // ── Cutscene 3D actors ────────────────────────────────────────────────────────
 
+// NPC name/look/position come from the server's npc_list table. With no local server
+// running, the backend falls back to a snapshot bundled inside xi-tools — the cast still
+// renders, but it reflects the upstream table rather than your database, so anything you
+// changed server-side (renames, moves, custom NPCs) won't be shown. Say so once per
+// session: silently rendering stale placement is how this went unnoticed before.
+let _npcFallbackNoted = false;
+function _noteNpcSource(r) {
+  if (_npcFallbackNoted || !r) return;
+  if (r.dbReachable !== false) return;
+  if (!(r.npcSources && r.npcSources.bundled)) return;
+  _npcFallbackNoted = true;
+  console.info('[cs actors] server DB unreachable — NPC data came from the bundled '
+    + 'npc_list snapshot', r.npcSources);
+  _setStatus?.('NPCs loaded from the bundled snapshot (server database unreachable)');
+}
+
 function csClearActorSelection() {
   csSelectedActor = null;
   _clearOutline(csActorOutline);
@@ -944,6 +960,7 @@ async function csLoadActors(key) {
   catch (e) { console.warn('[cs actors] fetch failed', e); return; }
   if (zoneUrl !== _getCurrentZoneUrl() || csData !== _eventsCutscene.get(key)?.data) return;  // stale
   if (!r || !r.ok || !Array.isArray(r.actors)) return;
+  _noteNpcSource(r);
   csActorGroup = new THREE.Group(); csActorGroup.name = '__cutscene_actors';
   zoneRoot.add(csActorGroup);
   // entityId → the cast member's chosen Default idle, so the preview rests in the
@@ -1012,6 +1029,7 @@ export async function csLoadAuthorActors() {
   catch (e) { return; }
   if (!csAuthorMode || zoneUrl !== _getCurrentZoneUrl()) return;      // stale (closed / zone switched)
   if (!r || !r.ok || !Array.isArray(r.actors)) return;
+  _noteNpcSource(r);
   // Dedupe response by actorId ONLY. (The old name+pos "slot" dedup dropped any cast
   // member sharing a display name + default spawn spot with another — which silently
   // ate Maat·3032, the status-6 cutscene copy that sits at the SAME npc_list pos as
