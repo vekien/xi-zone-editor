@@ -21,6 +21,20 @@ const BRIDGE_HOST: &str = "127.0.0.1";
 const BRIDGE_PORT: u16 = 8777;
 const BRIDGE_IDLE_SECS: u32 = 90;
 
+/// Release builds use `windows_subsystem = "windows"` (no console). Child processes
+/// (python, cmd, …) still allocate a console unless CREATE_NO_WINDOW is set — that is
+/// why the packaged exe was popping black terminal windows that never appeared under
+/// `cargo tauri dev` (dev inherits the cargo console).
+fn hide_console(cmd: &mut Command) -> &mut Command {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    cmd
+}
+
 static BRIDGE_CHILD: Lazy<Mutex<Option<Child>>> = Lazy::new(|| Mutex::new(None));
 
 #[cfg(windows)]
@@ -775,6 +789,7 @@ fn python_can_import_xi_deps(py: &Path) -> bool {
         cmd.arg("-3");
     }
     cmd.args(["-c", "import click, PIL, numpy"]);
+    hide_console(&mut cmd);
     cmd.stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -895,6 +910,7 @@ fn run_py(
     if let Some(c) = cwd {
         cmd.current_dir(c);
     }
+    hide_console(&mut cmd);
     cmd.stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -1278,6 +1294,7 @@ fn bridge_start_sync(app: &AppHandle) -> Result<String, String> {
     }
 
     let mut cmd = Command::new(&exe);
+    hide_console(&mut cmd);
     cmd.args(&args)
         .current_dir(&cwd)
         .stdin(Stdio::null())
@@ -1388,7 +1405,9 @@ fn bridge_stop() -> Result<(), String> {
     // Also kill anything still listening (orphan from prior crash).
     #[cfg(windows)]
     {
-        let _ = Command::new("cmd")
+        let mut kill = Command::new("cmd");
+        hide_console(&mut kill);
+        let _ = kill
             .args([
                 "/C",
                 &format!(
