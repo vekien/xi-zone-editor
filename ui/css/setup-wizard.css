@@ -82,19 +82,18 @@
   cursor: default;
   transition: background 0.12s, color 0.12s;
 }
+/* No pill or ring — the glyph itself carries the state, so a done step reads as a
+   green tick rather than a filled badge. */
 .wiz-step-num {
   flex: 0 0 24px;
   height: 24px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  border: 1px solid #40405a;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
-  color: #8a8aa4;
-  background: #1e1e28;
+  color: #6e6e88;
 }
-.wiz-step-num .material-symbols-outlined { font-size: 15px; }
+.wiz-step-num .material-symbols-outlined { font-size: 20px; }
 .wiz-step-label { font-size: 13px; }
 .wiz-step-note {
   font-size: 11px;
@@ -106,21 +105,10 @@
   background: #23233a;
   color: #e8e8f2;
 }
-.wiz-step.is-current .wiz-step-num {
-  border-color: #2f6fed;
-  background: #2f6fed;
-  color: #fff;
-}
-.wiz-step.is-done .wiz-step-num {
-  border-color: #2ea05b;
-  background: #2ea05b;
-  color: #fff;
-}
+.wiz-step.is-current .wiz-step-num { color: #5a90ff; }
+.wiz-step.is-done .wiz-step-num { color: #3fbd72; }
 .wiz-step.is-done .wiz-step-label { color: #a8a8c0; }
-.wiz-step.is-skipped .wiz-step-num {
-  border-color: #55556e;
-  color: #7d7d97;
-}
+.wiz-step.is-skipped .wiz-step-num { color: #55556e; }
 
 .wiz-sidebar-foot {
   margin-top: auto;
@@ -299,39 +287,135 @@
 .wiz-note.warn .material-symbols-outlined { color: #d8a13a; }
 .wiz-note.good .material-symbols-outlined { color: #2ea05b; }
 
-/* ── xi-tools step ───────────────────────────────────────────────────────── */
+/* ── Splash mode (xi-tools boot — every launch) ────────────────────────────
+   Same overlay + pane machinery as the wizard; chrome collapses to a centered
+   logo + status line so the auto-progressing boot doesn't look like a form. */
 
-.wiz-tools-status {
+.wiz-overlay.wiz-splash {
+  /* Keep default centered flex — logo/status stay viewport-centered regardless of log. */
+  padding: 24px;
+}
+.wiz-overlay.wiz-splash .wiz-shell {
+  width: min(440px, 100%);
+  height: auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.wiz-overlay.wiz-splash .wiz-sidebar,
+.wiz-overlay.wiz-splash .wiz-head,
+.wiz-overlay.wiz-splash .wiz-foot {
+  display: none;
+}
+.wiz-overlay.wiz-splash .wiz-main {
+  background: transparent;
+  width: 100%;
+}
+.wiz-overlay.wiz-splash .wiz-body {
+  padding: 0;
+  overflow: visible;
+}
+.wiz-overlay.wiz-splash .wiz-pane[data-pane="tools"].active {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 13px;
-  margin-bottom: 18px;
+  text-align: center;
+  gap: 0;
+  padding: 8px 12px 4px;
 }
-.wiz-tools-ico {
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: #23233a;
-  color: #7fb0ff;
+
+/* Floating terminal — out of document flow so it never shoves the splash up. */
+.wiz-overlay.wiz-splash > .wiz-log {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: block;
+  width: min(760px, calc(100vw - 48px));
+  max-height: min(220px, 28vh);
+  margin: 0;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: 10px;
+  background: rgba(10, 10, 14, 0.78);
+  border: 1px solid #2a2a3a;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  font: 11.5px/1.55 "Cascadia Mono", "Consolas", ui-monospace, monospace;
+  color: #9a9ab0;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: auto;
 }
-.wiz-tools-ico .material-symbols-outlined { font-size: 24px; }
-.wiz-tools-text { min-width: 0; }
+.wiz-overlay.wiz-splash > .wiz-log[hidden] { display: none; }
+.wiz-overlay.wiz-splash > .wiz-log.is-error {
+  color: #e69a9a;
+  border-color: #5c2a2a;
+}
+/* Hide the docked log when we flip into the framed wizard. */
+.wiz-overlay:not(.wiz-splash) > .wiz-log { display: none !important; }
+
+/* Brand only on the splash; inside the framed wizard it would double up. */
+.wiz-splash-brand { display: none; }
+.wiz-overlay.wiz-splash .wiz-splash-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.wiz-splash-brand img {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+}
+.wiz-splash-name {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #f0f0f8;
+}
+
 .wiz-tools-line {
   font-size: 14px;
-  color: #e4e4f0;
+  color: #d0d0e0;
+  margin-bottom: 6px;
 }
 .wiz-tools-meta {
-  font-size: 11.5px;
+  font-size: 12px;
   color: #7d7d97;
-  word-break: break-all;
+  word-break: break-word;
+  max-width: 40ch;
+  min-height: 1.4em;
+  margin-bottom: 14px;
+}
+.wiz-tools-detail {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: #6e6e88;
+  min-height: 1.3em;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+}
+
+.wiz-overlay.wiz-splash .wiz-bar {
+  width: 100%;
+  max-width: 280px;
+  margin-bottom: 0;
+}
+.wiz-overlay.wiz-splash .wiz-inline-btns {
+  justify-content: center;
+  width: 100%;
 }
 
 .wiz-bar {
-  height: 5px;
-  border-radius: 3px;
+  height: 4px;
+  border-radius: 2px;
   background: #2a2a3a;
   overflow: hidden;
   margin-bottom: 18px;
@@ -339,7 +423,7 @@
 .wiz-bar-fill {
   height: 100%;
   width: 0;
-  border-radius: 3px;
+  border-radius: 2px;
   background: linear-gradient(90deg, #2f6fed, #7fb0ff);
   transition: width 0.25s ease;
 }
@@ -368,22 +452,70 @@
 
 /* ── Server / database step ──────────────────────────────────────────────── */
 
-.wiz-testline {
+/* Row 1: host | port | user | password. Row 2: short db name + Test. */
+.wiz-db-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) 78px minmax(0, 0.9fr) minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: end;
+}
+.wiz-db-grid .wiz-field { margin-bottom: 12px; min-width: 0; }
+.wiz-db-name {
+  grid-column: 1;
+  /* ~quarter of the form width — names like tpzdb / xidb don't need a full row. */
+  max-width: 140px;
+}
+.wiz-db-test {
+  grid-column: 2;
+  margin-bottom: 12px;
+}
+.wiz-db-test .wiz-browse {
+  width: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.wiz-label-spacer {
+  visibility: hidden;
+  user-select: none;
+}
+
+/* Connection result — compact banner, not a long status sentence. */
+.wiz-db-banner {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 4px;
+  padding: 10px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
 }
-.wiz-test-result {
-  font-size: 12px;
-  color: #8a8aa4;
+.wiz-db-banner[hidden] { display: none; }
+.wiz-db-banner.ok {
+  color: #9de0b4;
+  background: #1b2a20;
+  border: 1px solid #2a4a34;
 }
-.wiz-test-result.ok { color: #6cc98a; }
-.wiz-test-result.bad { color: #e07070; }
+.wiz-db-banner.bad {
+  color: #f0a0a0;
+  background: #2a1a1a;
+  border: 1px solid #5c2a2a;
+}
+.wiz-db-banner.pending {
+  color: #a8a8c0;
+  background: #23233a;
+  border: 1px solid #34344c;
+}
+.wiz-db-banner .material-symbols-outlined {
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+.wiz-db-banner.ok .material-symbols-outlined { color: #3fbd72; }
+.wiz-db-banner.bad .material-symbols-outlined { color: #e07070; }
 
 .wiz-sectionhead {
-  margin: 26px 0 14px;
-  padding-top: 18px;
+  margin: 22px 0 12px;
+  padding-top: 16px;
   border-top: 1px solid #2a2a3a;
   font-size: 11px;
   font-weight: 600;
@@ -395,6 +527,13 @@
   margin-top: 0;
   padding-top: 0;
   border-top: none;
+}
+
+/* Skip stays one word — don't stretch it to the primary button width. */
+.wiz-foot-btns .wiz-btn.ghost {
+  min-width: 0;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 /* ── Desktop shortcut step ───────────────────────────────────────────────── */

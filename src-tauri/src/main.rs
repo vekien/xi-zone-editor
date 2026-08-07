@@ -7,11 +7,13 @@
 use once_cell::sync::Lazy;
 use serde::Serialize;
 use std::fs::{self, File};
-use std::io::{copy, Write};
+use std::io::{BufRead, BufReader, copy, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
-use std::time::Duration;
+use std::thread;
+use std::time::{Duration, Instant};
+use tauri::{AppHandle, Emitter};
 
 const GH_OWNER: &str = "vekien";
 const GH_REPO: &str = "xi-tools";
@@ -256,6 +258,69 @@ struct ToolsStatus {
     error: Option<String>,
 }
 
+/// Fired on the `tools-progress` event while install / Python setup runs.
+/// Each stage resets `pct` to 0 so the splash bar can restart cleanly.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ToolsProgress {
+    stage: String,
+    label: String,
+    loaded: u64,
+    total: Option<u64>,
+    pct: f64,
+    /// "bytes" | "files" | "none"
+    unit: String,
+    detail: Option<String>,
+}
+
+fn emit_progress(
+    app: &AppHandle,
+    stage: &str,
+    label: &str,
+    loaded: u64,
+    total: Option<u64>,
+    unit: &str,
+    detail: Option<String>,
+) {
+    let pct = match total {
+        Some(t) if t > 0 => (loaded as f64 / t as f64) * 100.0,
+        _ => 0.0,
+    };
+    let _ = app.emit(
+        "tools-progress",
+        ToolsProgress {
+            stage: stage.into(),
+            label: label.into(),
+            loaded,
+            total,
+            pct: pct.clamp(0.0, 100.0),
+            unit: unit.into(),
+            detail,
+        },
+    );
+}
+
+/// Append a line to the splash CLI log (`tools-log` event).
+fn emit_log(app: &AppHandle, line: impl AsRef<str>) {
+    let s = line.as_ref().trim_end();
+    if s.is_empty() {
+        return;
+    }
+    let _ = app.emit("tools-log", s.to_string());
+}
+
+/// Pump a child pipe into the splash log on a background thread.
+fn pump_log_pipe<R: Read + Send + 'static>(app: Option<AppHandle>, reader: R) -> thread::JoinHandle<()> {
+    thread::spawn(move || {
+        let buf = BufReader::new(reader);
+        for line in buf.lines().flatten() {
+            if let Some(ref app) = app {
+                emit_log(app, line);
+            }
+        }
+    })
+}
+
 fn gh_client() -> reqwest::blocking::Client {
     reqwest::blocking::Client::builder()
         .user_agent("xi-zone-editor")
@@ -279,36 +344,54 @@ fn fetch_latest_release() -> Result<serde_json::Value, String> {
     resp.json().map_err(|e| format!("bad GitHub JSON: {e}"))
 }
 
-#[tauri::command]
-fn tools_status() -> ToolsStatus {
+/// Disk-only status — no network. Safe to call from the UI thread path and after
+/// install without re-hitting GitHub.
+fn tools_status_local() -> ToolsStatus {
     let dir = xi_tools_dir();
     let local = read_local_version();
     let installed = install_complete(&dir);
-    let mut latest = None;
-    let mut update = false;
-    let mut error = None;
-    match fetch_latest_release() {
-        Ok(rel) => {
-            if let Some(tag) = rel.get("tag_name").and_then(|v| v.as_str()) {
-                latest = Some(normalize_version(tag));
-                update = is_newer(tag, &local) || !installed;
-            }
-        }
-        Err(e) => error = Some(e),
-    }
     let using_override = tools_override_path().is_file()
         || env_path("XI_TOOLS_DIR").map(|p| p == dir).unwrap_or(false);
     ToolsStatus {
         installed,
         local_version: local,
-        latest_version: latest,
-        update_available: update && !using_override,
+        latest_version: None,
+        update_available: false,
         tools_dir: dir.display().to_string(),
         using_local_override: using_override,
         bridge_url: format!("ws://{BRIDGE_HOST}:{BRIDGE_PORT}/ws"),
         bridge_running: port_open(BRIDGE_HOST, BRIDGE_PORT),
-        error,
+        error: None,
     }
+}
+
+/// Full status including a GitHub latest-release check. May take several seconds.
+fn tools_status_sync() -> ToolsStatus {
+    let mut st = tools_status_local();
+    match fetch_latest_release() {
+        Ok(rel) => {
+            if let Some(tag) = rel.get("tag_name").and_then(|v| v.as_str()) {
+                st.latest_version = Some(normalize_version(tag));
+                st.update_available =
+                    (is_newer(tag, &st.local_version) || !st.installed) && !st.using_local_override;
+            }
+        }
+        Err(e) => st.error = Some(e),
+    }
+    st
+}
+
+/// Async so the GitHub round-trip never freezes the webview. The wizard paints first,
+/// then calls this; a sync command would block paint and leave the window blank.
+#[tauri::command]
+async fn tools_status() -> ToolsStatus {
+    tauri::async_runtime::spawn_blocking(tools_status_sync)
+        .await
+        .unwrap_or_else(|e| {
+            let mut st = tools_status_local();
+            st.error = Some(format!("status task failed: {e}"));
+            st
+        })
 }
 
 /// Point the app at a local xi-tools checkout (must contain src/xi).
@@ -318,14 +401,14 @@ fn tools_set_local_path(path: String) -> Result<ToolsStatus, String> {
     validate_tools_dir(&dir)?;
     fs::create_dir_all(app_data_dir()).map_err(|e| e.to_string())?;
     fs::write(tools_override_path(), dir.display().to_string()).map_err(|e| e.to_string())?;
-    Ok(tools_status())
+    Ok(tools_status_local())
 }
 
 /// Clear the local-override path and go back to the downloaded install.
 #[tauri::command]
 fn tools_clear_local_path() -> Result<ToolsStatus, String> {
     let _ = fs::remove_file(tools_override_path());
-    Ok(tools_status())
+    Ok(tools_status_local())
 }
 
 /// Folder picker pre-labelled for choosing an xi-tools checkout.
@@ -381,9 +464,20 @@ fn pick_zip_asset(rel: &serde_json::Value) -> Result<(String, String), String> {
     Ok((name, url))
 }
 
-fn extract_zip(zip_path: &Path, dest: &Path) -> Result<(), String> {
+fn extract_zip_progress(
+    zip_path: &Path,
+    dest: &Path,
+    app: Option<&AppHandle>,
+    stage: &str,
+    label: &str,
+) -> Result<(), String> {
     let file = File::open(zip_path).map_err(|e| e.to_string())?;
     let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+    let total = archive.len() as u64;
+    if let Some(app) = app {
+        emit_progress(app, stage, label, 0, Some(total.max(1)), "files", None);
+    }
+    let mut last = Instant::now() - Duration::from_millis(200);
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
         let outpath = match file.enclosed_name() {
@@ -399,11 +493,84 @@ fn extract_zip(zip_path: &Path, dest: &Path) -> Result<(), String> {
             let mut outfile = File::create(&outpath).map_err(|e| e.to_string())?;
             copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
         }
+        let done = (i as u64) + 1;
+        if let Some(app) = app {
+            if last.elapsed() >= Duration::from_millis(80) || done == total {
+                emit_progress(app, stage, label, done, Some(total.max(1)), "files", None);
+                last = Instant::now();
+            }
+        }
+    }
+    if let Some(app) = app {
+        emit_progress(app, stage, label, total.max(1), Some(total.max(1)), "files", None);
     }
     Ok(())
 }
 
-fn tools_install_or_update_sync() -> Result<ToolsStatus, String> {
+/// Stream a URL to disk, emitting byte progress on `tools-progress` when `app` is set.
+fn download_file_progress(
+    url: &str,
+    dest: &Path,
+    app: Option<&AppHandle>,
+    stage: &str,
+    label: &str,
+) -> Result<(), String> {
+    let mut req = gh_client().get(url);
+    if let Ok(tok) = std::env::var("GITHUB_TOKEN") {
+        if !tok.trim().is_empty() {
+            req = req.bearer_auth(tok.trim());
+        }
+    }
+    let mut resp = req
+        .send()
+        .map_err(|e| format!("download failed ({url}): {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("download HTTP {} ({url})", resp.status()));
+    }
+    let total = resp.content_length();
+    if let Some(parent) = dest.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    if let Some(app) = app {
+        emit_progress(app, stage, label, 0, total, "bytes", None);
+    }
+    let mut f = File::create(dest).map_err(|e| e.to_string())?;
+    let mut buf = [0u8; 64 * 1024];
+    let mut loaded: u64 = 0;
+    let mut last = Instant::now() - Duration::from_millis(200);
+    loop {
+        let n = resp.read(&mut buf).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        f.write_all(&buf[..n]).map_err(|e| e.to_string())?;
+        loaded += n as u64;
+        if let Some(app) = app {
+            let finished = total.map(|t| loaded >= t).unwrap_or(false);
+            if last.elapsed() >= Duration::from_millis(100) || finished {
+                emit_progress(app, stage, label, loaded, total, "bytes", None);
+                last = Instant::now();
+            }
+        }
+    }
+    if let Some(app) = app {
+        let t = total.or(Some(loaded));
+        emit_progress(app, stage, label, loaded, t, "bytes", None);
+    }
+    Ok(())
+}
+
+fn tools_install_or_update_sync(app: &AppHandle) -> Result<ToolsStatus, String> {
+    emit_progress(
+        app,
+        "release",
+        "Fetching latest release…",
+        0,
+        None,
+        "none",
+        None,
+    );
+    emit_log(app, "Fetching latest release from github.com/vekien/xi-tools …");
     let rel = fetch_latest_release()?;
     let tag = rel
         .get("tag_name")
@@ -424,25 +591,27 @@ fn tools_install_or_update_sync() -> Result<ToolsStatus, String> {
     }
 
     let tmp = app_data_dir().join("download.zip");
-    {
-        let mut req = gh_client().get(&url);
-        if let Ok(tok) = std::env::var("GITHUB_TOKEN") {
-            if !tok.trim().is_empty() {
-                req = req.bearer_auth(tok.trim());
-            }
-        }
-        let mut resp = req.send().map_err(|e| format!("download failed: {e}"))?;
-        if !resp.status().is_success() {
-            return Err(format!("download HTTP {}", resp.status()));
-        }
-        let mut f = File::create(&tmp).map_err(|e| e.to_string())?;
-        copy(&mut resp, &mut f).map_err(|e| e.to_string())?;
-    }
+    emit_log(app, format!("Downloading xi-tools {tag} …"));
+    download_file_progress(
+        &url,
+        &tmp,
+        Some(app),
+        "download-tools",
+        "Downloading xi-tools…",
+    )?;
+    emit_log(app, "Download complete. Extracting…");
 
-    extract_zip(&tmp, &dir)?;
+    extract_zip_progress(
+        &tmp,
+        &dir,
+        Some(app),
+        "extract-tools",
+        "Extracting xi-tools…",
+    )?;
     let _ = fs::remove_file(&tmp);
+    emit_log(app, format!("Installed xi-tools v{}", normalize_version(&tag)));
 
-    // Optional python.zip asset
+    // Optional python.zip asset bundled with the release
     if let Some(assets) = rel.get("assets").and_then(|a| a.as_array()) {
         if let Some(py) = assets.iter().find(|a| {
             a.get("name")
@@ -452,25 +621,37 @@ fn tools_install_or_update_sync() -> Result<ToolsStatus, String> {
         }) {
             if let Some(purl) = py.get("browser_download_url").and_then(|u| u.as_str()) {
                 let pytmp = app_data_dir().join("python.zip");
-                let mut req = gh_client().get(purl);
-                if let Ok(tok) = std::env::var("GITHUB_TOKEN") {
-                    if !tok.trim().is_empty() {
-                        req = req.bearer_auth(tok.trim());
-                    }
+                if download_file_progress(
+                    purl,
+                    &pytmp,
+                    Some(app),
+                    "download-python-bundle",
+                    "Downloading bundled Python…",
+                )
+                .is_ok()
+                {
+                    let _ = extract_zip_progress(
+                        &pytmp,
+                        &dir,
+                        Some(app),
+                        "extract-python-bundle",
+                        "Extracting bundled Python…",
+                    );
                 }
-                if let Ok(mut resp) = req.send() {
-                    if resp.status().is_success() {
-                        if let Ok(mut f) = File::create(&pytmp) {
-                            let _ = copy(&mut resp, &mut f);
-                            let _ = extract_zip(&pytmp, &dir);
-                        }
-                        let _ = fs::remove_file(&pytmp);
-                    }
-                }
+                let _ = fs::remove_file(&pytmp);
             }
         }
     }
 
+    emit_progress(
+        app,
+        "finalize",
+        "Finalising install…",
+        1,
+        Some(1),
+        "none",
+        None,
+    );
     fs::write(version_path(), normalize_version(&tag)).map_err(|e| e.to_string())?;
 
     // Ensure .env exists from sample
@@ -484,12 +665,17 @@ fn tools_install_or_update_sync() -> Result<ToolsStatus, String> {
         }
     }
 
-    Ok(tools_status())
+    // Local only — we just fetched the release; no need to hit GitHub again.
+    let mut st = tools_status_local();
+    st.latest_version = Some(normalize_version(&tag));
+    st.local_version = normalize_version(&tag);
+    st.installed = true;
+    Ok(st)
 }
 
 #[tauri::command]
-async fn tools_install_or_update() -> Result<ToolsStatus, String> {
-    tauri::async_runtime::spawn_blocking(tools_install_or_update_sync)
+async fn tools_install_or_update(app: AppHandle) -> Result<ToolsStatus, String> {
+    tauri::async_runtime::spawn_blocking(move || tools_install_or_update_sync(&app))
         .await
         .map_err(|e| format!("install task failed: {e}"))?
 }
@@ -689,23 +875,13 @@ fn inject_tools_src_into_python(py_exe: &Path, tools_src: &Path) -> Result<(), S
     Ok(())
 }
 
-fn download_file(url: &str, dest: &Path) -> Result<(), String> {
-    let mut resp = gh_client()
-        .get(url)
-        .send()
-        .map_err(|e| format!("download failed ({url}): {e}"))?;
-    if !resp.status().is_success() {
-        return Err(format!("download HTTP {} ({url})", resp.status()));
-    }
-    if let Some(parent) = dest.parent() {
-        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    let mut f = File::create(dest).map_err(|e| e.to_string())?;
-    copy(&mut resp, &mut f).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-fn run_py(py: &Path, args: &[&str], cwd: Option<&Path>) -> Result<(), String> {
+/// Run a Python command, streaming stdout/stderr into the splash CLI log when `app` is set.
+fn run_py(
+    py: &Path,
+    args: &[&str],
+    cwd: Option<&Path>,
+    app: Option<&AppHandle>,
+) -> Result<(), String> {
     let mut cmd = Command::new(py);
     let name = py
         .file_name()
@@ -719,25 +895,55 @@ fn run_py(py: &Path, args: &[&str], cwd: Option<&Path>) -> Result<(), String> {
     if let Some(c) = cwd {
         cmd.current_dir(c);
     }
-    cmd.stdin(Stdio::null());
-    let out = cmd.output().map_err(|e| format!("failed to run {}: {e}", py.display()))?;
-    if out.status.success() {
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        // Line-buffer pip / get-pip so the splash log updates live.
+        .env("PYTHONUNBUFFERED", "1")
+        .env("PIP_DISABLE_PIP_VERSION_CHECK", "1")
+        .env("PIP_PROGRESS_BAR", "off");
+
+    if let Some(app) = app {
+        let shown: String = {
+            let mut parts = vec![py.display().to_string()];
+            parts.extend(args.iter().map(|a| (*a).to_string()));
+            format!("$ {}", parts.join(" "))
+        };
+        emit_log(app, shown);
+    }
+
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("failed to run {}: {e}", py.display()))?;
+
+    let out_h = child
+        .stdout
+        .take()
+        .map(|r| pump_log_pipe(app.cloned(), r));
+    let err_h = child
+        .stderr
+        .take()
+        .map(|r| pump_log_pipe(app.cloned(), r));
+
+    let status = child
+        .wait()
+        .map_err(|e| format!("failed waiting on {}: {e}", py.display()))?;
+    if let Some(h) = out_h {
+        let _ = h.join();
+    }
+    if let Some(h) = err_h {
+        let _ = h.join();
+    }
+
+    if status.success() {
         return Ok(());
     }
-    let stderr = String::from_utf8_lossy(&out.stderr);
-    let stdout = String::from_utf8_lossy(&out.stdout);
-    Err(format!(
-        "{} failed ({})\n{}\n{}",
-        py.display(),
-        out.status,
-        stdout.trim(),
-        stderr.trim()
-    ))
+    Err(format!("{} failed ({status})", py.display()))
 }
 
 /// Ensure a real Python exists (download embeddable from python.org if needed)
 /// and that xi-tools requirements are importable.
-fn ensure_python_runtime(tools: &Path) -> Result<PathBuf, String> {
+fn ensure_python_runtime(tools: &Path, app: Option<&AppHandle>) -> Result<PathBuf, String> {
     // Already good?
     if let Some(py) = find_python(tools) {
         if python_can_import_xi_deps(&py) {
@@ -745,7 +951,7 @@ fn ensure_python_runtime(tools: &Path) -> Result<PathBuf, String> {
         }
         // Have python but missing deps — try pip install into that env when it's our embed.
         if py.starts_with(embed_python_dir()) || py.starts_with(tools.join("python")) {
-            install_xi_requirements(&py, tools)?;
+            install_xi_requirements(&py, tools, app)?;
             if python_can_import_xi_deps(&py) {
                 return Ok(py);
             }
@@ -780,23 +986,60 @@ fn ensure_python_runtime(tools: &Path) -> Result<PathBuf, String> {
             fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
 
             let zip_path = app_data_dir().join("python-embed.zip");
-            download_file(EMBED_PY_URL, &zip_path)?;
-            extract_zip(&zip_path, &dir)?;
+            download_file_progress(
+                EMBED_PY_URL,
+                &zip_path,
+                app,
+                "download-python",
+                "Downloading Python 3.12…",
+            )?;
+            extract_zip_progress(
+                &zip_path,
+                &dir,
+                app,
+                "extract-python",
+                "Extracting Python…",
+            )?;
             let _ = fs::remove_file(&zip_path);
             enable_embed_site(&dir)?;
 
             // Bootstrap pip
             let get_pip = dir.join("get-pip.py");
-            download_file("https://bootstrap.pypa.io/get-pip.py", &get_pip)?;
-            run_py(&exe, &[get_pip.to_str().unwrap_or("get-pip.py")], Some(&dir))?;
+            download_file_progress(
+                "https://bootstrap.pypa.io/get-pip.py",
+                &get_pip,
+                app,
+                "download-pip",
+                "Downloading pip…",
+            )?;
+            if let Some(app) = app {
+                emit_progress(
+                    app,
+                    "setup-pip",
+                    "Installing pip…",
+                    0,
+                    None,
+                    "none",
+                    Some("This usually takes a few seconds".into()),
+                );
+            }
+            run_py(
+                &exe,
+                &[get_pip.to_str().unwrap_or("get-pip.py")],
+                Some(&dir),
+                app,
+            )?;
             let _ = fs::remove_file(&get_pip);
+            if let Some(app) = app {
+                emit_progress(app, "setup-pip", "Installing pip…", 1, Some(1), "none", None);
+            }
 
             fs::write(&marker, EMBED_PY_VERSION).map_err(|e| e.to_string())?;
         } else {
             let _ = enable_embed_site(&dir);
         }
 
-        install_xi_requirements(&exe, tools)?;
+        install_xi_requirements(&exe, tools, app)?;
         if !python_can_import_xi_deps(&exe) {
             return Err(format!(
                 "Embedded Python is installed at {} but xi-tools dependencies failed to import.\n\
@@ -808,7 +1051,23 @@ fn ensure_python_runtime(tools: &Path) -> Result<PathBuf, String> {
     }
 }
 
-fn install_xi_requirements(py: &Path, tools: &Path) -> Result<(), String> {
+fn install_xi_requirements(
+    py: &Path,
+    tools: &Path,
+    app: Option<&AppHandle>,
+) -> Result<(), String> {
+    if let Some(app) = app {
+        emit_progress(
+            app,
+            "install-deps",
+            "Installing Python packages…",
+            0,
+            None,
+            "none",
+            Some("pip install — first run can take a minute".into()),
+        );
+        emit_log(app, "Installing Python packages (pip)…");
+    }
     let req = tools.join("requirements.txt");
     if !req.is_file() {
         // Minimal set if requirements missing from an old zip
@@ -829,10 +1088,27 @@ fn install_xi_requirements(py: &Path, tools: &Path) -> Result<(), String> {
                 "numpy>=1.26",
             ],
             None,
+            app,
         )?;
+        if let Some(app) = app {
+            emit_progress(
+                app,
+                "install-deps",
+                "Installing Python packages…",
+                1,
+                Some(1),
+                "none",
+                None,
+            );
+        }
         return Ok(());
     }
-    run_py(py, &["-m", "pip", "install", "--upgrade", "pip"], None)?;
+    run_py(
+        py,
+        &["-m", "pip", "install", "--upgrade", "pip"],
+        None,
+        app,
+    )?;
     run_py(
         py,
         &[
@@ -843,7 +1119,19 @@ fn install_xi_requirements(py: &Path, tools: &Path) -> Result<(), String> {
             req.to_str().ok_or("requirements path")?,
         ],
         None,
+        app,
     )?;
+    if let Some(app) = app {
+        emit_progress(
+            app,
+            "install-deps",
+            "Installing Python packages…",
+            1,
+            Some(1),
+            "none",
+            None,
+        );
+    }
     Ok(())
 }
 
@@ -875,7 +1163,10 @@ fn explain_exit_code(code: Option<i32>, exe: &Path, detail: &str) -> String {
     msg
 }
 
-fn resolve_bridge_command(tools: &Path) -> Result<(PathBuf, Vec<String>, PathBuf), String> {
+fn resolve_bridge_command(
+    tools: &Path,
+    app: Option<&AppHandle>,
+) -> Result<(PathBuf, Vec<String>, PathBuf), String> {
     let src = tools.join("src");
     let pkg = src.join("xi");
     if !pkg.is_dir() {
@@ -908,7 +1199,7 @@ fn resolve_bridge_command(tools: &Path) -> Result<(PathBuf, Vec<String>, PathBuf
     }
 
     // Real Python: system, local, or auto-downloaded embeddable from python.org
-    let py = ensure_python_runtime(tools)?;
+    let py = ensure_python_runtime(tools, app)?;
     let mut args: Vec<String> = Vec::new();
     let name = py
         .file_name()
@@ -933,12 +1224,21 @@ fn resolve_bridge_command(tools: &Path) -> Result<(PathBuf, Vec<String>, PathBuf
     Ok((py, args, tools.to_path_buf()))
 }
 
-fn bridge_start_sync() -> Result<String, String> {
+fn bridge_start_sync(app: &AppHandle) -> Result<String, String> {
     if port_open(BRIDGE_HOST, BRIDGE_PORT) {
         return Ok(format!("ws://{BRIDGE_HOST}:{BRIDGE_PORT}/ws"));
     }
     let tools = xi_tools_dir();
-    let (exe, args, cwd) = resolve_bridge_command(&tools)?;
+    emit_progress(
+        app,
+        "python",
+        "Preparing Python runtime…",
+        0,
+        None,
+        "none",
+        None,
+    );
+    let (exe, args, cwd) = resolve_bridge_command(&tools, Some(app))?;
     let src = tools.join("src");
     let env_file = tools.join(".env");
     let log_path = app_data_dir().join("bridge-last.log");
@@ -949,6 +1249,20 @@ fn bridge_start_sync() -> Result<String, String> {
     if src.is_dir() {
         inject_tools_src_into_python(&exe, &src)?;
     }
+
+    emit_progress(
+        app,
+        "start-bridge",
+        "Starting the bridge…",
+        0,
+        None,
+        "none",
+        None,
+    );
+    emit_log(
+        app,
+        format!("Starting bridge: {} {}", exe.display(), args.join(" ")),
+    );
 
     // Header so the log is self-explanatory if the user opens it.
     {
@@ -1059,8 +1373,8 @@ fn bridge_start_sync() -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn bridge_start() -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(bridge_start_sync)
+async fn bridge_start(app: AppHandle) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || bridge_start_sync(&app))
         .await
         .map_err(|e| format!("bridge task failed: {e}"))?
 }
@@ -1093,12 +1407,25 @@ fn bridge_url() -> String {
     format!("ws://{BRIDGE_HOST}:{BRIDGE_PORT}/ws")
 }
 
+/// Modern Explorer folder picker (rfd → IFileDialog with FOS_PICKFOLDERS on Windows):
+/// address bar, left nav, search. The bridge's PowerShell fallback uses
+/// FolderBrowserDialog, which renders the legacy SHBrowseForFolder tree — so the
+/// frontend prefers this whenever it is running inside the desktop shell.
 #[tauri::command]
-fn pick_folder(initial: Option<String>) -> Option<String> {
-    let mut dialog = rfd::FileDialog::new().set_title("Select folder");
+fn pick_folder(initial: Option<String>, title: Option<String>) -> Option<String> {
+    let mut dialog =
+        rfd::FileDialog::new().set_title(title.unwrap_or_else(|| "Select folder".into()));
     if let Some(p) = initial {
-        if Path::new(&p).is_dir() {
-            dialog = dialog.set_directory(p);
+        // Walk up to the nearest folder that exists: a half-typed or since-deleted path
+        // would otherwise drop the dialog at some arbitrary default.
+        let mut probe = PathBuf::from(&p);
+        while !probe.as_os_str().is_empty() && !probe.is_dir() {
+            if !probe.pop() {
+                break;
+            }
+        }
+        if probe.is_dir() {
+            dialog = dialog.set_directory(probe);
         }
     }
     dialog

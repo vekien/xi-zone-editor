@@ -18,8 +18,10 @@ import { connectBridge, bridgeOnline, onBridgeStatus, bridgeCall, bridgeCancel, 
 import { runSetupWizard, initSetupSettings } from './panels/setup-wizard.js';
 
 /** Resolves when the Setup panel is done: xi-tools is up (or the user went offline),
- *  and on a fresh install the remaining setup steps have been completed. */
-export const toolsBootPromise = runSetupWizard().catch((e) => {
+ *  and on a fresh install the remaining setup steps have been completed.
+ *  Prefer the promise started by the early boot script in index.html so the download
+ *  is already underway by the time this (heavy) module finishes loading. */
+export const toolsBootPromise = (window.__toolsBootPromise || runSetupWizard()).catch((e) => {
   console.warn('[setup]', e);
   document.body.classList.remove('wiz-active');
   const ov = document.getElementById('wizard-overlay');

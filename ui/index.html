@@ -12,8 +12,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./style.css" />
 </head>
-<body>
-  <div id="app-loader" class="app-loader">
+<body class="wiz-active">
+  <!-- Hidden while the Setup wizard owns the screen (it is always the first paint). -->
+  <div id="app-loader" class="app-loader hidden">
     <div class="app-loader-inner">
       <span class="material-symbols-outlined app-loader-icon">map</span>
       <div class="app-loader-text">Loading…</div>
@@ -602,7 +603,7 @@
           <div class="spane spane-database" id="spane-database">
             <div class="spane-grouphead">Server checkout</div>
             <div class="form-row">
-              <label class="setting-row wide">LSB / CatsEyeXI folder
+              <label class="setting-row wide">LSB server folder
                 <input type="text" data-setenv="XI_SERVER_DIR" spellcheck="false" autocomplete="off"
                   placeholder="C:\path\to\your\server-checkout" />
               </label>
@@ -619,7 +620,7 @@
             <div class="form-row"><label class="setting-row wide">Port <input type="number" data-setenv="XI_DB_PORT" min="1" max="65535" placeholder="3306" /></label></div>
             <div class="form-row"><label class="setting-row wide">User <input type="text" data-setenv="XI_DB_USER" placeholder="root" autocomplete="off" /></label></div>
             <div class="form-row"><label class="setting-row wide">Password <input type="password" data-setenv="XI_DB_PASSWORD" class="masked" autocomplete="off" spellcheck="false" data-1p-ignore data-lpignore="true" /></label></div>
-            <div class="form-row"><label class="setting-row wide">Database <input type="text" data-setenv="XI_DB_NAME" placeholder="tpzdb" autocomplete="off" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Database <input type="text" data-setenv="XI_DB_NAME" placeholder="xidb" autocomplete="off" /></label></div>
             <div class="form-row">
               <button type="button" id="set-db-test">Test connection</button>
               <button type="button" id="set-db-save" class="btn-primary">Save connection</button>
@@ -1081,9 +1082,8 @@
       </div>
     </div>
 
-    <!-- First-run Setup wizard — one framed window; replaces the old workspace +
-         game-paths overlays and hosts the always-on xi-tools check as its first step. -->
-    <div id="wizard-overlay" class="wiz-overlay" style="display:none">
+    <!-- Boot overlay: splash (xi-tools, every launch) → wizard shell (first-run only). -->
+    <div id="wizard-overlay" class="wiz-overlay wiz-splash">
       <div class="wiz-shell">
 
         <aside class="wiz-sidebar">
@@ -1094,29 +1094,63 @@
               <div class="wiz-brand-sub">Setup</div>
             </div>
           </div>
-          <ol class="wiz-steps" id="wiz-steps"></ol>
+          <ol class="wiz-steps" id="wiz-steps">
+            <li class="wiz-step is-current">
+              <span class="wiz-step-num">1</span>
+              <span>
+                <span class="wiz-step-label">Workspace</span>
+                <span class="wiz-step-note">Where edits are saved</span>
+              </span>
+            </li>
+            <li class="wiz-step">
+              <span class="wiz-step-num">2</span>
+              <span>
+                <span class="wiz-step-label">Game paths</span>
+                <span class="wiz-step-note">FFXI install</span>
+              </span>
+            </li>
+            <li class="wiz-step">
+              <span class="wiz-step-num">3</span>
+              <span>
+                <span class="wiz-step-label">Server &amp; database</span>
+                <span class="wiz-step-note">Optional</span>
+              </span>
+            </li>
+            <li class="wiz-step">
+              <span class="wiz-step-num">4</span>
+              <span>
+                <span class="wiz-step-label">Desktop icon</span>
+                <span class="wiz-step-note">Optional</span>
+              </span>
+            </li>
+            <li class="wiz-step">
+              <span class="wiz-step-num">5</span>
+              <span>
+                <span class="wiz-step-label">Finish</span>
+              </span>
+            </li>
+          </ol>
           <div class="wiz-sidebar-foot" id="wiz-version"></div>
         </aside>
 
         <main class="wiz-main">
           <header class="wiz-head">
-            <h1 class="wiz-title" id="wiz-title">Setup</h1>
-            <p class="wiz-sub" id="wiz-sub"></p>
+            <h1 class="wiz-title" id="wiz-title">Choose a workspace</h1>
+            <p class="wiz-sub" id="wiz-sub">Where your zone edits are stored on disk.</p>
           </header>
 
           <div class="wiz-body">
 
-            <!-- XI Tools — always shown; checks for an update on every launch -->
-            <section class="wiz-pane" data-pane="tools">
-              <div class="wiz-tools-status">
-                <div class="wiz-tools-ico"><span class="material-symbols-outlined" id="wiz-tools-ico">inventory_2</span></div>
-                <div class="wiz-tools-text">
-                  <div class="wiz-tools-line" id="wiz-tools-line">Checking for the xi-tools backend…</div>
-                  <div class="wiz-tools-meta" id="wiz-tools-meta"></div>
-                </div>
+            <!-- Splash / tools — minimal, every launch. Active in HTML for first paint. -->
+            <section class="wiz-pane active" data-pane="tools">
+              <div class="wiz-splash-brand">
+                <img src="./icon.png" alt="" />
+                <div class="wiz-splash-name">XI Zone Editor</div>
               </div>
-              <div class="wiz-bar"><div class="wiz-bar-fill" id="wiz-tools-bar"></div></div>
-              <pre class="wiz-log" id="wiz-tools-log" hidden></pre>
+              <div class="wiz-tools-line" id="wiz-tools-line">Starting…</div>
+              <div class="wiz-tools-meta" id="wiz-tools-meta"></div>
+              <div class="wiz-bar"><div class="wiz-bar-fill" id="wiz-tools-bar" style="width:6%"></div></div>
+              <div class="wiz-tools-detail" id="wiz-tools-detail"></div>
               <div class="wiz-inline-btns" id="wiz-tools-btns"></div>
             </section>
 
@@ -1134,8 +1168,7 @@
                     placeholder="C:\xi-zone-workspaces" />
                   <button type="button" class="wiz-browse" id="wiz-ws-browse">Browse…</button>
                 </div>
-                <p class="wiz-hint">Pick an empty folder to start fresh, or an existing workspace folder if you
-                  already have one. Skip to use the default location inside your user profile.</p>
+                <p class="wiz-hint">Empty folder for a fresh start, or an existing workspace. Skip uses your user profile.</p>
               </div>
             </section>
 
@@ -1180,50 +1213,49 @@
             <section class="wiz-pane" data-pane="server">
               <div class="wiz-note warn">
                 <span class="material-symbols-outlined">info</span>
-                <div>Optional, but without it the editor can't read your server's live NPC data. Cutscene NPCs
-                  fall back to a bundled snapshot, and the Database panel and server-script lookups are unavailable.</div>
+                <div>Optional. Needed for live NPC data, the Database panel, and server-script lookups.</div>
               </div>
 
               <div class="wiz-field">
-                <label class="wiz-label" for="wiz-server">LSB / CatsEyeXI server folder <span class="opt">optional</span></label>
+                <label class="wiz-label" for="wiz-server">LSB server folder <span class="opt">optional</span></label>
                 <div class="wiz-row">
                   <input id="wiz-server" class="wiz-input" type="text" spellcheck="false" autocomplete="off"
                     data-env-key="XI_SERVER_DIR" placeholder="C:\path\to\your\server-checkout" />
                   <span class="wiz-tick" data-tick="XI_SERVER_DIR"><span class="material-symbols-outlined">check_circle</span></span>
                   <button type="button" class="wiz-browse" data-env-browse="XI_SERVER_DIR" data-kind="folder">Browse…</button>
                 </div>
-                <p class="wiz-hint">The server source checkout. Its <code>settings/network.lua</code> supplies the
-                  database login below, so picking it here usually fills everything in.</p>
+                <p class="wiz-hint">Reads DB login from <code>settings/network.lua</code>.</p>
               </div>
 
-              <div class="wiz-sectionhead">Database connection</div>
-              <div class="wiz-grid-2">
-                <div class="wiz-field">
+              <div class="wiz-sectionhead">Database</div>
+              <div class="wiz-db-grid">
+                <div class="wiz-field wiz-db-host">
                   <label class="wiz-label" for="wiz-db-host">Host</label>
                   <div class="wiz-row"><input id="wiz-db-host" class="wiz-input" type="text" autocomplete="off" data-env-key="XI_DB_HOST" placeholder="127.0.0.1" /></div>
                 </div>
-                <div class="wiz-field">
+                <div class="wiz-field wiz-db-port">
                   <label class="wiz-label" for="wiz-db-port">Port</label>
                   <div class="wiz-row"><input id="wiz-db-port" class="wiz-input" type="number" min="1" max="65535" data-env-key="XI_DB_PORT" placeholder="3306" /></div>
                 </div>
-                <div class="wiz-field">
+                <div class="wiz-field wiz-db-user">
                   <label class="wiz-label" for="wiz-db-user">User</label>
                   <div class="wiz-row"><input id="wiz-db-user" class="wiz-input" type="text" autocomplete="off" data-env-key="XI_DB_USER" placeholder="root" /></div>
                 </div>
-                <div class="wiz-field">
+                <div class="wiz-field wiz-db-pass">
                   <label class="wiz-label" for="wiz-db-pass">Password</label>
                   <div class="wiz-row"><input id="wiz-db-pass" class="wiz-input" type="password" autocomplete="off"
                     data-env-key="XI_DB_PASSWORD" data-1p-ignore data-lpignore="true" spellcheck="false" /></div>
                 </div>
-              </div>
-              <div class="wiz-field">
-                <label class="wiz-label" for="wiz-db-name">Database</label>
-                <div class="wiz-row">
-                  <input id="wiz-db-name" class="wiz-input" type="text" autocomplete="off" data-env-key="XI_DB_NAME" placeholder="tpzdb" />
-                  <button type="button" class="wiz-browse" id="wiz-db-test">Test connection</button>
+                <div class="wiz-field wiz-db-name">
+                  <label class="wiz-label" for="wiz-db-name">Database</label>
+                  <div class="wiz-row"><input id="wiz-db-name" class="wiz-input" type="text" autocomplete="off" data-env-key="XI_DB_NAME" placeholder="xidb" /></div>
                 </div>
-                <div class="wiz-testline"><span class="wiz-test-result" id="wiz-db-result"></span></div>
+                <div class="wiz-field wiz-db-test">
+                  <label class="wiz-label wiz-label-spacer" aria-hidden="true">&nbsp;</label>
+                  <button type="button" class="wiz-browse" id="wiz-db-test">Test</button>
+                </div>
               </div>
+              <div class="wiz-db-banner" id="wiz-db-result" hidden></div>
             </section>
 
             <!-- Desktop shortcut -->
@@ -1253,13 +1285,16 @@
           <footer class="wiz-foot">
             <div class="wiz-foot-msg" id="wiz-msg"></div>
             <div class="wiz-foot-btns">
-              <button type="button" class="wiz-btn ghost" id="wiz-back">Back</button>
-              <button type="button" class="wiz-btn ghost" id="wiz-skip">Skip</button>
-              <button type="button" class="wiz-btn primary" id="wiz-next">Next</button>
+              <button type="button" class="wiz-btn ghost" id="wiz-back" style="display:none">Back</button>
+              <button type="button" class="wiz-btn ghost" id="wiz-skip" style="display:none">Skip</button>
+              <button type="button" class="wiz-btn primary" id="wiz-next" style="display:none">Next</button>
             </div>
           </footer>
         </main>
       </div>
+
+      <!-- Splash CLI log — docked to the bottom, wider than the centered splash card. -->
+      <pre class="wiz-log" id="wiz-tools-log" hidden></pre>
     </div>
 
     <!-- Projects launcher — two-tone, edge-to-edge entry screen -->
@@ -1789,6 +1824,20 @@
     </div>
   </div>
 
+  <!-- Boot the Setup wizard immediately — only pulls setup-wizard + tools-boot +
+       bridge, not the three.js editor. Download/status run while main.js loads. -->
+  <script type="module">
+    import { runSetupWizard } from './panels/setup-wizard.js';
+    import { connectBridge } from './ffxi/bridge.js';
+    window.__toolsBootPromise = runSetupWizard().catch((e) => {
+      console.warn('[setup]', e);
+      document.body.classList.remove('wiz-active');
+      const ov = document.getElementById('wizard-overlay');
+      if (ov) ov.style.display = 'none';
+      try { connectBridge(); } catch { /* ignore */ }
+      return { online: false };
+    });
+  </script>
   <script type="module" src="main.js"></script>
 </body>
 </html>

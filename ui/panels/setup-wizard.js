@@ -1,12 +1,9 @@
-// setup-wizard.js — the Setup panel shown before the editor opens.
+// setup-wizard.js — boot splash + first-run Setup wizard.
 //
-// One framed window with a stepper, replacing the three separate overlays this used to
-// be (an xi-tools card, a workspace card, a game-paths card), each with its own size,
-// styling and independent decision about whether to appear.
-//
-// The xi-tools step runs on EVERY launch — it is how updates are offered. Everything
-// after it runs only until setup is marked complete; afterwards the same fields are
-// editable under Settings → Setup.
+// Every launch: a minimal splash runs the xi-tools check/download (same code path).
+// First run only: after the splash, the framed wizard collects workspace / paths /
+// server / shortcut. Once setup is marked complete, the splash hands off straight
+// to the projects launcher. Settings → Setup edits the same fields later.
 
 import { bridgeCall, bridgeOnline, connectBridge, setBridgeUrl, onBridgeStatus } from '../ffxi/bridge.js';
 import { runToolsBoot } from '../js/tools-boot.js';
@@ -24,11 +21,8 @@ const STEP_ENV_KEYS = {
   server: ['XI_SERVER_DIR', 'XI_DB_HOST', 'XI_DB_PORT', 'XI_DB_USER', 'XI_DB_PASSWORD', 'XI_DB_NAME'],
 };
 
+/** Wizard steps only — tools boot is the splash, not a stepper entry. */
 const STEPS = [
-  {
-    id: 'tools', label: 'XI Tools', note: 'Checked every launch',
-    title: 'XI Tools', sub: 'The editor runs on the xi-tools backend. This checks it is installed and up to date, then starts it.',
-  },
   {
     id: 'workspace', label: 'Workspace', note: 'Where edits are saved',
     title: 'Choose a workspace', sub: 'Where your zone edits are stored on disk.',
@@ -39,7 +33,7 @@ const STEPS = [
   },
   {
     id: 'server', label: 'Server & database', note: 'Optional',
-    title: 'Connect your server', sub: 'Link a local LandSandBoat / CatsEyeXI server so the editor can read its live data.',
+    title: 'Connect your server', sub: 'Link a local LandSandBoat server so the editor can read its live data.',
   },
   {
     id: 'shortcut', label: 'Desktop icon', note: 'Optional',
@@ -51,8 +45,7 @@ const STEPS = [
   },
 ];
 
-/** Steps after the always-on xi-tools check. */
-const FLOW = ['workspace', 'paths', 'server', 'shortcut', 'done'];
+const FLOW = STEPS.map((s) => s.id);
 
 const $ = (id) => document.getElementById(id);
 const stepMeta = (id) => STEPS.find((s) => s.id === id);
@@ -68,6 +61,11 @@ function showOverlay(on) {
   if (ov) ov.style.display = on ? 'flex' : 'none';
   document.body.classList.toggle('wiz-active', on);
   if (on) $('app-loader')?.classList.add('hidden');
+}
+
+/** Splash = minimal centered boot UI; wizard = framed stepper for first-run. */
+function setSplashMode(on) {
+  $('wizard-overlay')?.classList.toggle('wiz-splash', on);
 }
 
 function renderSteps(currentId) {
@@ -142,8 +140,8 @@ function toolsView() {
   return {
     line: (t) => { $('wiz-tools-line').textContent = t; },
     meta: (t) => { $('wiz-tools-meta').textContent = t || ''; },
+    detail: (t) => { const el = $('wiz-tools-detail'); if (el) el.textContent = t || ''; },
     bar: (pct) => { $('wiz-tools-bar').style.width = `${Math.max(0, Math.min(100, pct))}%`; },
-    icon: (name) => { $('wiz-tools-ico').textContent = name; },
     log: (t, { error = false } = {}) => {
       if (!log) return;
       log.hidden = false;
@@ -165,6 +163,22 @@ function toolsView() {
       }
     }),
   };
+}
+
+/** Compact connection banner under the DB form. */
+function setDbBanner(state, text) {
+  const el = $('wiz-db-result');
+  if (!el) return;
+  if (!state) {
+    el.hidden = true;
+    el.className = 'wiz-db-banner';
+    el.textContent = '';
+    return;
+  }
+  const icons = { ok: 'check_circle', bad: 'error', pending: 'progress_activity' };
+  el.hidden = false;
+  el.className = `wiz-db-banner ${state}`;
+  el.innerHTML = `<span class="material-symbols-outlined">${icons[state] || 'info'}</span><span>${text}</span>`;
 }
 
 // ── Env field plumbing ───────────────────────────────────────────────────────
@@ -298,16 +312,13 @@ async function autofillFromServer(path) {
 }
 
 async function testDbConnection() {
-  const out = $('wiz-db-result');
   if (!bridgeOnline()) {
-    out.textContent = 'Backend not connected.';
-    out.className = 'wiz-test-result bad';
+    setDbBanner('bad', 'Backend not connected.');
     return;
   }
   const btn = $('wiz-db-test');
   btn.disabled = true;
-  out.textContent = 'Connecting…';
-  out.className = 'wiz-test-result';
+  setDbBanner('pending', 'Connecting…');
   try {
     const r = await bridgeCall('env.testDb', {
       host: ($('wiz-db-host').value || '').trim(),
@@ -317,15 +328,12 @@ async function testDbConnection() {
       database: ($('wiz-db-name').value || '').trim(),
     });
     if (r && r.ok) {
-      out.textContent = `Connected to ${r.database} on ${r.host} — MariaDB ${r.version}, ${r.npcRows.toLocaleString()} NPCs.`;
-      out.className = 'wiz-test-result ok';
+      setDbBanner('ok', 'Connection confirmed');
     } else {
-      out.textContent = (r && r.error) || 'Could not connect.';
-      out.className = 'wiz-test-result bad';
+      setDbBanner('bad', (r && r.error) || 'Could not connect.');
     }
   } catch (e) {
-    out.textContent = e?.message || 'Could not connect.';
-    out.className = 'wiz-test-result bad';
+    setDbBanner('bad', e?.message || 'Could not connect.');
   } finally {
     btn.disabled = false;
   }
@@ -336,6 +344,37 @@ async function testDbConnection() {
 async function tauriInvoke(cmd, args = {}) {
   if (!window.__TAURI__?.core?.invoke) return null;
   return window.__TAURI__.core.invoke(cmd, args);
+}
+
+/** Dialog titles per env field — a picker labelled "Select path" tells you nothing. */
+const BROWSE_TITLES = {
+  FFXI_DIR:       'Select your FINAL FANTASY XI folder',
+  FFXI_HD_DIR:    'Select your HD DAT pack folder',
+  FFXI_PIVOT_DIR: 'Select your pivot / override DATs folder',
+  XI_SERVER_DIR:  'Select your LSB server folder',
+};
+
+/**
+ * Pick a folder, preferring the desktop shell's dialog.
+ *
+ * Tauri's rfd picker is the modern Explorer one — address bar, left nav, search. The
+ * bridge fallback shells out to PowerShell's FolderBrowserDialog, which on .NET
+ * Framework is still the cramped SHBrowseForFolder tree; it is only reached in a plain
+ * browser / `npm run dev`, where there is no shell to ask.
+ *
+ * @returns {Promise<string>} chosen path, or '' if cancelled/unavailable
+ */
+async function pickFolder({ initial = '', title = 'Select folder' } = {}) {
+  if (window.__TAURI__?.core?.invoke) {
+    try {
+      return (await tauriInvoke('pick_folder', { initial, title })) || '';
+    } catch { /* fall through to the bridge */ }
+  }
+  if (!bridgeOnline()) return '';
+  try {
+    const r = await bridgeCall('env.pickPath', { kind: 'folder', title, initial });
+    return (r && r.ok && r.path) ? r.path : '';
+  } catch { return ''; }
 }
 
 async function enterShortcut() {
@@ -388,7 +427,7 @@ function renderSummary(st) {
   const dash = 'Not set';
 
   const dbLine = vals.XI_SERVER_DIR
-    ? or(`${vals.XI_DB_USER || 'root'}@${vals.XI_DB_HOST || '127.0.0.1'}/${vals.XI_DB_NAME || 'tpzdb'}`, dash)
+    ? or(`${vals.XI_DB_USER || 'root'}@${vals.XI_DB_HOST || '127.0.0.1'}/${vals.XI_DB_NAME || 'xidb'}`, dash)
     : dash;
 
   $('wiz-summary').innerHTML = [
@@ -407,6 +446,7 @@ function renderSummary(st) {
 
 async function enterStep(id) {
   showPane(id);
+  if (id === 'server') setDbBanner(null);
   if (id === 'workspace') await enterWorkspace();
   if (id === 'paths' || id === 'server') await loadEnvValues();
   if (id === 'shortcut') await enterShortcut();
@@ -428,10 +468,10 @@ async function commitStep(id) {
 
 function navOptionsFor(id, index) {
   const back = index > 0;
-  if (id === 'workspace') return { back, skip: true, skipLabel: 'Use default folder' };
+  if (id === 'workspace') return { back, skip: true, skipLabel: 'Skip' };
   if (id === 'paths') return { back, skip: false };
-  if (id === 'server') return { back, skip: true, skipLabel: 'Skip for now' };
-  if (id === 'shortcut') return { back, skip: true, skipLabel: 'No thanks' };
+  if (id === 'server') return { back, skip: true, skipLabel: 'Skip' };
+  if (id === 'shortcut') return { back, skip: true, skipLabel: 'Skip' };
   if (id === 'done') return { back, skip: false, nextLabel: 'Open the editor' };
   return { back, skip: false };
 }
@@ -466,30 +506,26 @@ function wireOnce() {
   $('wiz-next')?.addEventListener('click', () => _navResolve?.('next'));
 
   $('wiz-ws-browse')?.addEventListener('click', async () => {
-    if (!bridgeOnline()) return;
-    try {
-      const r = await bridgeCall('workspace.pickFolder', {});
-      if (r && r.ok && r.path) $('wiz-ws-path').value = withWorkspaceFolder(r.path);
-    } catch { /* picker unavailable — the typed path still works */ }
+    const path = await pickFolder({
+      initial: $('wiz-ws-path')?.value || '',
+      title: 'Choose where to save your zone edits',
+    });
+    if (path) $('wiz-ws-path').value = withWorkspaceFolder(path);
   });
 
   document.querySelectorAll('#wizard-overlay [data-env-browse]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const key = btn.dataset.envBrowse;
       const inp = envInput(key);
-      if (!bridgeOnline() || !inp) return;
-      try {
-        const r = await bridgeCall('env.pickPath', {
-          kind: btn.dataset.kind || 'folder',
-          title: 'Select path',
-          initial: inp.value || '',
-        });
-        if (r && r.ok && r.path) {
-          inp.value = r.path;
-          validateEnvField(key);
-          if (key === 'XI_SERVER_DIR') await autofillFromServer(r.path);
-        }
-      } catch { /* keep whatever is typed */ }
+      if (!inp) return;
+      const path = await pickFolder({
+        initial: inp.value || '',
+        title: BROWSE_TITLES[key] || 'Select folder',
+      });
+      if (!path) return;                       // cancelled — keep whatever is typed
+      inp.value = path;
+      validateEnvField(key);
+      if (key === 'XI_SERVER_DIR') await autofillFromServer(path);
     });
   });
 
@@ -511,50 +547,86 @@ function wireOnce() {
   }).catch(() => { /* shown blank until the bridge is up */ });
 }
 
+/** Let the browser paint the wizard before any heavy work (download / GitHub check). */
+function waitForPaint() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // One more macrotask so layout + composite finish before we block on IPC.
+        setTimeout(resolve, 0);
+      });
+    });
+  });
+}
+
+// Single flight: the early boot script and main.js both call this; only one run.
+let _setupRun = null;
+
 /**
- * Run the setup panel. Always performs the xi-tools check; runs the remaining steps
- * only on a fresh install. Resolves `{ online }` once the editor may open.
+ * Boot entry. Always runs the xi-tools splash; then either opens the projects
+ * launcher (setup already done) or the first-run wizard. Resolves `{ online }`.
+ *
+ * The splash is already in the HTML (tools pane active, body.wiz-active, wiz-splash)
+ * so the user sees it on first paint. Download/status only start after a paint yield.
  */
-export async function runSetupWizard() {
-  wireOnce();
-  _state = {};
-  showOverlay(true);
+export function runSetupWizard() {
+  if (_setupRun) return _setupRun;
+  _setupRun = (async () => {
+    wireOnce();
+    _state = {};
+    showOverlay(true);
+    setSplashMode(true);
 
-  // xi-tools: always. This is the update path, not just first-run.
-  showPane('tools');
-  $('wiz-back').style.display = 'none';
-  $('wiz-skip').style.display = 'none';
-  $('wiz-next').style.display = 'none';
+    // Show the tools pane without driving the wizard stepper (tools is not a step).
+    document.querySelectorAll('#wizard-overlay .wiz-pane').forEach((el) => {
+      el.classList.toggle('active', el.dataset.pane === 'tools');
+    });
+    $('wiz-back').style.display = 'none';
+    $('wiz-skip').style.display = 'none';
+    $('wiz-next').style.display = 'none';
+    $('wiz-tools-line').textContent = 'Checking xi-tools…';
+    $('wiz-tools-meta').textContent = '';
 
-  let boot = { online: false };
-  try {
-    boot = await runToolsBoot(
-      { setBridgeUrl, connectBridge, bridgeOnline, onBridgeStatus },
-      toolsView(),
-    );
-  } catch (e) {
-    console.warn('[setup] tools boot failed', e);
-    connectBridge();
-  }
-  _state.tools = 'done';
+    await waitForPaint();
 
-  if (setupComplete()) {
+    let boot = { online: false };
+    try {
+      boot = await runToolsBoot(
+        { setBridgeUrl, connectBridge, bridgeOnline, onBridgeStatus },
+        toolsView(),
+      );
+    } catch (e) {
+      console.warn('[setup] tools boot failed', e);
+      connectBridge();
+    }
+
+    // Returning user → splash dismisses; main.js opens the projects launcher.
+    if (setupComplete()) {
+      showOverlay(false);
+      return boot;
+    }
+
+    // First run: flip splash → wizard chrome and walk the remaining steps.
+    setSplashMode(false);
+
+    if (!boot.online) {
+      // Stay on splash-looking tools content inside the wizard shell so they can bail.
+      document.querySelectorAll('#wizard-overlay .wiz-pane').forEach((el) => {
+        el.classList.toggle('active', el.dataset.pane === 'tools');
+      });
+      $('wiz-title').textContent = 'Backend required';
+      $('wiz-sub').textContent = 'Setup needs XI Tools. You can continue offline, but the editor will be read-only.';
+      setMsg('Continue offline to skip setup for now.', true);
+      const key = await nav({ back: false, skip: true, next: false, skipLabel: 'Skip' });
+      if (key === 'skip') { showOverlay(false); return boot; }
+    }
+
+    await runFlow();
+    localStorage.setItem(SETUP_DONE_KEY, '1');
     showOverlay(false);
     return boot;
-  }
-
-  // A fresh install with no backend can't save anything the remaining steps collect.
-  if (!boot.online) {
-    showPane('tools');
-    setMsg('Setup needs the XI Tools backend. You can continue offline, but the editor will be read-only.', true);
-    const key = await nav({ back: false, skip: true, next: false, skipLabel: 'Continue offline' });
-    if (key === 'skip') { showOverlay(false); return boot; }
-  }
-
-  await runFlow();
-  localStorage.setItem(SETUP_DONE_KEY, '1');
-  showOverlay(false);
-  return boot;
+  })();
+  return _setupRun;
 }
 
 /** Reopen the wizard at the workspace step (used when the folder goes missing). */
@@ -562,10 +634,11 @@ export async function reopenWorkspaceSetup(message) {
   wireOnce();
   _state = {};
   showOverlay(true);
+  setSplashMode(false);
   await enterStep('workspace');
   if (message) setMsg(message, true);
   while (true) {
-    const action = await nav({ back: false, skip: true, skipLabel: 'Use default folder' });
+    const action = await nav({ back: false, skip: true, skipLabel: 'Skip' });
     if (action === 'skip') { await skipWorkspace(); break; }
     if (await commitWorkspace()) break;
   }
@@ -651,26 +724,24 @@ export function initSetupSettings() {
     btn.addEventListener('click', async () => {
       const key = btn.dataset.setenvBrowse;
       const inp = setInput(key);
-      if (!bridgeOnline() || !inp) return;
-      try {
-        const r = await bridgeCall('env.pickPath', {
-          kind: btn.dataset.kind || 'folder', title: 'Select path', initial: inp.value || '',
-        });
-        if (r && r.ok && r.path) {
-          inp.value = r.path;
-          validateSettingsField(key);
-          if (key === 'XI_SERVER_DIR') {
-            const c = await bridgeCall('env.serverCreds', { path: r.path }).catch(() => null);
-            if (c && c.ok && c.values) {
-              for (const [k, v] of Object.entries(c.values)) {
-                const target = setInput(k);
-                if (target && v && !target.value.trim()) target.value = v;
-              }
-              setState('set-db-msg', `Read the database login from ${c.path}`, 'ok');
-            }
+      if (!inp) return;
+      const path = await pickFolder({
+        initial: inp.value || '',
+        title: BROWSE_TITLES[key] || 'Select folder',
+      });
+      if (!path) return;                       // cancelled — keep the typed value
+      inp.value = path;
+      validateSettingsField(key);
+      if (key === 'XI_SERVER_DIR') {
+        const c = await bridgeCall('env.serverCreds', { path }).catch(() => null);
+        if (c && c.ok && c.values) {
+          for (const [k, v] of Object.entries(c.values)) {
+            const target = setInput(k);
+            if (target && v && !target.value.trim()) target.value = v;
           }
+          setState('set-db-msg', `Read the database login from ${c.path}`, 'ok');
         }
-      } catch { /* keep the typed value */ }
+      }
     });
   });
 
@@ -715,18 +786,17 @@ export function initSetupSettings() {
         database: (setInput('XI_DB_NAME')?.value || '').trim(),
       });
       setState('set-db-msg',
-        r?.ok ? `Connected to ${r.database} on ${r.host} — MariaDB ${r.version}, ${r.npcRows.toLocaleString()} NPCs.`
-              : (r?.error || 'Could not connect.'),
+        r?.ok ? 'Connection confirmed' : (r?.error || 'Could not connect.'),
         r?.ok ? 'ok' : 'bad');
     } catch (e) { setState('set-db-msg', e?.message || 'Could not connect.', 'bad'); }
   });
 
   document.getElementById('set-ws-browse')?.addEventListener('click', async () => {
-    if (!bridgeOnline()) return;
-    try {
-      const r = await bridgeCall('workspace.pickFolder', {});
-      if (r && r.ok && r.path) document.getElementById('set-ws-path').value = withWorkspaceFolder(r.path);
-    } catch { /* picker unavailable */ }
+    const path = await pickFolder({
+      initial: document.getElementById('set-ws-path')?.value || '',
+      title: 'Choose where to save your zone edits',
+    });
+    if (path) document.getElementById('set-ws-path').value = withWorkspaceFolder(path);
   });
 
   document.getElementById('set-ws-apply')?.addEventListener('click', async () => {

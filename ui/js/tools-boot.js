@@ -29,6 +29,59 @@ async function invoke(cmd, args = {}) {
   return null;
 }
 
+function formatBytes(n) {
+  const v = Number(n) || 0;
+  if (v < 1024) return `${v} B`;
+  if (v < 1024 * 1024) return `${(v / 1024).toFixed(1)} KB`;
+  if (v < 1024 * 1024 * 1024) return `${(v / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(v / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+/** Subscribe to Rust progress + CLI log events for the splash. */
+async function attachProgress(view) {
+  const listen = window.__TAURI__?.event?.listen;
+  if (typeof listen !== 'function') return () => {};
+  const unsubs = [];
+  try {
+    unsubs.push(await listen('tools-progress', (ev) => {
+      const p = ev?.payload || {};
+      if (p.label) view.line(p.label);
+      const pct = Number(p.pct);
+      if (Number.isFinite(pct)) view.bar(pct);
+
+      const unit = p.unit || 'bytes';
+      const loaded = Number(p.loaded) || 0;
+      const total = p.total == null ? null : Number(p.total);
+
+      if (unit === 'bytes' && (loaded > 0 || total > 0)) {
+        if (total > 0) {
+          view.detail(`${formatBytes(loaded)} / ${formatBytes(total)}  ·  ${Math.round(pct)}%`);
+        } else {
+          view.detail(`${formatBytes(loaded)} downloaded`);
+        }
+      } else if (unit === 'files' && total > 0) {
+        view.detail(`${loaded} / ${total} files  ·  ${Math.round(pct)}%`);
+      } else if (p.detail) {
+        view.detail(p.detail);
+      } else {
+        view.detail(Number.isFinite(pct) && pct > 0 ? `${Math.round(pct)}%` : '');
+      }
+    }));
+    // Live pip / get-pip / stage lines → bottom terminal.
+    unsubs.push(await listen('tools-log', (ev) => {
+      const line = typeof ev?.payload === 'string' ? ev.payload : String(ev?.payload ?? '');
+      if (line) view.log(line);
+    }));
+  } catch {
+    /* no event bus (browser dev) */
+  }
+  return () => {
+    for (const u of unsubs) {
+      try { u(); } catch { /* ignore */ }
+    }
+  };
+}
+
 function waitForBridge(bridge, ms = 20000) {
   return new Promise((resolve) => {
     if (bridge.bridgeOnline?.()) { resolve(true); return; }
@@ -59,11 +112,11 @@ function waitForBridge(bridge, ms = 20000) {
  *   onBridgeStatus?: (fn:(on:boolean)=>void)=>()=>void,
  * }} bridge
  * @param {{
- *   line: (text:string)=>void,               // headline status
- *   meta: (text:string)=>void,               // version / path subtitle
+ *   line: (text:string)=>void,
+ *   meta: (text:string)=>void,
+ *   detail?: (text:string)=>void,
  *   bar: (pct:number)=>void,
  *   log: (text:string, opts?:{error?:boolean})=>void,
- *   icon?: (name:string)=>void,
  *   choose: (opts:Array<{key:string,label:string,primary?:boolean}>)=>Promise<string>,
  *   clearChoices: ()=>void,
  * }} view
@@ -71,6 +124,7 @@ function waitForBridge(bridge, ms = 20000) {
  */
 export async function runToolsBoot(bridge, view) {
   view.clearChoices();
+  view.detail?.('');
 
   const finishOffline = () => ({ online: false });
 
@@ -83,10 +137,12 @@ export async function runToolsBoot(bridge, view) {
   const finishOnline = async (url) => {
     view.clearChoices();
     rememberUrl(url);
-    view.line('Ensuring Python and starting the bridge…');
-    view.meta('First run may download Python 3.12');
-    view.bar(80);
+    view.line('Preparing Python runtime…');
+    view.meta('');
+    view.detail?.('');
+    view.bar(0);
 
+    const stopProgress = await attachProgress(view);
     let startErr = null;
     try {
       rememberUrl(await invoke('bridge_start'));
@@ -94,16 +150,20 @@ export async function runToolsBoot(bridge, view) {
     } catch (e) {
       startErr = String(e?.message || e);
       view.log(startErr, { error: true });
+    } finally {
+      try { stopProgress(); } catch { /* ignore */ }
     }
 
     if (!startErr) {
       bridge.connectBridge();
       view.line('Connecting to the bridge…');
+      view.detail?.('');
+      view.bar(90);
       const ok = await waitForBridge(bridge, 25000);
       view.bar(100);
       if (ok) {
-        view.icon?.('check_circle');
         view.line('Backend ready.');
+        view.detail?.('');
         return { online: true };
       }
       view.log('WebSocket did not open on ws://127.0.0.1:8777/ws after the process started.',
@@ -130,6 +190,7 @@ export async function runToolsBoot(bridge, view) {
   const pickLocalTools = async () => {
     view.clearChoices();
     view.line('Choose your local xi-tools folder…');
+    view.detail?.('');
     try {
       const path = await invoke('pick_tools_folder');
       if (!path) {
@@ -151,24 +212,26 @@ export async function runToolsBoot(bridge, view) {
 
   const doInstall = async () => {
     view.clearChoices();
-    view.line('Downloading the latest xi-tools release…');
-    view.bar(15);
-    view.log('Fetching latest release from github.com/vekien/xi-tools …');
+    view.line('Downloading xi-tools…');
+    view.meta('');
+    view.detail?.('');
+    view.bar(0);
+    const stopProgress = await attachProgress(view);
     try {
       const st = await invoke('tools_install_or_update');
-      view.bar(65);
-      view.log(`Installed xi-tools v${st.localVersion || st.latestVersion || '?'}`.trim());
-      view.meta(`v${st.localVersion || '?'} · ${st.toolsDir || ''}`);
+      view.meta(`v${st.localVersion || '?'}`);
       return finishOnline(st.bridgeUrl);
     } catch (e) {
       view.line('Download failed.');
       view.log(String(e?.message || e), { error: true });
       return recover('Retry download', doInstall);
+    } finally {
+      try { stopProgress(); } catch { /* ignore */ }
     }
   };
 
   try {
-    // Browser / vite dev: no Tauri shell, so just try whatever bridge is listening.
+    // Browser / non-Tauri: still try local bridge, but allow offline.
     if (!isTauri()) {
       view.line('Connecting to the local xi-tools bridge…');
       view.bar(40);
@@ -176,6 +239,8 @@ export async function runToolsBoot(bridge, view) {
     }
 
     view.line('Checking xi-tools…');
+    view.meta('');
+    view.detail?.('');
     view.bar(10);
 
     let status;
@@ -194,7 +259,6 @@ export async function runToolsBoot(bridge, view) {
         ? `Installed v${status.localVersion}`
         : (status.installed ? 'Installed' : 'Not installed'),
       status.latestVersion && !status.usingLocalOverride ? `Latest v${status.latestVersion}` : null,
-      status.toolsDir || null,
     ].filter(Boolean).join(' · '));
 
     if (status.installed && status.usingLocalOverride) {
@@ -204,12 +268,12 @@ export async function runToolsBoot(bridge, view) {
     }
 
     if (!status.installed) {
-      view.line('xi-tools is required. Downloading the latest release…');
+      view.line('Downloading xi-tools…');
       return await doInstall();
     }
 
     if (status.updateAvailable && status.latestVersion) {
-      view.line(`An update is available: v${status.localVersion} → v${status.latestVersion}.`);
+      view.line(`Update available: v${status.localVersion} → v${status.latestVersion}`);
       const key = await view.choose([
         { key: 'update', label: 'Update now', primary: true },
         { key: 'keep', label: 'Keep current version' },
