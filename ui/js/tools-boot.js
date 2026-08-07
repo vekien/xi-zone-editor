@@ -269,22 +269,22 @@ export async function runToolsBoot(bridge, view) {
 
     if (!status.installed) {
       view.line('Downloading xi-tools…');
+      view.bar(0);
       return await doInstall();
     }
 
+    // Always take updates — no "keep current" path. Local checkouts skip this above.
     if (status.updateAvailable && status.latestVersion) {
-      view.line(`Update available: v${status.localVersion} → v${status.latestVersion}`);
-      const key = await view.choose([
-        { key: 'update', label: 'Update now', primary: true },
-        { key: 'keep', label: 'Keep current version' },
-      ]);
-      return key === 'update'
-        ? await doInstall()
-        : await finishOnline(status.bridgeUrl);
+      view.line(`Updating xi-tools v${status.localVersion} → v${status.latestVersion}…`);
+      view.meta('');
+      view.detail?.('');
+      view.bar(0);
+      view.log(`Update required: v${status.localVersion} → v${status.latestVersion}`);
+      return await doInstall();
     }
 
     view.line(`xi-tools v${status.localVersion} is up to date.`);
-    view.bar(55);
+    view.bar(0);
     return await finishOnline(status.bridgeUrl);
   } catch (e) {
     view.log(String(e?.message || e), { error: true });

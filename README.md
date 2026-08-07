@@ -185,3 +185,7 @@ a pixel-accurate replication of the client.
 
 If you are implementing or fixing **viewer-quality** rendering, copy patterns from
 `xi-model-viewer`, not from this editor’s three.js scene setup.
+
+---
+
+AI assistants were used heavily in research and development of this project.
