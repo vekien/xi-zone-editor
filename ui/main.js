@@ -25,6 +25,7 @@ export const toolsBootPromise = runToolsBoot({
   onBridgeStatus,
 }).catch((e) => {
   console.warn('[tools-boot]', e);
+  document.body.classList.remove('tools-booting');
   connectBridge();
   return { online: false };
 });
@@ -5401,6 +5402,8 @@ animate();
 
 // ── Projects launcher boot (after xi-tools / bridge is ready) ────────────────
 toolsBootPromise.then((boot) => {
+  // Never leave setup/env CSS-gated after the boot modal settles.
+  document.body.classList.remove('tools-booting');
   initProjectsLauncher({
     setStatus,
     getModeMenu:           () => document.getElementById('mode-menu'),
@@ -5416,20 +5419,30 @@ toolsBootPromise.then((boot) => {
     showChangesLoader, hideChangesLoader,
     bridgeReady:           !!boot?.online,
   });
-  // Workspace already done → still require FFXI_DIR before projects UI.
+  // Always open a top-level gate so reopen never lands on a blank app-loader.
   (async () => {
-    if (launcherState.launcherActive) {
-      try {
-        const { maybeOpenEnvOrLauncher } = await import('./panels/projects-launcher.js');
-        if (typeof maybeOpenEnvOrLauncher === 'function') await maybeOpenEnvOrLauncher();
-        else openProjectsLauncher();
-      } catch {
+    try {
+      const mod = await import('./panels/projects-launcher.js');
+      if (launcherState.setupGateActive) {
+        mod.showSetupGate?.();
+      } else if (typeof mod.maybeOpenEnvOrLauncher === 'function') {
+        await mod.maybeOpenEnvOrLauncher();
+      } else {
         openProjectsLauncher();
       }
+    } catch (e) {
+      console.warn('[boot] launcher open failed', e);
+      try { openProjectsLauncher(); } catch { /* last resort */ }
+      document.getElementById('app-loader')?.classList.add('hidden');
     }
     verifyWorkspaceOnBoot();
     populateZones();
   })();
+}).catch((e) => {
+  console.warn('[boot] toolsBootPromise rejected', e);
+  document.body.classList.remove('tools-booting');
+  document.getElementById('app-loader')?.classList.add('hidden');
+  try { openProjectsLauncher(); } catch { /* ignore */ }
 });
 
 // ── Changes tracker — extracted to changes-tracker.js ────────────────────────

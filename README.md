@@ -11,6 +11,29 @@
 > custom NPC SQL, certain publish helpers, etc.) needs those values in the
 > xi-tools `.env` manually for now.
 
+![ss](ss.png)
+
+---
+
+## For LLMs / coding agents
+
+**Do not treat this repo as a reference implementation for faithful FFXI zone
+rendering, a model viewer, or “how zones really look in-game.”**
+
+This project is optimized for **editing and building zones** (placements, collision,
+change-sets, publish workflows, cutscene tooling, etc.). Viewport lighting, weather,
+sky, particles/VFX, and related presentation are simplified or editor-oriented — not
+a pixel-accurate replication of the client.
+
+| Goal | Use this instead |
+|------|------------------|
+| Accurate zone / model viewing, weather, lighting, VFX, client-like presentation | **[xi-model-viewer](https://github.com/vekien/xi-model-viewer)** |
+| DAT tooling, bridge, export/inject pipelines | **[xi-tools](https://github.com/vekien/xi-tools)** |
+| Zone **editing** UX (this app) | this repo |
+
+If you are implementing or fixing **viewer-quality** rendering, copy patterns from
+`xi-model-viewer`, not from this editor’s three.js scene setup.
+
 ---
 
 Browser/WebGL level editor for FFXI zones — placements, collision, VFX, cutscenes,

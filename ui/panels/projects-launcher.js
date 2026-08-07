@@ -130,6 +130,26 @@ function hideEnvSetup() {
   if (ov) ov.style.display = 'none';
 }
 
+function hideAppLoader() {
+  const el = document.getElementById('app-loader');
+  if (el) el.classList.add('hidden');
+}
+
+/** Show workspace setup overlay (first-run / missing workspace). */
+export function showSetupGate(message) {
+  launcherState.setupGateActive = true;
+  launcherState.launcherActive = false;
+  document.body.classList.remove('tools-booting');
+  document.body.classList.add('setup-gating');
+  hideEnvSetup();
+  const lov = document.getElementById('projects-overlay');
+  if (lov) lov.style.display = 'none';
+  const ov = document.getElementById('setup-overlay');
+  if (ov) ov.style.display = 'flex';
+  hideAppLoader();
+  if (message) showSetupError(message);
+}
+
 function _isPlaceholderPath(v) {
   if (!v || !String(v).trim()) return true;
   const s = String(v).toLowerCase();
@@ -183,7 +203,11 @@ function scheduleValidateEnvField(key) {
 async function openEnvSetup(prefill = {}) {
   const ov = document.getElementById('env-setup-overlay');
   if (!ov) { openProjectsLauncher(); return; }
+  document.body.classList.remove('tools-booting');
   showEnvError('');
+  // Show the form immediately so a slow/hung env.status never leaves a blank screen.
+  ov.style.display = 'flex';
+  hideAppLoader();
   let values = { ...prefill };
   try {
     const st = await bridgeCall('env.status', {});
@@ -205,19 +229,45 @@ async function openEnvSetup(prefill = {}) {
       if (d?.path) b.placeholder = d.path;
     } catch { /* ignore */ }
   }
-  ov.style.display = 'flex';
   // Live ticks for anything already filled
   for (const key of Object.keys(ENV_INPUTS)) validateEnvField(key);
 }
 
+function _envStatusWithTimeout(ms = 4000) {
+  return Promise.race([
+    bridgeCall('env.status', {}),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('env.status timeout')), ms)),
+  ]);
+}
+
 /** After workspace setup (or on boot): require FFXI_DIR before projects launcher. */
 export async function maybeOpenEnvOrLauncher() {
+  document.body.classList.remove('tools-booting');
+
+  // Reopen fast-path: user already completed Game Paths — show projects immediately.
+  // Re-verify FFXI in the background; only bounce back to the form if it's missing.
+  if (localStorage.getItem(ENV_DONE_KEY) === '1') {
+    openProjectsLauncher();
+    if (bridgeOnline()) {
+      _envStatusWithTimeout(5000).then((st) => {
+        if (st?.ffxiOk) return;
+        if (st && st.ffxiOk === false) {
+          const lov = document.getElementById('projects-overlay');
+          if (lov) lov.style.display = 'none';
+          launcherState.launcherActive = false;
+          openEnvSetup(st.values || {});
+        }
+      }).catch(() => { /* keep projects UI */ });
+    }
+    return;
+  }
+
   if (!bridgeOnline()) {
     openProjectsLauncher();
     return;
   }
   try {
-    const st = await bridgeCall('env.status', {});
+    const st = await _envStatusWithTimeout(4000);
     if (st?.ffxiOk) {
       localStorage.setItem(ENV_DONE_KEY, '1');
       openProjectsLauncher();
@@ -348,6 +398,10 @@ async function fillLauncherVersion() {
 
 export function openProjectsLauncher() {
   launcherState.launcherActive = true;
+  launcherState.setupGateActive = false;
+  document.body.classList.remove('tools-booting', 'setup-gating');
+  hideEnvSetup();
+  hideAppLoader();
   fillLauncherVersion();
   refreshProjectsList();
   const ov = document.getElementById('projects-overlay');
@@ -515,23 +569,18 @@ function buildProjCard(p) {
 let _allProjects = [];
 const projectTagFilter = new Set();
 
-function _hideAppLoader() {
-  const el = document.getElementById("app-loader");
-  if (el) el.classList.add('hidden');
-}
-
 async function refreshProjectsList() {
   const ul = document.getElementById('projects-list');
   if (!ul) return;
   const path = workspacePath();
-  if (!bridgeOnline() || !path) { ul.innerHTML = '<div class="projects-empty">Backend offline.</div>'; _hideAppLoader(); return; }
+  if (!bridgeOnline() || !path) { ul.innerHTML = '<div class="projects-empty">Backend offline.</div>'; hideAppLoader(); return; }
   try {
     const r = await bridgeCall('project.list', { path });
     _allProjects = (r && r.projects) || [];
-  } catch { ul.innerHTML = '<div class="projects-empty">Could not load projects.</div>'; _hideAppLoader(); return; }
+  } catch { ul.innerHTML = '<div class="projects-empty">Could not load projects.</div>'; hideAppLoader(); return; }
   renderTagFilter();
   renderProjectsList();
-  _hideAppLoader();
+  hideAppLoader();
 }
 
 function renderProjectsList() {
@@ -756,15 +805,8 @@ export function revertToSetupGate(message) {
   // The configured workspace vanished — wipe config and behave like a fresh install.
   localStorage.removeItem(SETUP_DONE_KEY);
   localStorage.removeItem(WORKSPACE_PATH_KEY);
-  launcherState.launcherActive = false;
-  const lov = document.getElementById('projects-overlay');
-  if (lov) lov.style.display = 'none';
-  launcherState.setupGateActive = true;
   setSetupCloning(false);                 // form visible, progress hidden
-  document.body.classList.add('setup-gating');
-  const ov = document.getElementById('setup-overlay');
-  if (ov) ov.style.display = 'flex';
-  if (message) showSetupError(message);
+  showSetupGate(message);
 }
 
 // On boot, confirm the configured workspace folder still exists (the user may have
@@ -810,9 +852,10 @@ function initSetupGate() {
   });
 
   // Workspace setup only after XI Tools boot finishes (body.tools-booting hides this).
+  // main.js also calls showSetupGate / maybeOpenEnvOrLauncher after boot — this is the
+  // immediate paint if boot already finished by the time init runs.
   if (launcherState.setupGateActive && !document.body.classList.contains('tools-booting')) {
-    document.body.classList.add('setup-gating');
-    ov.style.display = 'flex';
+    showSetupGate();
   } else {
     ov.style.display = 'none';
   }

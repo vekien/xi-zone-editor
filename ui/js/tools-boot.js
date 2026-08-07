@@ -136,8 +136,12 @@ export async function runToolsBoot(bridge) {
   root.classList.remove('hidden');
   showActions({});
 
-  const finishOffline = () => {
+  const clearBooting = () => {
     document.body.classList.remove('tools-booting');
+  };
+
+  const finishOffline = () => {
+    clearBooting();
     hideModal();
     return { online: false };
   };
@@ -169,13 +173,16 @@ export async function runToolsBoot(bridge) {
       setBar(100);
       if (ok) {
         setSub('Backend ready.');
-        document.body.classList.remove('tools-booting');
+        clearBooting();
         setTimeout(hideModal, 300);
         return { online: true };
       }
       logError('WebSocket did not open on ws://127.0.0.1:8777/ws after the process started.');
     }
     setBar(100);
+    // Leave modal up for retry, but clear tools-booting so a later "Continue offline"
+    // or outer catch can still open setup/projects (CSS !important otherwise blanks UI).
+    clearBooting();
     showActions({
       action: true,
       retry: true,
@@ -268,81 +275,102 @@ export async function runToolsBoot(bridge) {
     }
   };
 
-  // Browser / non-Tauri: still try local bridge, but allow offline.
-  if (!isTauri()) {
-    setSub('Connecting to local xi-tools bridge…');
-    setBar(40);
-    return finishOnline(null);
-  }
-
-  setSub('Checking xi-tools…');
-  setBar(10);
-  let status;
   try {
-    status = await invoke('tools_status');
+    // Browser / non-Tauri: still try local bridge, but allow offline.
+    if (!isTauri()) {
+      setSub('Connecting to local xi-tools bridge…');
+      setBar(40);
+      return await finishOnline(null);
+    }
+
+    setSub('Checking xi-tools…');
+    setBar(10);
+    let status;
+    try {
+      status = await invoke('tools_status');
+    } catch (e) {
+      setSub('Could not check tools status.');
+      logLine(String(e?.message || e));
+      clearBooting();
+      showActions({
+        action: true,
+        local: true,
+        skip: true,
+        actionLabel: 'Download xi-tools',
+        localLabel: 'Use local folder…',
+        skipLabel: 'Continue offline',
+      });
+      return new Promise((resolve) => {
+        $('#tools-boot-action').onclick = () => runToolsBoot(bridge).then(resolve);
+        $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
+        $('#tools-boot-skip').onclick = () => resolve(finishOffline());
+      });
+    }
+
+    if (status.error) logLine(status.error);
+    setMeta([
+      status.usingLocalOverride ? 'Local checkout' : null,
+      status.localVersion && status.localVersion !== '0.0.0' ? `Installed: v${status.localVersion}` : (status.installed ? 'Installed' : 'Not installed'),
+      status.latestVersion && !status.usingLocalOverride ? `Latest: v${status.latestVersion}` : null,
+      status.toolsDir || null,
+    ].filter(Boolean).join(' · '));
+
+    // Already pointing at a valid local/downloaded install → just start the bridge.
+    if (status.installed && status.usingLocalOverride) {
+      setSub('Using local xi-tools checkout.');
+      setBar(55);
+      return await finishOnline(status.bridgeUrl);
+    }
+
+    // Not installed → offer download or local folder (auto-try download first).
+    if (!status.installed) {
+      setSub('xi-tools is required for Save / Publish and workspaces. Download the latest release?');
+      showActions({
+        action: true,
+        local: true,
+        skip: true,
+        actionLabel: 'Download xi-tools',
+        localLabel: 'Use local folder…',
+        skipLabel: 'Continue offline',
+      });
+      // Auto-start download; on failure the UI offers a local folder.
+      return await doInstall();
+    }
+
+    if (status.updateAvailable && status.latestVersion) {
+      setSub(`Update available (v${status.localVersion} → v${status.latestVersion}).`);
+      clearBooting();
+      showActions({
+        action: true,
+        skip: true,
+        actionLabel: 'Update now',
+        skipLabel: 'Use installed version',
+      });
+      return new Promise((resolve) => {
+        $('#tools-boot-action').onclick = () => runToolsBoot(bridge).then(resolve);
+        $('#tools-boot-skip').onclick = () => finishOnline(status.bridgeUrl).then(resolve);
+      });
+    }
+
+    setSub(`xi-tools v${status.localVersion} is up to date.`);
+    setBar(55);
+    return await finishOnline(status.bridgeUrl);
   } catch (e) {
-    setSub('Could not check tools status.');
-    logLine(String(e?.message || e));
+    // Never leave body.tools-booting stuck — that CSS-hides setup/env forever.
+    logError(String(e?.message || e));
+    clearBooting();
     showActions({
       action: true,
       local: true,
       skip: true,
-      actionLabel: 'Download xi-tools',
+      actionLabel: 'Retry',
       localLabel: 'Use local folder…',
       skipLabel: 'Continue offline',
     });
     return new Promise((resolve) => {
-      $('#tools-boot-action').onclick = () => doInstall().then(resolve);
+      $('#tools-boot-action').onclick = () => runToolsBoot(bridge).then(resolve);
       $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
       $('#tools-boot-skip').onclick = () => resolve(finishOffline());
     });
   }
-
-  if (status.error) logLine(status.error);
-  setMeta([
-    status.usingLocalOverride ? 'Local checkout' : null,
-    status.localVersion && status.localVersion !== '0.0.0' ? `Installed: v${status.localVersion}` : (status.installed ? 'Installed' : 'Not installed'),
-    status.latestVersion && !status.usingLocalOverride ? `Latest: v${status.latestVersion}` : null,
-    status.toolsDir || null,
-  ].filter(Boolean).join(' · '));
-
-  // Already pointing at a valid local/downloaded install → just start the bridge.
-  if (status.installed && status.usingLocalOverride) {
-    setSub('Using local xi-tools checkout.');
-    setBar(55);
-    return finishOnline(status.bridgeUrl);
-  }
-
-  // Not installed → offer download or local folder (auto-try download first).
-  if (!status.installed) {
-    setSub('xi-tools is required for Save / Publish and workspaces. Download the latest release?');
-    showActions({
-      action: true,
-      local: true,
-      skip: true,
-      actionLabel: 'Download xi-tools',
-      localLabel: 'Use local folder…',
-      skipLabel: 'Continue offline',
-    });
-    // Auto-start download; on failure the UI offers a local folder.
-    return doInstall();
-  }
-
-  if (status.updateAvailable && status.latestVersion) {
-    setSub(`Update available (v${status.localVersion} → v${status.latestVersion}).`);
-    showActions({
-      action: true,
-      skip: true,
-      actionLabel: 'Update now',
-      skipLabel: 'Use installed version',
-    });
-    return new Promise((resolve) => {
-      $('#tools-boot-action').onclick = () => doInstall().then(resolve);
-      $('#tools-boot-skip').onclick = () => finishOnline(status.bridgeUrl).then(resolve);
-    });
-  }
-
-  setSub(`xi-tools v${status.localVersion} is up to date.`);
-  setBar(55);
-  return finishOnline(status.bridgeUrl);
 }
