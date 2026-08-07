@@ -1106,6 +1106,137 @@ fn pick_folder(initial: Option<String>) -> Option<String> {
         .map(|p| p.to_string_lossy().into_owned())
 }
 
+// ── Desktop shortcut ─────────────────────────────────────────────────────────
+
+const SHORTCUT_NAME: &str = "XI Zone Editor";
+
+#[derive(Serialize)]
+struct DesktopShortcut {
+    /// False on non-Windows, so the wizard can hide the step rather than offer a
+    /// button that always fails.
+    supported: bool,
+    exists: bool,
+    path: String,
+}
+
+/// Run a PowerShell snippet, passing values via the environment.
+///
+/// Paths go in as env vars rather than being interpolated into the script text —
+/// they routinely contain spaces, and quoting them into a `-Command` string is a
+/// reliable way to produce a broken shortcut on someone else's machine.
+#[cfg(windows)]
+fn powershell(script: &str, vars: &[(&str, &str)]) -> Result<String, String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    let mut cmd = Command::new("powershell");
+    cmd.args([
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        script,
+    ])
+    .creation_flags(CREATE_NO_WINDOW);
+    for (k, v) in vars {
+        cmd.env(k, v);
+    }
+    let out = cmd
+        .output()
+        .map_err(|e| format!("Could not run PowerShell: {e}"))?;
+    if !out.status.success() {
+        let err = String::from_utf8_lossy(&out.stderr).trim().to_string();
+        return Err(if err.is_empty() {
+            "PowerShell reported an error creating the shortcut.".into()
+        } else {
+            err
+        });
+    }
+    Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+/// Desktop folder via the shell API, so redirected/OneDrive profiles resolve correctly
+/// (`%USERPROFILE%\Desktop` is simply wrong on those machines).
+#[cfg(windows)]
+fn desktop_shortcut_path() -> Result<PathBuf, String> {
+    let dir = powershell("[Environment]::GetFolderPath('Desktop')", &[])?;
+    if dir.is_empty() {
+        return Err("Could not locate your Desktop folder.".into());
+    }
+    Ok(PathBuf::from(dir).join(format!("{SHORTCUT_NAME}.lnk")))
+}
+
+#[tauri::command]
+fn desktop_shortcut_status() -> DesktopShortcut {
+    #[cfg(windows)]
+    {
+        match desktop_shortcut_path() {
+            Ok(p) => DesktopShortcut {
+                supported: true,
+                exists: p.is_file(),
+                path: p.display().to_string(),
+            },
+            Err(_) => DesktopShortcut {
+                supported: true,
+                exists: false,
+                path: String::new(),
+            },
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        DesktopShortcut {
+            supported: false,
+            exists: false,
+            path: String::new(),
+        }
+    }
+}
+
+#[tauri::command]
+fn create_desktop_shortcut() -> Result<DesktopShortcut, String> {
+    #[cfg(not(windows))]
+    {
+        Err("Desktop shortcuts are only supported on Windows.".into())
+    }
+    #[cfg(windows)]
+    {
+        let exe = std::env::current_exe().map_err(|e| format!("Could not find this app: {e}"))?;
+        let dir = exe
+            .parent()
+            .map(|p| p.display().to_string())
+            .unwrap_or_default();
+        let lnk = desktop_shortcut_path()?;
+
+        powershell(
+            r#"
+$sh = New-Object -ComObject WScript.Shell
+$sc = $sh.CreateShortcut($env:XIZE_LNK)
+$sc.TargetPath = $env:XIZE_EXE
+$sc.WorkingDirectory = $env:XIZE_DIR
+$sc.IconLocation = "$($env:XIZE_EXE),0"
+$sc.Description = 'XI Zone Editor'
+$sc.Save()
+"#,
+            &[
+                ("XIZE_LNK", &lnk.display().to_string()),
+                ("XIZE_EXE", &exe.display().to_string()),
+                ("XIZE_DIR", &dir),
+            ],
+        )?;
+
+        if !lnk.is_file() {
+            return Err("PowerShell reported success but no shortcut appeared on the Desktop.".into());
+        }
+        Ok(DesktopShortcut {
+            supported: true,
+            exists: true,
+            path: lnk.display().to_string(),
+        })
+    }
+}
+
 fn main() {
     load_dotenv();
     tauri::Builder::default()
@@ -1119,6 +1250,8 @@ fn main() {
             bridge_stop,
             bridge_url,
             pick_folder,
+            desktop_shortcut_status,
+            create_desktop_shortcut,
         ])
         .on_window_event(|_window, event| {
             if let tauri::WindowEvent::Destroyed = event {

@@ -7,34 +7,28 @@
 // independent of main.js scope while still driving the full boot / project UX.
 
 import { bridgeCall, bridgeOnline, onBridgeStatus } from '../ffxi/bridge.js';
+import { reopenWorkspaceSetup } from './setup-wizard.js';
 
 // ── Workspace config keys ─────────────────────────────────────────────────────
-const SETUP_DONE_KEY      = 'xi.workspaceConfigured';
+// Setup completion lives in setup-wizard.js; the launcher only needs the folder.
 const WORKSPACE_PATH_KEY  = 'xi.workspacePath';
-const WORKSPACE_FOLDER_NAME = 'xi-tools-workspaces';
-
-function workspaceConfigured() { return localStorage.getItem(SETUP_DONE_KEY) === '1'; }
 
 // ── Mutable launcher state (exported as a live object so main.js can read by ref) ──
 // Main.js reads: launcherState.currentProject, .browseOnly, .projectAwaitingZone,
-//                .launcherActive, .setupGateActive
+//                .launcherActive
 // Main.js writes: launcherState.projectAwaitingZone (set to false in onZoneLoaded)
 export const launcherState = {
   currentProject:      null,     // active project (edit) or null (browse / none)
   browseOnly:          false,    // Browse Zones → read-only, View mode forced
   projectAwaitingZone: false,    // in a project but no zone picked yet → View until one loads
-  launcherActive:      !workspaceConfigured(),  // true when workspace configured on boot
-  setupGateActive:     !workspaceConfigured(),  // true when setup gate should show
+  launcherActive:      true,     // the launcher is the first screen after setup
+  // Retained because core/zone-nav.js gates auto-load on it. Setup is now a separate
+  // overlay that resolves before the launcher exists, so it is never true here.
+  setupGateActive:     false,
 };
-// Correct initial values: if workspace is configured, launcherActive=true, setupGateActive=false
-launcherState.setupGateActive = !workspaceConfigured();
-launcherState.launcherActive  = !launcherState.setupGateActive;
 
 // ── Injected deps (set by initProjectsLauncher) ───────────────────────────────
 let _deps = null;
-
-// ── Setup-gate state ──────────────────────────────────────────────────────────
-let setupBusy = false;
 
 // ── Workspace helpers ─────────────────────────────────────────────────────────
 export function workspacePath() { return localStorage.getItem(WORKSPACE_PATH_KEY) || ''; }
@@ -85,305 +79,10 @@ export function setPackageSelection(id, paths) {
   localStorage.setItem(PACKAGE_SEL_KEY, JSON.stringify(m));
 }
 
-// ── Setup gate helpers ────────────────────────────────────────────────────────
-function showSetupError(msg) {
-  const el = document.getElementById('setup-error');
-  if (!el) return;
-  if (msg) { el.textContent = msg; el.hidden = false; } else { el.hidden = true; }
-}
-
-function setSetupCloning(on) {
-  setupBusy = on;
-  const form = document.getElementById('setup-form');
-  const prog = document.getElementById('setup-progress');
-  if (form) form.hidden = on;
-  if (prog) prog.hidden = !on;
-  if (on) { const s = document.getElementById('setup-progress-status'); if (s) s.textContent = 'Setting up folder…'; }
-}
-
-function dismissSetupGate() {
-  launcherState.setupGateActive = false;
-  document.body.classList.remove('setup-gating');
-  const ov = document.getElementById('setup-overlay');
-  if (ov) ov.style.display = 'none';
-}
-
-// ── FFXI path (.env) setup ───────────────────────────────────────────────────
-const ENV_DONE_KEY = 'xi.envConfigured';
-const ENV_INPUTS = {
-  FFXI_DIR: 'env-ffxi',
-  FFXI_HD_DIR: 'env-hd',
-  FFXI_PIVOT_DIR: 'env-pivot',
-  BLENDER_PATH: 'env-blender',
-};
-
-function showEnvError(msg) {
-  const el = document.getElementById('env-setup-error');
-  if (!el) return;
-  if (!msg) { el.hidden = true; el.textContent = ''; return; }
-  el.hidden = false;
-  el.textContent = msg;
-}
-
-function hideEnvSetup() {
-  const ov = document.getElementById('env-setup-overlay');
-  if (ov) ov.style.display = 'none';
-}
-
+// The boot loader is dismissed by whoever opens the first real screen.
 function hideAppLoader() {
   const el = document.getElementById('app-loader');
   if (el) el.classList.add('hidden');
-}
-
-/** Show workspace setup overlay (first-run / missing workspace). */
-export function showSetupGate(message) {
-  launcherState.setupGateActive = true;
-  launcherState.launcherActive = false;
-  document.body.classList.remove('tools-booting');
-  document.body.classList.add('setup-gating');
-  hideEnvSetup();
-  const lov = document.getElementById('projects-overlay');
-  if (lov) lov.style.display = 'none';
-  const ov = document.getElementById('setup-overlay');
-  if (ov) ov.style.display = 'flex';
-  hideAppLoader();
-  if (message) showSetupError(message);
-}
-
-function _isPlaceholderPath(v) {
-  if (!v || !String(v).trim()) return true;
-  const s = String(v).toLowerCase();
-  return s.includes('path\\to') || s.includes('path/to') || s.includes('<')
-    || s.includes('your-overlay') || s.includes('your-server');
-}
-
-function setEnvTick(key, state, title = '') {
-  // state: '' | 'ok' | 'bad'
-  const el = document.getElementById(`tick-${key}`);
-  if (!el) return;
-  el.classList.toggle('on', state === 'ok' || state === 'bad');
-  el.classList.toggle('bad', state === 'bad');
-  el.hidden = !state;
-  el.title = title || '';
-  const ico = el.querySelector('.material-symbols-outlined');
-  if (ico) ico.textContent = state === 'bad' ? 'cancel' : 'check_circle';
-}
-
-let _envValidateTimer = null;
-async function validateEnvField(key) {
-  const id = ENV_INPUTS[key];
-  const inp = id && document.getElementById(id);
-  if (!inp) return false;
-  const path = inp.value.trim();
-  if (!path) {
-    setEnvTick(key, '');
-    return key !== 'FFXI_DIR';
-  }
-  if (!bridgeOnline()) {
-    setEnvTick(key, '');
-    return false;
-  }
-  try {
-    const r = await bridgeCall('env.validate', { key, path });
-    if (r?.empty) { setEnvTick(key, ''); return key !== 'FFXI_DIR'; }
-    if (r?.valid) { setEnvTick(key, 'ok', r.detail || 'OK'); return true; }
-    setEnvTick(key, path ? 'bad' : '', r?.detail || '');
-    return false;
-  } catch {
-    setEnvTick(key, '');
-    return false;
-  }
-}
-
-function scheduleValidateEnvField(key) {
-  clearTimeout(_envValidateTimer);
-  _envValidateTimer = setTimeout(() => validateEnvField(key), 280);
-}
-
-async function openEnvSetup(prefill = {}) {
-  const ov = document.getElementById('env-setup-overlay');
-  if (!ov) { openProjectsLauncher(); return; }
-  document.body.classList.remove('tools-booting');
-  showEnvError('');
-  // Show the form immediately so a slow/hung env.status never leaves a blank screen.
-  ov.style.display = 'flex';
-  hideAppLoader();
-  let values = { ...prefill };
-  try {
-    const st = await bridgeCall('env.status', {});
-    if (st?.values) values = { ...st.values, ...prefill };
-  } catch { /* offline */ }
-  for (const [key, id] of Object.entries(ENV_INPUTS)) {
-    const inp = document.getElementById(id);
-    if (!inp) continue;
-    // Only prefill real saved paths — never sample placeholders.
-    const v = values[key];
-    inp.value = (!_isPlaceholderPath(v) && v) ? v : '';
-    setEnvTick(key, '');
-  }
-  // Suggest Blender in the placeholder only (don't force-fill the field).
-  const b = document.getElementById('env-blender');
-  if (b && !b.value.trim()) {
-    try {
-      const d = await bridgeCall('env.detectBlender', {});
-      if (d?.path) b.placeholder = d.path;
-    } catch { /* ignore */ }
-  }
-  // Live ticks for anything already filled
-  for (const key of Object.keys(ENV_INPUTS)) validateEnvField(key);
-}
-
-function _envStatusWithTimeout(ms = 4000) {
-  return Promise.race([
-    bridgeCall('env.status', {}),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('env.status timeout')), ms)),
-  ]);
-}
-
-/** After workspace setup (or on boot): require FFXI_DIR before projects launcher. */
-export async function maybeOpenEnvOrLauncher() {
-  document.body.classList.remove('tools-booting');
-
-  // Reopen fast-path: user already completed Game Paths — show projects immediately.
-  // Re-verify FFXI in the background; only bounce back to the form if it's missing.
-  if (localStorage.getItem(ENV_DONE_KEY) === '1') {
-    openProjectsLauncher();
-    if (bridgeOnline()) {
-      _envStatusWithTimeout(5000).then((st) => {
-        if (st?.ffxiOk) return;
-        if (st && st.ffxiOk === false) {
-          const lov = document.getElementById('projects-overlay');
-          if (lov) lov.style.display = 'none';
-          launcherState.launcherActive = false;
-          openEnvSetup(st.values || {});
-        }
-      }).catch(() => { /* keep projects UI */ });
-    }
-    return;
-  }
-
-  if (!bridgeOnline()) {
-    openProjectsLauncher();
-    return;
-  }
-  try {
-    const st = await _envStatusWithTimeout(4000);
-    if (st?.ffxiOk) {
-      localStorage.setItem(ENV_DONE_KEY, '1');
-      openProjectsLauncher();
-      return;
-    }
-  } catch { /* show form */ }
-  // Hide projects overlay while configuring paths
-  const lov = document.getElementById('projects-overlay');
-  if (lov) lov.style.display = 'none';
-  launcherState.launcherActive = false;
-  await openEnvSetup();
-}
-
-async function continueAfterWorkspace() {
-  dismissSetupGate();
-  await maybeOpenEnvOrLauncher();
-}
-
-async function saveEnvSetup() {
-  const values = {};
-  for (const [key, id] of Object.entries(ENV_INPUTS)) {
-    values[key] = (document.getElementById(id)?.value || '').trim();
-  }
-  if (!values.FFXI_DIR) {
-    showEnvError('FFXI directory is required.');
-    return;
-  }
-  if (!bridgeOnline()) {
-    showEnvError('Backend offline — wait for XI Tools to finish connecting.');
-    return;
-  }
-  showEnvError('');
-  const btn = document.getElementById('env-setup-go');
-  if (btn) btn.disabled = true;
-  try {
-    const r = await bridgeCall('env.save', { values });
-    if (!r || !r.ok) {
-      showEnvError((r && r.error) || 'Could not save settings.');
-      return;
-    }
-    localStorage.setItem(ENV_DONE_KEY, '1');
-    // DLL / DAT fetches must re-resolve against the new FFXI_DIR.
-    try { window.invalidateKeyTables?.(); } catch { /* optional */ }
-    hideEnvSetup();
-    openProjectsLauncher();
-  } catch (e) {
-    showEnvError(e?.message || 'Save failed.');
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-async function browseEnvField(key, kind) {
-  const id = ENV_INPUTS[key];
-  const inp = id && document.getElementById(id);
-  const initial = inp?.value || '';
-  try {
-    const r = await bridgeCall('env.pickPath', {
-      kind: kind || 'folder',
-      title: key === 'BLENDER_PATH' ? 'Select blender.exe' : `Select ${key}`,
-      initial,
-    });
-    if (r?.ok && r.path && inp) inp.value = r.path;
-  } catch { /* picker unavailable */ }
-}
-
-// Append the workspaces folder name to a picked parent (D:\ → D:\xi-tools-workspaces),
-// unless the user already selected a folder of that name. Keeps the OS path separator.
-function withWorkspaceFolder(raw) {
-  const sep = raw.includes('\\') ? '\\' : '/';
-  const p = raw.replace(/[\\/]+$/, '');                 // trim trailing separators
-  const leaf = p.split(/[\\/]/).pop();
-  return (leaf === WORKSPACE_FOLDER_NAME) ? p : p + sep + WORKSPACE_FOLDER_NAME;
-}
-
-async function browseWorkspaceFolder() {
-  if (!bridgeOnline()) return;            // the native folder dialog lives on the backend
-  try {
-    const r = await bridgeCall('workspace.pickFolder', {});
-    if (r && r.ok && r.path) document.getElementById('setup-path').value = withWorkspaceFolder(r.path);
-  } catch { /* picker unavailable — keep the typed path */ }
-}
-
-async function skipWorkspaceSetup() {
-  if (setupBusy) return;
-  const r = await bridgeCall('workspace.skip', {});
-  if (!r || !r.ok) { showSetupError((r && r.error) || 'Could not create local workspaces folder.'); return; }
-  localStorage.setItem(SETUP_DONE_KEY, '1');
-  if (r.path) localStorage.setItem(WORKSPACE_PATH_KEY, r.path);
-  await continueAfterWorkspace();
-}
-
-async function runWorkspaceSetup() {
-  if (setupBusy) return;
-  const input = document.getElementById('setup-path');
-  const path = (input?.value || '').trim();
-  if (!path) { showSetupError('Choose a folder to save your workspaces.'); return; }
-  if (!bridgeOnline()) {
-    showSetupError("XI Tools backend isn't connected yet. Wait for the XI Tools setup to finish, or restart the app.");
-    return;
-  }
-  showSetupError('');
-  setSetupCloning(true);
-  const statusEl = document.getElementById('setup-progress-status');
-  const onLog = (line) => { if (statusEl && line) statusEl.textContent = line; };
-  try {
-    const r = await bridgeCall('workspace.setup', { path }, onLog);
-    if (!r || !r.ok) { setSetupCloning(false); showSetupError((r && r.error) || 'Workspace setup failed.'); return; }
-    localStorage.setItem(SETUP_DONE_KEY, '1');
-    if (r.path) localStorage.setItem(WORKSPACE_PATH_KEY, r.path);
-    setSetupCloning(false);
-    await continueAfterWorkspace();
-  } catch (e) {
-    setSetupCloning(false);
-    showSetupError((e && e.message) ? e.message : 'Workspace setup failed.');
-  }
 }
 
 // ── Projects launcher ─────────────────────────────────────────────────────────
@@ -398,9 +97,7 @@ async function fillLauncherVersion() {
 
 export function openProjectsLauncher() {
   launcherState.launcherActive = true;
-  launcherState.setupGateActive = false;
-  document.body.classList.remove('tools-booting', 'setup-gating');
-  hideEnvSetup();
+  document.body.classList.remove('wiz-active');
   hideAppLoader();
   fillLauncherVersion();
   refreshProjectsList();
@@ -800,65 +497,31 @@ async function onDpDelete() {
   }
 }
 
-// ── Fallback: workspace missing → revert to first-run setup ──────────────────
-export function revertToSetupGate(message) {
-  // The configured workspace vanished — wipe config and behave like a fresh install.
-  localStorage.removeItem(SETUP_DONE_KEY);
+// ── Fallback: workspace missing → back to the Setup panel ───────────────────
+export async function revertToSetupGate(message) {
+  // The configured workspace vanished — clear it and reopen the wizard's workspace
+  // step so the user can point at a new folder without redoing the whole setup.
   localStorage.removeItem(WORKSPACE_PATH_KEY);
-  setSetupCloning(false);                 // form visible, progress hidden
-  showSetupGate(message);
+  const ov = document.getElementById('projects-overlay');
+  if (ov) ov.style.display = 'none';
+  launcherState.launcherActive = false;
+  await reopenWorkspaceSetup(message);
+  openProjectsLauncher();
 }
 
 // On boot, confirm the configured workspace folder still exists (the user may have
-// deleted it). If it's gone, fall back to first-run setup.
+// deleted it). If it's gone, ask for a new one.
 export async function verifyWorkspaceOnBoot() {
-  if (!workspaceConfigured()) return;
   const path = localStorage.getItem(WORKSPACE_PATH_KEY) || '';
-  if (!path) return;                      // no recorded path (legacy) — nothing to verify
+  if (!path) return;                      // nothing recorded yet — nothing to verify
   if (!bridgeOnline()) {                  // wait for the socket, then verify once
     const off = onBridgeStatus((online) => { if (online) { off(); verifyWorkspaceOnBoot(); } });
     return;
   }
   try {
     const r = await bridgeCall('workspace.status', { path });
-    if (r && !r.exists && !r.isRepo) revertToSetupGate('Your workspace folder is missing — set it up again.');
+    if (r && !r.exists && !r.isRepo) revertToSetupGate('Your workspace folder is missing — choose it again.');
   } catch { /* bridge hiccup — leave the optimistic launcher up */ }
-}
-
-// ── DOM init ──────────────────────────────────────────────────────────────────
-function initSetupGate() {
-  const ov = document.getElementById('setup-overlay');
-  if (!ov) return;
-  const input = document.getElementById('setup-path');
-  if (input && !input.value) input.value = 'C:/xi-zone-workspaces';
-  // Bind once, regardless of gate state — so the gate still works if we later
-  // fall back to it (e.g. the workspace folder was deleted out from under us).
-  document.getElementById('setup-go')?.addEventListener('click', runWorkspaceSetup);
-  document.getElementById('setup-skip')?.addEventListener('click', skipWorkspaceSetup);
-  document.getElementById('setup-browse')?.addEventListener('click', browseWorkspaceFolder);
-  input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') runWorkspaceSetup(); });
-
-  // Env setup form
-  document.getElementById('env-setup-go')?.addEventListener('click', saveEnvSetup);
-  document.querySelectorAll('[data-env-browse]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      await browseEnvField(btn.dataset.envBrowse, btn.dataset.kind);
-      validateEnvField(btn.dataset.envBrowse);
-    });
-  });
-  document.querySelectorAll('[data-env-key]').forEach((inp) => {
-    inp.addEventListener('input', () => scheduleValidateEnvField(inp.dataset.envKey));
-    inp.addEventListener('change', () => validateEnvField(inp.dataset.envKey));
-  });
-
-  // Workspace setup only after XI Tools boot finishes (body.tools-booting hides this).
-  // main.js also calls showSetupGate / maybeOpenEnvOrLauncher after boot — this is the
-  // immediate paint if boot already finished by the time init runs.
-  if (launcherState.setupGateActive && !document.body.classList.contains('tools-booting')) {
-    showSetupGate();
-  } else {
-    ov.style.display = 'none';
-  }
 }
 
 /**
@@ -879,8 +542,6 @@ function initSetupGate() {
  */
 export function initProjectsLauncher(deps) {
   _deps = deps;
-
-  initSetupGate();
 
   document.getElementById('projects-btn')?.addEventListener('click', openProjectsLauncher);   // topbar → launcher
   document.getElementById('projects-browse')?.addEventListener('click', enterBrowseMode);
@@ -903,13 +564,7 @@ export function initProjectsLauncher(deps) {
   // The boot version fetch + project list can race the socket — refresh once connected.
   onBridgeStatus((online) => { if (online) { fillLauncherVersion(); if (launcherState.launcherActive) refreshProjectsList(); } });
 
-  // Dev helpers
-  window.xiResetSetup = () => {
-    localStorage.removeItem(SETUP_DONE_KEY);
-    localStorage.removeItem(WORKSPACE_PATH_KEY);
-    localStorage.removeItem(ENV_DONE_KEY);
-    location.reload();
-  };
+  // Dev helpers (xiResetSetup lives in setup-wizard.js — it owns the setup keys)
   window.xiMarkAllProjectsMine = async () => {
     const path = workspacePath();
     if (!bridgeOnline() || !path) { console.warn('[xi] backend offline / no workspace — open the editor via `xi gui zone`'); return; }

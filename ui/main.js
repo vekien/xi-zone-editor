@@ -15,17 +15,15 @@ import { initUndoRedo, pushCommand, undo, redo, clearHistory, updateHistoryButto
 import { initFlyCamera, flyState, flySpeed, heldKeys, flyClock, WORLD_UP, FLY_SPEED_MIN, FLY_SPEED_MAX, flyUpdate, onFlyLook, endFlyLook, setFlySpeed, setFlyTarget, updateZoomSpeedUi, speedToSlider } from './viewport/fly-camera.js';
 import { initLighting, LIGHT_UNIFORMS_GLSL, litRGB_GLSL, applyFog_GLSL, BIAS, NO_BIAS, TH, ambientToColor, diffuseToColor, sunDirDisplay, applyDayColors, applyEnvironment } from './viewport/lighting.js';
 import { connectBridge, bridgeOnline, onBridgeStatus, bridgeCall, bridgeCancel, setBridgeUrl, bridgeHttpUrl, exportsUrl, BRIDGE_HTTP_BASE } from './ffxi/bridge.js';
-import { runToolsBoot } from './js/tools-boot.js';
+import { runSetupWizard, initSetupSettings } from './panels/setup-wizard.js';
 
-/** Resolves when xi-tools boot modal finishes (online or offline skip). */
-export const toolsBootPromise = runToolsBoot({
-  setBridgeUrl,
-  connectBridge,
-  bridgeOnline,
-  onBridgeStatus,
-}).catch((e) => {
-  console.warn('[tools-boot]', e);
-  document.body.classList.remove('tools-booting');
+/** Resolves when the Setup panel is done: xi-tools is up (or the user went offline),
+ *  and on a fresh install the remaining setup steps have been completed. */
+export const toolsBootPromise = runSetupWizard().catch((e) => {
+  console.warn('[setup]', e);
+  document.body.classList.remove('wiz-active');
+  const ov = document.getElementById('wizard-overlay');
+  if (ov) ov.style.display = 'none';
   connectBridge();
   return { online: false };
 });
@@ -2250,22 +2248,9 @@ if (settingsBtn) settingsBtn.onclick = () => toggleModal(settingsPanel, settings
   activatePane(savedPane);
 }
 
-// ── Database credentials (Settings → Database) ────────────────────────────────
-{
-  const dbFields = [
-    { id: 'db-host',     key: 'db.host',     def: '127.0.0.1' },
-    { id: 'db-port',     key: 'db.port',     def: '3306' },
-    { id: 'db-user',     key: 'db.user',     def: 'root' },
-    { id: 'db-password', key: 'db.password', def: 'xi' },
-    { id: 'db-database', key: 'db.database', def: 'tpzdb' },
-  ];
-  for (const f of dbFields) {
-    const el = document.getElementById(f.id);
-    if (!el) continue;
-    el.value = loadSetting(f.key, f.def);
-    el.addEventListener('change', () => saveSetting(f.key, el.value.trim() || f.def));
-  }
-}
+// ── Settings → Setup (workspace, game paths, server + database, desktop icon) ──
+// These read and write .env through the bridge, the same as the first-run wizard.
+initSetupSettings();
 
 // ── View dropdown menu ────────────────────────────────────────────────────────
 const viewBtn = document.getElementById('view-btn');
@@ -5400,10 +5385,10 @@ animate();
 
 // refreshCustomZones and populateZones moved to core/zone-nav.js
 
-// ── Projects launcher boot (after xi-tools / bridge is ready) ────────────────
+// ── Projects launcher boot (after the Setup panel is done) ──────────────────
 toolsBootPromise.then((boot) => {
-  // Never leave setup/env CSS-gated after the boot modal settles.
-  document.body.classList.remove('tools-booting');
+  // The wizard owns every gate now, so by this point the screen is ours.
+  document.body.classList.remove('wiz-active');
   initProjectsLauncher({
     setStatus,
     getModeMenu:           () => document.getElementById('mode-menu'),
@@ -5419,28 +5404,20 @@ toolsBootPromise.then((boot) => {
     showChangesLoader, hideChangesLoader,
     bridgeReady:           !!boot?.online,
   });
-  // Always open a top-level gate so reopen never lands on a blank app-loader.
+  // Setup is finished (or was already done) — go straight to the launcher.
   (async () => {
     try {
-      const mod = await import('./panels/projects-launcher.js');
-      if (launcherState.setupGateActive) {
-        mod.showSetupGate?.();
-      } else if (typeof mod.maybeOpenEnvOrLauncher === 'function') {
-        await mod.maybeOpenEnvOrLauncher();
-      } else {
-        openProjectsLauncher();
-      }
+      openProjectsLauncher();
     } catch (e) {
       console.warn('[boot] launcher open failed', e);
-      try { openProjectsLauncher(); } catch { /* last resort */ }
       document.getElementById('app-loader')?.classList.add('hidden');
     }
     verifyWorkspaceOnBoot();
     populateZones();
   })();
 }).catch((e) => {
-  console.warn('[boot] toolsBootPromise rejected', e);
-  document.body.classList.remove('tools-booting');
+  console.warn('[boot] setup promise rejected', e);
+  document.body.classList.remove('wiz-active');
   document.getElementById('app-loader')?.classList.add('hidden');
   try { openProjectsLauncher(); } catch { /* ignore */ }
 });

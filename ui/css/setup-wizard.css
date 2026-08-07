@@ -1,0 +1,486 @@
+/* setup-wizard.css — the first-run Setup panel.
+   One large framed window with a numbered stepper down the left and a single content
+   pane on the right. Replaces the three separate boot overlays (xi-tools card,
+   workspace card, game-paths card) that each had their own size and styling. */
+
+.wiz-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: radial-gradient(circle at 50% 30%, #20202b 0%, #121217 70%, #0c0c10 100%);
+  font: 13px/1.55 Roboto, sans-serif;
+  color: #c8c8d4;
+}
+
+.wiz-shell {
+  display: flex;
+  width: min(1040px, 100%);
+  height: min(660px, 100%);
+  background: #1e1e28;
+  border: 1px solid #3a3a50;
+  border-radius: 12px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.wiz-sidebar {
+  flex: 0 0 268px;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 0 18px;
+  background: #191921;
+  border-right: 1px solid #2e2e3f;
+}
+
+.wiz-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 24px 22px;
+}
+.wiz-brand img {
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
+}
+.wiz-brand-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8e8f2;
+  line-height: 1.25;
+}
+.wiz-brand-sub {
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #7d7d97;
+}
+
+.wiz-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wiz-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  color: #8a8aa4;
+  /* Steps report progress; they are not a navigation control. Jumping into step 4
+     before the bridge is up would just show a form that cannot save. */
+  cursor: default;
+  transition: background 0.12s, color 0.12s;
+}
+.wiz-step-num {
+  flex: 0 0 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid #40405a;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a8aa4;
+  background: #1e1e28;
+}
+.wiz-step-num .material-symbols-outlined { font-size: 15px; }
+.wiz-step-label { font-size: 13px; }
+.wiz-step-note {
+  font-size: 11px;
+  color: #6e6e88;
+  margin-top: 1px;
+}
+
+.wiz-step.is-current {
+  background: #23233a;
+  color: #e8e8f2;
+}
+.wiz-step.is-current .wiz-step-num {
+  border-color: #2f6fed;
+  background: #2f6fed;
+  color: #fff;
+}
+.wiz-step.is-done .wiz-step-num {
+  border-color: #2ea05b;
+  background: #2ea05b;
+  color: #fff;
+}
+.wiz-step.is-done .wiz-step-label { color: #a8a8c0; }
+.wiz-step.is-skipped .wiz-step-num {
+  border-color: #55556e;
+  color: #7d7d97;
+}
+
+.wiz-sidebar-foot {
+  margin-top: auto;
+  padding: 14px 24px 0;
+  font-size: 11px;
+  color: #61617a;
+}
+
+/* ── Main pane ───────────────────────────────────────────────────────────── */
+
+.wiz-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wiz-head {
+  padding: 30px 38px 18px;
+  border-bottom: 1px solid #2a2a3a;
+}
+.wiz-title {
+  margin: 0 0 6px;
+  font-size: 21px;
+  font-weight: 600;
+  color: #f0f0f8;
+}
+.wiz-sub {
+  margin: 0;
+  font-size: 13px;
+  color: #9a9ab4;
+  max-width: 62ch;
+}
+
+.wiz-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 24px 38px;
+}
+.wiz-pane { display: none; }
+.wiz-pane.active { display: block; }
+
+.wiz-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 38px;
+  border-top: 1px solid #2a2a3a;
+  background: #1b1b24;
+}
+.wiz-foot-msg {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: #8a8aa4;
+}
+.wiz-foot-msg.is-error { color: #e07070; }
+.wiz-foot-btns {
+  display: flex;
+  gap: 8px;
+}
+.wiz-btn {
+  min-width: 96px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+.wiz-btn.primary { background: #2f6fed; color: #fff; }
+.wiz-btn.primary:hover:not(:disabled) { background: #4680f5; }
+.wiz-btn.ghost { background: transparent; color: #9a9ab4; }
+.wiz-btn.ghost:hover:not(:disabled) { background: #2a2a3a; color: #d8d8e6; }
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+
+.wiz-field { margin-bottom: 20px; }
+.wiz-label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #d0d0e0;
+}
+.wiz-label .req,
+.wiz-label .opt {
+  margin-left: 7px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.wiz-label .req { color: #ffd0d0; background: #5c2a2a; }
+.wiz-label .opt { color: #b8b8cc; background: #33334a; }
+
+.wiz-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wiz-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 9px 11px;
+  font-size: 13px;
+  color: #e0e0ec;
+  background: #15151d;
+  border: 1px solid #3a3a50;
+  border-radius: 6px;
+}
+.wiz-input:focus {
+  outline: none;
+  border-color: #2f6fed;
+}
+.wiz-input::placeholder { color: #5a5a72; }
+.wiz-browse {
+  flex: 0 0 auto;
+  padding: 9px 14px;
+  font-size: 12px;
+}
+.wiz-hint {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: #7d7d97;
+}
+.wiz-hint code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #24243a;
+  font-size: 11px;
+}
+.wiz-hint a { color: #7fb0ff; }
+
+/* Validation tick beside a path field. */
+.wiz-tick {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  opacity: 0;
+  color: #2ea05b;
+  transition: opacity 0.12s;
+}
+.wiz-tick.on { opacity: 1; }
+.wiz-tick.bad { color: #e07070; }
+.wiz-tick .material-symbols-outlined { font-size: 20px; }
+
+.wiz-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+}
+
+/* ── Callouts ────────────────────────────────────────────────────────────── */
+
+.wiz-note {
+  display: flex;
+  gap: 11px;
+  padding: 12px 14px;
+  margin-bottom: 22px;
+  border-radius: 7px;
+  background: #23233a;
+  border-left: 3px solid #2f6fed;
+  font-size: 12.5px;
+  color: #b0b0c8;
+}
+.wiz-note.warn { border-left-color: #d8a13a; background: #2c2618; }
+.wiz-note.good { border-left-color: #2ea05b; background: #1b2a20; }
+.wiz-note .material-symbols-outlined {
+  flex: 0 0 auto;
+  font-size: 19px;
+  color: #7fb0ff;
+}
+.wiz-note.warn .material-symbols-outlined { color: #d8a13a; }
+.wiz-note.good .material-symbols-outlined { color: #2ea05b; }
+
+/* ── xi-tools step ───────────────────────────────────────────────────────── */
+
+.wiz-tools-status {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 18px;
+}
+.wiz-tools-ico {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #23233a;
+  color: #7fb0ff;
+}
+.wiz-tools-ico .material-symbols-outlined { font-size: 24px; }
+.wiz-tools-text { min-width: 0; }
+.wiz-tools-line {
+  font-size: 14px;
+  color: #e4e4f0;
+}
+.wiz-tools-meta {
+  font-size: 11.5px;
+  color: #7d7d97;
+  word-break: break-all;
+}
+
+.wiz-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: #2a2a3a;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.wiz-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #2f6fed, #7fb0ff);
+  transition: width 0.25s ease;
+}
+
+.wiz-log {
+  max-height: 190px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 7px;
+  background: #131319;
+  border: 1px solid #2a2a3a;
+  font: 11.5px/1.6 "Cascadia Mono", Consolas, monospace;
+  color: #8a8aa4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.wiz-log.is-error { color: #e69a9a; border-color: #5c2a2a; }
+
+.wiz-inline-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ── Server / database step ──────────────────────────────────────────────── */
+
+.wiz-testline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.wiz-test-result {
+  font-size: 12px;
+  color: #8a8aa4;
+}
+.wiz-test-result.ok { color: #6cc98a; }
+.wiz-test-result.bad { color: #e07070; }
+
+.wiz-sectionhead {
+  margin: 26px 0 14px;
+  padding-top: 18px;
+  border-top: 1px solid #2a2a3a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #7d7d97;
+}
+.wiz-sectionhead:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* ── Desktop shortcut step ───────────────────────────────────────────────── */
+
+.wiz-choice {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 16px 18px;
+  border-radius: 9px;
+  background: #23233a;
+  border: 1px solid #34344c;
+}
+.wiz-choice .material-symbols-outlined {
+  font-size: 26px;
+  color: #7fb0ff;
+}
+.wiz-choice-text { flex: 1 1 auto; min-width: 0; }
+.wiz-choice-title { font-size: 13.5px; color: #e4e4f0; }
+.wiz-choice-sub { font-size: 11.5px; color: #7d7d97; }
+
+/* ── Done step ───────────────────────────────────────────────────────────── */
+
+.wiz-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 26px 0 8px;
+}
+.wiz-done .material-symbols-outlined {
+  font-size: 56px;
+  color: #2ea05b;
+  margin-bottom: 14px;
+}
+.wiz-done-title {
+  font-size: 19px;
+  font-weight: 600;
+  color: #f0f0f8;
+  margin-bottom: 8px;
+}
+.wiz-done-sub {
+  font-size: 13px;
+  color: #9a9ab4;
+  max-width: 52ch;
+}
+.wiz-summary {
+  width: 100%;
+  margin-top: 24px;
+  border-top: 1px solid #2a2a3a;
+  padding-top: 16px;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 7px 16px;
+  font-size: 12px;
+}
+.wiz-summary dt { color: #7d7d97; }
+.wiz-summary dd {
+  margin: 0;
+  color: #c8c8d4;
+  word-break: break-all;
+}
+.wiz-summary dd.muted { color: #61617a; }
+
+/* Everything behind the wizard stays hidden while it owns the screen. */
+body.wiz-active #topbar,
+body.wiz-active #quick-bar,
+body.wiz-active #gizmo-tools,
+body.wiz-active #side-tabs,
+body.wiz-active #panel {
+  display: none !important;
+}
+
+@media (max-height: 700px) {
+  .wiz-head { padding: 20px 30px 14px; }
+  .wiz-body { padding: 18px 30px; }
+  .wiz-foot { padding: 12px 30px; }
+}
+
+/* ── Settings → Setup panes ──────────────────────────────────────────────────
+   Inline status text beside the Browse / Save / Test buttons. */
+.set-env-state {
+  font-size: 11.5px;
+  color: #8a8aa4;
+  align-self: center;
+}
+.set-env-state.ok { color: #6cc98a; }
+.set-env-state.bad { color: #e07070; }

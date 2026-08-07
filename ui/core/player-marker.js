@@ -136,15 +136,10 @@ export function syncFootstepSourceUI() {
 }
 
 // ── Mob spawn DB writer ───────────────────────────────────────────────────────
-function dbCreds() {
-  return {
-    host:     loadSetting('db.host',     '127.0.0.1'),
-    port:     parseInt(loadSetting('db.port', '3306'), 10),
-    user:     loadSetting('db.user',     'root'),
-    password: loadSetting('db.password', 'xi'),
-    database: loadSetting('db.database', 'tpzdb'),
-  };
-}
+// Database credentials are resolved entirely on the backend now
+// (settings/network.lua, then the XI_DB_* values the Setup panel writes to .env), so
+// nothing is sent from here. Passing locally-stored creds meant this path defaulted to
+// password 'xi' and failed independently of everything else that talks to the DB.
 
 export async function writeMobSpawns(snap, con) {
   const mobs = (snap && snap.mobs) || [];
@@ -152,7 +147,7 @@ export async function writeMobSpawns(snap, con) {
   const zoneId = _R.currentZoneId();
   if (zoneId == null) { con?.log?.('⚠ mobs: no server zone id — skipped spawn write.\n'); return; }
   try {
-    const r = await bridgeCall('zone.writeMobSpawns', { zoneId, mobs, ...dbCreds() });
+    const r = await bridgeCall('zone.writeMobSpawns', { zoneId, mobs });
     if (!r || !r.ok) { con?.log?.(`⚠ mob spawns: ${r?.error || 'write failed'}\n`); return; }
     const byName = new Map((r.spawns || []).map((s) => [s.name, s]));
     for (const p of _R.getPlacements()) {
@@ -227,10 +222,9 @@ export async function refreshPlayerMarker() {
   _R.setPlayerSpawn(null);
   if (!_R.getShowPlayerMarker() || !bridgeOnline()) { grp.visible = false; return; }
   const id = parseInt(document.getElementById('db-spawn-id')?.value, 10) || 1;
-  const creds = dbCreds();
   let cols, row;
   try {
-    const r = await bridgeCall('db.exec', { ...creds,
+    const r = await bridgeCall('db.exec', {
       sql: `SELECT charname, pos_x, pos_y, pos_z, pos_zone FROM chars WHERE charid = ${id}` });
     cols = r?.columns || []; row = (r?.rows || [])[0];
   } catch { grp.visible = false; return; }

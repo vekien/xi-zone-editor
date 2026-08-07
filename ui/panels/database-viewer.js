@@ -79,15 +79,11 @@ function _init() {
     }
   }).observe(databasePanel);
 
-  function dbCreds() {
-    return {
-      host:     _loadSetting('db.host',     '127.0.0.1'),
-      port:     parseInt(_loadSetting('db.port', '3306'), 10),
-      user:     _loadSetting('db.user',     'root'),
-      password: _loadSetting('db.password', 'xi'),
-      database: _loadSetting('db.database', 'tpzdb'),
-    };
-  }
+  // Database credentials are resolved entirely on the backend now
+  // (settings/network.lua, then the XI_DB_* values the Setup panel writes to .env), so
+  // nothing is sent from here. Passing locally-stored creds meant this path defaulted to
+  // password 'xi' and failed independently of everything else that talks to the DB.
+  function dbCreds() { return {}; }
 
   function dbEsc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>

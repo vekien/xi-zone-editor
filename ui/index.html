@@ -435,7 +435,11 @@
           <button class="snav-btn active" data-spane="editor">Editor</button>
           <button class="snav-btn" data-spane="collision">Collision / NavMesh</button>
           <button class="snav-btn" data-spane="autosave">Save / Publish</button>
-          <button class="snav-btn" data-spane="database">Database</button>
+          <div class="snav-cat">Setup</div>
+          <button class="snav-btn" data-spane="workspace">Workspace</button>
+          <button class="snav-btn" data-spane="gamepaths">Game Paths</button>
+          <button class="snav-btn" data-spane="database">Server &amp; Database</button>
+          <button class="snav-btn" data-spane="shortcut">Desktop Icon</button>
           <div class="snav-cat">Project Settings</div>
           <button class="snav-btn" data-spane="project">Project</button>
           <div class="snav-cat dev">Dev</div>
@@ -531,13 +535,104 @@
             </div>
           </div>
 
+          <!-- ── Setup panes ────────────────────────────────────────────────
+               Same fields as the first-run Setup panel. Values come from env.status
+               and save straight back to .env via env.save, so there is exactly one
+               source of truth for paths and database credentials. -->
+
+          <div class="spane" id="spane-workspace">
+            <div class="spane-grouphead">Workspace</div>
+            <p class="spane-hint">Where your zone edits are saved. A git repository is recommended.</p>
+            <div class="form-row">
+              <label class="setting-row wide">Save folder
+                <input type="text" id="set-ws-path" spellcheck="false" autocomplete="off" placeholder="C:\xi-zone-workspaces" />
+              </label>
+            </div>
+            <div class="form-row">
+              <button type="button" id="set-ws-browse">Browse…</button>
+              <button type="button" id="set-ws-apply" class="btn-primary">Move workspace here</button>
+            </div>
+            <p class="spane-hint" id="set-ws-msg"></p>
+          </div>
+
+          <div class="spane" id="spane-gamepaths">
+            <div class="spane-grouphead">FFXI install</div>
+            <div class="form-row">
+              <label class="setting-row wide">Game folder
+                <input type="text" data-setenv="FFXI_DIR" spellcheck="false" autocomplete="off"
+                  placeholder="C:\Program Files (x86)\PlayOnline\SquareEnix\FINAL FANTASY XI" />
+              </label>
+            </div>
+            <div class="form-row">
+              <button type="button" data-setenv-browse="FFXI_DIR" data-kind="folder">Browse…</button>
+              <span class="set-env-state" data-setenv-state="FFXI_DIR"></span>
+            </div>
+            <p class="spane-hint">Needs <code>FFXiMain.dll</code> in or beside it.</p>
+
+            <div class="spane-grouphead">HD DAT pack</div>
+            <div class="form-row">
+              <label class="setting-row wide">HD folder
+                <input type="text" data-setenv="FFXI_HD_DIR" spellcheck="false" autocomplete="off"
+                  placeholder="…\Ashita\polplugins\DATs\ffxi-hd" />
+              </label>
+            </div>
+            <div class="form-row">
+              <button type="button" data-setenv-browse="FFXI_HD_DIR" data-kind="folder">Browse…</button>
+              <span class="set-env-state" data-setenv-state="FFXI_HD_DIR"></span>
+            </div>
+
+            <div class="spane-grouphead">Pivot / override DATs</div>
+            <div class="form-row">
+              <label class="setting-row wide">Pivot folder
+                <input type="text" data-setenv="FFXI_PIVOT_DIR" spellcheck="false" autocomplete="off"
+                  placeholder="…\Ashita\polplugins\DATs\your-overlay" />
+              </label>
+            </div>
+            <div class="form-row">
+              <button type="button" data-setenv-browse="FFXI_PIVOT_DIR" data-kind="folder">Browse…</button>
+              <span class="set-env-state" data-setenv-state="FFXI_PIVOT_DIR"></span>
+            </div>
+
+            <div class="form-row">
+              <button type="button" id="set-paths-save" class="btn-primary">Save paths</button>
+              <span class="set-env-state" id="set-paths-msg"></span>
+            </div>
+          </div>
+
           <div class="spane spane-database" id="spane-database">
-            <div class="form-row"><label class="setting-row wide">Host <input type="text" id="db-host" placeholder="127.0.0.1" autocomplete="off" /></label></div>
-            <div class="form-row"><label class="setting-row wide">Port <input type="number" id="db-port" min="1" max="65535" placeholder="3306" /></label></div>
-            <div class="form-row"><label class="setting-row wide">User <input type="text" id="db-user" placeholder="root" autocomplete="off" /></label></div>
-            <div class="form-row"><label class="setting-row wide">Password <input type="text" id="db-password" class="masked" placeholder="xi" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" /></label></div>
-            <div class="form-row"><label class="setting-row wide">Database <input type="text" id="db-database" placeholder="tpzdb" autocomplete="off" /></label></div>
-            <p class="spane-hint">MariaDB credentials for the FFXI server. Defaults are read from network.lua on the backend; only override if you need different values.</p>
+            <div class="spane-grouphead">Server checkout</div>
+            <div class="form-row">
+              <label class="setting-row wide">LSB / CatsEyeXI folder
+                <input type="text" data-setenv="XI_SERVER_DIR" spellcheck="false" autocomplete="off"
+                  placeholder="C:\path\to\your\server-checkout" />
+              </label>
+            </div>
+            <div class="form-row">
+              <button type="button" data-setenv-browse="XI_SERVER_DIR" data-kind="folder">Browse…</button>
+              <span class="set-env-state" data-setenv-state="XI_SERVER_DIR"></span>
+            </div>
+            <p class="spane-hint">Its <code>settings/network.lua</code> supplies the login below. Leaving the
+              database fields blank uses whatever that file says.</p>
+
+            <div class="spane-grouphead">Database connection</div>
+            <div class="form-row"><label class="setting-row wide">Host <input type="text" data-setenv="XI_DB_HOST" placeholder="127.0.0.1" autocomplete="off" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Port <input type="number" data-setenv="XI_DB_PORT" min="1" max="65535" placeholder="3306" /></label></div>
+            <div class="form-row"><label class="setting-row wide">User <input type="text" data-setenv="XI_DB_USER" placeholder="root" autocomplete="off" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Password <input type="password" data-setenv="XI_DB_PASSWORD" class="masked" autocomplete="off" spellcheck="false" data-1p-ignore data-lpignore="true" /></label></div>
+            <div class="form-row"><label class="setting-row wide">Database <input type="text" data-setenv="XI_DB_NAME" placeholder="tpzdb" autocomplete="off" /></label></div>
+            <div class="form-row">
+              <button type="button" id="set-db-test">Test connection</button>
+              <button type="button" id="set-db-save" class="btn-primary">Save connection</button>
+            </div>
+            <p class="spane-hint" id="set-db-msg"></p>
+          </div>
+
+          <div class="spane" id="spane-shortcut">
+            <div class="spane-grouphead">Desktop icon</div>
+            <p class="spane-hint" id="set-shortcut-msg">Checking…</p>
+            <div class="form-row">
+              <button type="button" id="set-shortcut-btn" class="btn-primary">Create Desktop shortcut</button>
+            </div>
           </div>
 
           <div class="spane" id="spane-dev-theme">
@@ -986,78 +1081,184 @@
       </div>
     </div>
 
-    <!-- First-run workspace setup gate — blocks the editor until a workspaces folder is configured -->
-    <div id="setup-overlay" class="setup-overlay" style="display:none">
-      <div class="setup-card">
-        <div class="setup-logo"><img src="./icon.png" alt="XI Zone Editor" /></div>
-        <h1 class="setup-title">Workspace Setup</h1>
-        <div id="setup-form">
-          <p class="setup-sub">The zone editor saves your edits as workspace JSON files. Choose where you’d like to store them — a git repository is recommended so you can share and version your work.</p>
-          <label class="setup-field-label" for="setup-path">Save folder</label>
-          <div class="setup-path-row">
-            <input id="setup-path" class="setup-path-input" type="text" spellcheck="false" autocomplete="off" placeholder="C:/xi-zone-workspaces" />
-            <button type="button" id="setup-browse" class="setup-browse-btn">Browse…</button>
-          </div>
-          <p class="setup-hint">Pick an empty folder to start fresh, or an existing project folder if you already have one.</p>
-          <div id="setup-error" class="setup-error" hidden></div>
-          <div class="setup-actions">
-            <button id="setup-skip" class="setup-skip-btn" type="button">Skip</button>
-            <button id="setup-go" class="setup-go-btn" type="button">Continue</button>
-          </div>
-        </div>
-        <div id="setup-progress" class="setup-progress" hidden>
-          <div class="setup-spinner"></div>
-          <div class="setup-progress-status" id="setup-progress-status">Setting up folder…</div>
-        </div>
-      </div>
-    </div>
+    <!-- First-run Setup wizard — one framed window; replaces the old workspace +
+         game-paths overlays and hosts the always-on xi-tools check as its first step. -->
+    <div id="wizard-overlay" class="wiz-overlay" style="display:none">
+      <div class="wiz-shell">
 
-    <!-- First-run FFXI paths (.env) — after workspace, before projects -->
-    <div id="env-setup-overlay" class="setup-overlay" style="display:none">
-      <div class="setup-card setup-card-wide">
-        <div class="setup-logo"><img src="./icon.png" alt="XI Zone Editor" /></div>
-        <h1 class="setup-title">Game Paths</h1>
-        <p class="setup-sub">Point the tools at your FFXI install. Only the game folder is required — HD, pivot, and Blender are optional.</p>
-        <div id="env-setup-form" class="env-setup-form">
-          <label class="setup-field-label" for="env-ffxi">FFXI directory <span class="req">required</span></label>
-          <div class="setup-path-row">
-            <input id="env-ffxi" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
-              placeholder="C:\Program Files (x86)\PlayOnline\SquareEnix\FINAL FANTASY XI" data-env-key="FFXI_DIR" />
-            <span class="env-tick" id="tick-FFXI_DIR" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
-            <button type="button" class="setup-browse-btn" data-env-browse="FFXI_DIR" data-kind="folder">Browse…</button>
+        <aside class="wiz-sidebar">
+          <div class="wiz-brand">
+            <img src="./icon.png" alt="" />
+            <div>
+              <div class="wiz-brand-name">XI Zone Editor</div>
+              <div class="wiz-brand-sub">Setup</div>
+            </div>
           </div>
-          <p class="setup-hint">Folder with the game ROM tree. Needs <code>FFXiMain.dll</code> in or next to it.</p>
+          <ol class="wiz-steps" id="wiz-steps"></ol>
+          <div class="wiz-sidebar-foot" id="wiz-version"></div>
+        </aside>
 
-          <label class="setup-field-label" for="env-hd">HD DAT pack <span class="opt">optional</span></label>
-          <div class="setup-path-row">
-            <input id="env-hd" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
-              placeholder="…\Ashita\polplugins\DATs\ffxi-hd" data-env-key="FFXI_HD_DIR" />
-            <span class="env-tick" id="tick-FFXI_HD_DIR" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
-            <button type="button" class="setup-browse-btn" data-env-browse="FFXI_HD_DIR" data-kind="folder">Browse…</button>
+        <main class="wiz-main">
+          <header class="wiz-head">
+            <h1 class="wiz-title" id="wiz-title">Setup</h1>
+            <p class="wiz-sub" id="wiz-sub"></p>
+          </header>
+
+          <div class="wiz-body">
+
+            <!-- XI Tools — always shown; checks for an update on every launch -->
+            <section class="wiz-pane" data-pane="tools">
+              <div class="wiz-tools-status">
+                <div class="wiz-tools-ico"><span class="material-symbols-outlined" id="wiz-tools-ico">inventory_2</span></div>
+                <div class="wiz-tools-text">
+                  <div class="wiz-tools-line" id="wiz-tools-line">Checking for the xi-tools backend…</div>
+                  <div class="wiz-tools-meta" id="wiz-tools-meta"></div>
+                </div>
+              </div>
+              <div class="wiz-bar"><div class="wiz-bar-fill" id="wiz-tools-bar"></div></div>
+              <pre class="wiz-log" id="wiz-tools-log" hidden></pre>
+              <div class="wiz-inline-btns" id="wiz-tools-btns"></div>
+            </section>
+
+            <!-- Workspace -->
+            <section class="wiz-pane" data-pane="workspace">
+              <div class="wiz-note">
+                <span class="material-symbols-outlined">lightbulb</span>
+                <div>Your zone edits are saved as JSON files in this folder. A <strong>git repository</strong> is
+                  recommended — it gives you version history and a way to share work with others.</div>
+              </div>
+              <div class="wiz-field">
+                <label class="wiz-label" for="wiz-ws-path">Save folder <span class="req">required</span></label>
+                <div class="wiz-row">
+                  <input id="wiz-ws-path" class="wiz-input" type="text" spellcheck="false" autocomplete="off"
+                    placeholder="C:\xi-zone-workspaces" />
+                  <button type="button" class="wiz-browse" id="wiz-ws-browse">Browse…</button>
+                </div>
+                <p class="wiz-hint">Pick an empty folder to start fresh, or an existing workspace folder if you
+                  already have one. Skip to use the default location inside your user profile.</p>
+              </div>
+            </section>
+
+            <!-- FFXI paths -->
+            <section class="wiz-pane" data-pane="paths">
+              <div class="wiz-field">
+                <label class="wiz-label" for="wiz-ffxi">FFXI install <span class="req">required</span></label>
+                <div class="wiz-row">
+                  <input id="wiz-ffxi" class="wiz-input" type="text" spellcheck="false" autocomplete="off"
+                    data-env-key="FFXI_DIR"
+                    placeholder="C:\Program Files (x86)\PlayOnline\SquareEnix\FINAL FANTASY XI" />
+                  <span class="wiz-tick" data-tick="FFXI_DIR"><span class="material-symbols-outlined">check_circle</span></span>
+                  <button type="button" class="wiz-browse" data-env-browse="FFXI_DIR" data-kind="folder">Browse…</button>
+                </div>
+                <p class="wiz-hint">The folder holding the game's ROM tree. Needs <code>FFXiMain.dll</code> in or beside it.</p>
+              </div>
+
+              <div class="wiz-field">
+                <label class="wiz-label" for="wiz-hd">HD DAT pack <span class="opt">optional</span></label>
+                <div class="wiz-row">
+                  <input id="wiz-hd" class="wiz-input" type="text" spellcheck="false" autocomplete="off"
+                    data-env-key="FFXI_HD_DIR" placeholder="…\Ashita\polplugins\DATs\ffxi-hd" />
+                  <span class="wiz-tick" data-tick="FFXI_HD_DIR"><span class="material-symbols-outlined">check_circle</span></span>
+                  <button type="button" class="wiz-browse" data-env-browse="FFXI_HD_DIR" data-kind="folder">Browse…</button>
+                </div>
+                <p class="wiz-hint">Enables HD preview and publishing to an HD asset pack.</p>
+              </div>
+
+              <div class="wiz-field">
+                <label class="wiz-label" for="wiz-pivot">Pivot / override DATs <span class="opt">optional</span></label>
+                <div class="wiz-row">
+                  <input id="wiz-pivot" class="wiz-input" type="text" spellcheck="false" autocomplete="off"
+                    data-env-key="FFXI_PIVOT_DIR" placeholder="…\Ashita\polplugins\DATs\your-overlay" />
+                  <span class="wiz-tick" data-tick="FFXI_PIVOT_DIR"><span class="material-symbols-outlined">check_circle</span></span>
+                  <button type="button" class="wiz-browse" data-env-browse="FFXI_PIVOT_DIR" data-kind="folder">Browse…</button>
+                </div>
+                <p class="wiz-hint">Where published edits are mirrored so XIPivot serves them to the game.</p>
+              </div>
+            </section>
+
+            <!-- LSB server + database -->
+            <section class="wiz-pane" data-pane="server">
+              <div class="wiz-note warn">
+                <span class="material-symbols-outlined">info</span>
+                <div>Optional, but without it the editor can't read your server's live NPC data. Cutscene NPCs
+                  fall back to a bundled snapshot, and the Database panel and server-script lookups are unavailable.</div>
+              </div>
+
+              <div class="wiz-field">
+                <label class="wiz-label" for="wiz-server">LSB / CatsEyeXI server folder <span class="opt">optional</span></label>
+                <div class="wiz-row">
+                  <input id="wiz-server" class="wiz-input" type="text" spellcheck="false" autocomplete="off"
+                    data-env-key="XI_SERVER_DIR" placeholder="C:\path\to\your\server-checkout" />
+                  <span class="wiz-tick" data-tick="XI_SERVER_DIR"><span class="material-symbols-outlined">check_circle</span></span>
+                  <button type="button" class="wiz-browse" data-env-browse="XI_SERVER_DIR" data-kind="folder">Browse…</button>
+                </div>
+                <p class="wiz-hint">The server source checkout. Its <code>settings/network.lua</code> supplies the
+                  database login below, so picking it here usually fills everything in.</p>
+              </div>
+
+              <div class="wiz-sectionhead">Database connection</div>
+              <div class="wiz-grid-2">
+                <div class="wiz-field">
+                  <label class="wiz-label" for="wiz-db-host">Host</label>
+                  <div class="wiz-row"><input id="wiz-db-host" class="wiz-input" type="text" autocomplete="off" data-env-key="XI_DB_HOST" placeholder="127.0.0.1" /></div>
+                </div>
+                <div class="wiz-field">
+                  <label class="wiz-label" for="wiz-db-port">Port</label>
+                  <div class="wiz-row"><input id="wiz-db-port" class="wiz-input" type="number" min="1" max="65535" data-env-key="XI_DB_PORT" placeholder="3306" /></div>
+                </div>
+                <div class="wiz-field">
+                  <label class="wiz-label" for="wiz-db-user">User</label>
+                  <div class="wiz-row"><input id="wiz-db-user" class="wiz-input" type="text" autocomplete="off" data-env-key="XI_DB_USER" placeholder="root" /></div>
+                </div>
+                <div class="wiz-field">
+                  <label class="wiz-label" for="wiz-db-pass">Password</label>
+                  <div class="wiz-row"><input id="wiz-db-pass" class="wiz-input" type="password" autocomplete="off"
+                    data-env-key="XI_DB_PASSWORD" data-1p-ignore data-lpignore="true" spellcheck="false" /></div>
+                </div>
+              </div>
+              <div class="wiz-field">
+                <label class="wiz-label" for="wiz-db-name">Database</label>
+                <div class="wiz-row">
+                  <input id="wiz-db-name" class="wiz-input" type="text" autocomplete="off" data-env-key="XI_DB_NAME" placeholder="tpzdb" />
+                  <button type="button" class="wiz-browse" id="wiz-db-test">Test connection</button>
+                </div>
+                <div class="wiz-testline"><span class="wiz-test-result" id="wiz-db-result"></span></div>
+              </div>
+            </section>
+
+            <!-- Desktop shortcut -->
+            <section class="wiz-pane" data-pane="shortcut">
+              <div class="wiz-choice">
+                <span class="material-symbols-outlined">desktop_windows</span>
+                <div class="wiz-choice-text">
+                  <div class="wiz-choice-title">Add a Desktop shortcut</div>
+                  <div class="wiz-choice-sub" id="wiz-shortcut-sub">Creates "XI Zone Editor" on your Desktop.</div>
+                </div>
+                <button type="button" class="wiz-btn primary" id="wiz-shortcut-btn">Create</button>
+              </div>
+            </section>
+
+            <!-- Done -->
+            <section class="wiz-pane" data-pane="done">
+              <div class="wiz-done">
+                <span class="material-symbols-outlined">check_circle</span>
+                <div class="wiz-done-title">You're all set</div>
+                <div class="wiz-done-sub">Everything below can be changed later in <strong>Settings &rarr; Setup</strong>.</div>
+                <dl class="wiz-summary" id="wiz-summary"></dl>
+              </div>
+            </section>
+
           </div>
 
-          <label class="setup-field-label" for="env-pivot">Pivot / override DATs <span class="opt">optional</span></label>
-          <div class="setup-path-row">
-            <input id="env-pivot" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
-              placeholder="…\Ashita\polplugins\DATs\your-overlay" data-env-key="FFXI_PIVOT_DIR" />
-            <span class="env-tick" id="tick-FFXI_PIVOT_DIR" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
-            <button type="button" class="setup-browse-btn" data-env-browse="FFXI_PIVOT_DIR" data-kind="folder">Browse…</button>
-          </div>
-
-          <label class="setup-field-label" for="env-blender">Blender <span class="opt">optional</span></label>
-          <div class="setup-path-row">
-            <input id="env-blender" class="setup-path-input" type="text" spellcheck="false" autocomplete="off"
-              placeholder="C:\Program Files\Blender Foundation\Blender 5.x\blender.exe" data-env-key="BLENDER_PATH" />
-            <span class="env-tick" id="tick-BLENDER_PATH" hidden title=""><span class="material-symbols-outlined">check_circle</span></span>
-            <button type="button" class="setup-browse-btn" data-env-browse="BLENDER_PATH" data-kind="file">Browse…</button>
-          </div>
-          <p class="setup-hint">Only needed for FBX conversion. Leave blank if you only use GLB.</p>
-
-          <div id="env-setup-error" class="setup-error" hidden></div>
-          <div class="setup-actions">
-            <button id="env-setup-go" class="setup-go-btn" type="button">Save &amp; continue</button>
-          </div>
-        </div>
+          <footer class="wiz-foot">
+            <div class="wiz-foot-msg" id="wiz-msg"></div>
+            <div class="wiz-foot-btns">
+              <button type="button" class="wiz-btn ghost" id="wiz-back">Back</button>
+              <button type="button" class="wiz-btn ghost" id="wiz-skip">Skip</button>
+              <button type="button" class="wiz-btn primary" id="wiz-next">Next</button>
+            </div>
+          </footer>
+        </main>
       </div>
     </div>
 

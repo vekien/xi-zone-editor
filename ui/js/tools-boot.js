@@ -1,7 +1,8 @@
-// Boot modal: ensure xi-tools is installed/updated, then start the bridge.
-// Resolves only after the WebSocket is online, or the user explicitly continues offline.
-
-const $ = (sel, el = document) => el.querySelector(sel);
+// tools-boot.js — ensure xi-tools is installed/updated, then start its bridge.
+//
+// Pure logic: every bit of rendering goes through the `view` the caller supplies, so
+// this step can live inside the setup wizard instead of owning a modal of its own.
+// Resolves once the WebSocket is online, or the user explicitly continues offline.
 
 function isTauri() {
   return !!(window.__TAURI__ || window.__TAURI_INTERNALS__);
@@ -9,6 +10,8 @@ function isTauri() {
 
 async function invoke(cmd, args = {}) {
   if (window.__TAURI__?.core?.invoke) return window.__TAURI__.core.invoke(cmd, args);
+  // Browser / vite dev: no shell to talk to. Pretend tools are present and let the
+  // bridge connection attempt decide whether anything is actually listening.
   if (cmd === 'tools_status') {
     return {
       installed: true,
@@ -24,75 +27,6 @@ async function invoke(cmd, args = {}) {
   if (cmd === 'bridge_start' || cmd === 'bridge_url') return 'ws://127.0.0.1:8777/ws';
   if (cmd === 'tools_install_or_update') throw new Error('Install only available in the desktop app');
   return null;
-}
-
-function ensureModal() {
-  let root = document.getElementById('tools-boot-modal');
-  if (root) return root;
-  root = document.createElement('div');
-  root.id = 'tools-boot-modal';
-  root.className = 'tools-boot-modal';
-  root.innerHTML = `
-    <div class="tools-boot-card">
-      <div class="tools-boot-ico"><span class="material-symbols-outlined">inventory_2</span></div>
-      <h2 class="tools-boot-title">XI Tools</h2>
-      <p class="tools-boot-sub" id="tools-boot-sub">Checking for the xi-tools backend…</p>
-      <div class="tools-boot-meta" id="tools-boot-meta"></div>
-      <div class="tools-boot-bar"><div class="tools-boot-bar-fill" id="tools-boot-bar"></div></div>
-      <div class="tools-boot-actions">
-        <button type="button" class="tools-boot-btn primary" id="tools-boot-action" hidden>Download</button>
-        <button type="button" class="tools-boot-btn" id="tools-boot-local" hidden>Use local folder…</button>
-        <button type="button" class="tools-boot-btn" id="tools-boot-retry" hidden>Retry</button>
-        <button type="button" class="tools-boot-btn ghost" id="tools-boot-skip" hidden>Continue offline</button>
-      </div>
-      <pre class="tools-boot-log" id="tools-boot-log" hidden></pre>
-    </div>`;
-  document.body.appendChild(root);
-  return root;
-}
-
-function setSub(t) { const el = $('#tools-boot-sub'); if (el) el.textContent = t; }
-function setMeta(t) { const el = $('#tools-boot-meta'); if (el) el.textContent = t; }
-function setBar(pct) {
-  const el = $('#tools-boot-bar');
-  if (el) el.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-}
-function logLine(t, { error = false } = {}) {
-  const el = $('#tools-boot-log');
-  if (!el) return;
-  el.hidden = false;
-  if (error) el.classList.add('is-error');
-  el.textContent = (el.textContent ? `${el.textContent}\n` : '') + t;
-  el.scrollTop = el.scrollHeight;
-}
-function logError(t) {
-  const el = $('#tools-boot-log');
-  if (el) el.classList.add('is-error');
-  logLine(t, { error: true });
-  setSub('Bridge failed to start');
-}
-function hideModal() {
-  const root = document.getElementById('tools-boot-modal');
-  if (root) root.classList.add('hidden');
-}
-function showActions({ action, retry, skip, local, actionLabel, skipLabel, localLabel } = {}) {
-  const actionBtn = $('#tools-boot-action');
-  const retryBtn = $('#tools-boot-retry');
-  const skipBtn = $('#tools-boot-skip');
-  const localBtn = $('#tools-boot-local');
-  if (actionBtn) {
-    actionBtn.hidden = !action;
-    if (actionLabel) actionBtn.textContent = actionLabel;
-  }
-  if (retryBtn) retryBtn.hidden = !retry;
-  if (localBtn) {
-    localBtn.hidden = !local;
-    if (localLabel) localBtn.textContent = localLabel;
-  }
-  if (skipBtn) {
-    skipBtn.hidden = !skip;
-    if (skipLabel) skipBtn.textContent = skipLabel;
-  }
 }
 
 function waitForBridge(bridge, ms = 20000) {
@@ -124,253 +58,173 @@ function waitForBridge(bridge, ms = 20000) {
  *   bridgeOnline: ()=>boolean,
  *   onBridgeStatus?: (fn:(on:boolean)=>void)=>()=>void,
  * }} bridge
+ * @param {{
+ *   line: (text:string)=>void,               // headline status
+ *   meta: (text:string)=>void,               // version / path subtitle
+ *   bar: (pct:number)=>void,
+ *   log: (text:string, opts?:{error?:boolean})=>void,
+ *   icon?: (name:string)=>void,
+ *   choose: (opts:Array<{key:string,label:string,primary?:boolean}>)=>Promise<string>,
+ *   clearChoices: ()=>void,
+ * }} view
  * @returns {Promise<{online:boolean}>}
  */
-export async function runToolsBoot(bridge) {
-  // Keep workspace setup hidden until tools boot finishes.
-  document.body.classList.add('tools-booting');
-  const setupOv = document.getElementById('setup-overlay');
-  if (setupOv) setupOv.style.display = 'none';
+export async function runToolsBoot(bridge, view) {
+  view.clearChoices();
 
-  const root = ensureModal();
-  root.classList.remove('hidden');
-  showActions({});
+  const finishOffline = () => ({ online: false });
 
-  const clearBooting = () => {
-    document.body.classList.remove('tools-booting');
-  };
-
-  const finishOffline = () => {
-    clearBooting();
-    hideModal();
-    return { online: false };
+  const rememberUrl = (url) => {
+    if (!url) return;
+    bridge.setBridgeUrl(url);
+    try { localStorage.setItem('xi.bridgeUrl', url); } catch { /* private mode */ }
   };
 
   const finishOnline = async (url) => {
-    showActions({});
-    if (url) {
-      bridge.setBridgeUrl(url);
-      try { localStorage.setItem('xi.bridgeUrl', url); } catch { /* ignore */ }
-    }
-    setSub('Ensuring Python and starting bridge… (first run may download Python 3.12)');
-    setBar(80);
+    view.clearChoices();
+    rememberUrl(url);
+    view.line('Ensuring Python and starting the bridge…');
+    view.meta('First run may download Python 3.12');
+    view.bar(80);
+
     let startErr = null;
     try {
-      const u = await invoke('bridge_start');
-      if (u) {
-        bridge.setBridgeUrl(u);
-        try { localStorage.setItem('xi.bridgeUrl', u); } catch { /* ignore */ }
-      }
-      logLine('Bridge process started.');
+      rememberUrl(await invoke('bridge_start'));
+      view.log('Bridge process started.');
     } catch (e) {
       startErr = String(e?.message || e);
-      logError(startErr);
+      view.log(startErr, { error: true });
     }
+
     if (!startErr) {
       bridge.connectBridge();
-      setSub('Connecting to bridge…');
+      view.line('Connecting to the bridge…');
       const ok = await waitForBridge(bridge, 25000);
-      setBar(100);
+      view.bar(100);
       if (ok) {
-        setSub('Backend ready.');
-        clearBooting();
-        setTimeout(hideModal, 300);
+        view.icon?.('check_circle');
+        view.line('Backend ready.');
         return { online: true };
       }
-      logError('WebSocket did not open on ws://127.0.0.1:8777/ws after the process started.');
+      view.log('WebSocket did not open on ws://127.0.0.1:8777/ws after the process started.',
+        { error: true });
     }
-    setBar(100);
-    // Leave modal up for retry, but clear tools-booting so a later "Continue offline"
-    // or outer catch can still open setup/projects (CSS !important otherwise blanks UI).
-    clearBooting();
-    showActions({
-      action: true,
-      retry: true,
-      local: true,
-      skip: true,
-      actionLabel: 'Retry',
-      localLabel: 'Use local folder…',
-      skipLabel: 'Continue offline',
-    });
-    return new Promise((resolve) => {
-      $('#tools-boot-action').onclick = () => runToolsBoot(bridge).then(resolve);
-      $('#tools-boot-retry').onclick = () => runToolsBoot(bridge).then(resolve);
-      $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
-      $('#tools-boot-skip').onclick = () => resolve(finishOffline());
-    });
+    view.bar(100);
+    view.line('The backend could not be started.');
+    return recover('Retry', () => runToolsBoot(bridge, view));
+  };
+
+  // Every failure path offers the same three ways out; keeping it in one place stops
+  // the branches drifting apart (they previously each rebuilt the button set by hand).
+  const recover = async (actionLabel, primary) => {
+    const key = await view.choose([
+      { key: 'action', label: actionLabel, primary: true },
+      { key: 'local', label: 'Use local folder…' },
+      { key: 'skip', label: 'Continue offline' },
+    ]);
+    if (key === 'action') return primary();
+    if (key === 'local') return pickLocalTools();
+    return finishOffline();
   };
 
   const pickLocalTools = async () => {
-    showActions({});
-    setSub('Choose your local xi-tools folder…');
+    view.clearChoices();
+    view.line('Choose your local xi-tools folder…');
     try {
       const path = await invoke('pick_tools_folder');
       if (!path) {
-        setSub('No folder selected.');
-        showActions({
-          action: true,
-          local: true,
-          skip: true,
-          actionLabel: 'Retry download',
-          localLabel: 'Use local folder…',
-          skipLabel: 'Continue offline',
-        });
-        return new Promise((resolve) => {
-          $('#tools-boot-action').onclick = () => doInstall().then(resolve);
-          $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
-          $('#tools-boot-skip').onclick = () => resolve(finishOffline());
-        });
+        view.line('No folder selected.');
+        return recover('Retry download', doInstall);
       }
-      setSub('Validating local xi-tools…');
+      view.line('Validating local xi-tools…');
       const st = await invoke('tools_set_local_path', { path });
-      logLine(`Using local xi-tools: ${st.toolsDir}`);
-      setMeta(`Local · ${st.toolsDir}`);
-      setBar(70);
+      view.log(`Using local xi-tools: ${st.toolsDir}`);
+      view.meta(`Local checkout · ${st.toolsDir}`);
+      view.bar(70);
       return finishOnline(st.bridgeUrl);
     } catch (e) {
-      logError(String(e?.message || e));
-      showActions({
-        action: true,
-        local: true,
-        skip: true,
-        actionLabel: 'Retry download',
-        localLabel: 'Use local folder…',
-        skipLabel: 'Continue offline',
-      });
-      return new Promise((resolve) => {
-        $('#tools-boot-action').onclick = () => doInstall().then(resolve);
-        $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
-        $('#tools-boot-skip').onclick = () => resolve(finishOffline());
-      });
+      view.log(String(e?.message || e), { error: true });
+      view.line('That folder could not be used.');
+      return recover('Retry download', doInstall);
     }
   };
 
   const doInstall = async () => {
-    showActions({});
-    setSub('Downloading xi-tools release…');
-    setBar(15);
-    logLine('Fetching latest release from github.com/vekien/xi-tools …');
+    view.clearChoices();
+    view.line('Downloading the latest xi-tools release…');
+    view.bar(15);
+    view.log('Fetching latest release from github.com/vekien/xi-tools …');
     try {
       const st = await invoke('tools_install_or_update');
-      setBar(65);
-      logLine(`Installed xi-tools v${st.localVersion || st.latestVersion || '?'}`.trim());
-      setMeta(`v${st.localVersion || '?'} · ${st.toolsDir || ''}`);
+      view.bar(65);
+      view.log(`Installed xi-tools v${st.localVersion || st.latestVersion || '?'}`.trim());
+      view.meta(`v${st.localVersion || '?'} · ${st.toolsDir || ''}`);
       return finishOnline(st.bridgeUrl);
     } catch (e) {
-      setSub('Download failed — use a local copy?');
-      logError(String(e?.message || e));
-      showActions({
-        action: true,
-        local: true,
-        skip: true,
-        actionLabel: 'Retry download',
-        localLabel: 'Use local folder…',
-        skipLabel: 'Continue offline',
-      });
-      return new Promise((resolve) => {
-        $('#tools-boot-action').onclick = () => doInstall().then(resolve);
-        $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
-        $('#tools-boot-skip').onclick = () => resolve(finishOffline());
-      });
+      view.line('Download failed.');
+      view.log(String(e?.message || e), { error: true });
+      return recover('Retry download', doInstall);
     }
   };
 
   try {
-    // Browser / non-Tauri: still try local bridge, but allow offline.
+    // Browser / vite dev: no Tauri shell, so just try whatever bridge is listening.
     if (!isTauri()) {
-      setSub('Connecting to local xi-tools bridge…');
-      setBar(40);
+      view.line('Connecting to the local xi-tools bridge…');
+      view.bar(40);
       return await finishOnline(null);
     }
 
-    setSub('Checking xi-tools…');
-    setBar(10);
+    view.line('Checking xi-tools…');
+    view.bar(10);
+
     let status;
     try {
       status = await invoke('tools_status');
     } catch (e) {
-      setSub('Could not check tools status.');
-      logLine(String(e?.message || e));
-      clearBooting();
-      showActions({
-        action: true,
-        local: true,
-        skip: true,
-        actionLabel: 'Download xi-tools',
-        localLabel: 'Use local folder…',
-        skipLabel: 'Continue offline',
-      });
-      return new Promise((resolve) => {
-        $('#tools-boot-action').onclick = () => runToolsBoot(bridge).then(resolve);
-        $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
-        $('#tools-boot-skip').onclick = () => resolve(finishOffline());
-      });
+      view.line('Could not check the xi-tools status.');
+      view.log(String(e?.message || e), { error: true });
+      return await recover('Download xi-tools', () => runToolsBoot(bridge, view));
     }
 
-    if (status.error) logLine(status.error);
-    setMeta([
+    if (status.error) view.log(status.error);
+    view.meta([
       status.usingLocalOverride ? 'Local checkout' : null,
-      status.localVersion && status.localVersion !== '0.0.0' ? `Installed: v${status.localVersion}` : (status.installed ? 'Installed' : 'Not installed'),
-      status.latestVersion && !status.usingLocalOverride ? `Latest: v${status.latestVersion}` : null,
+      status.localVersion && status.localVersion !== '0.0.0'
+        ? `Installed v${status.localVersion}`
+        : (status.installed ? 'Installed' : 'Not installed'),
+      status.latestVersion && !status.usingLocalOverride ? `Latest v${status.latestVersion}` : null,
       status.toolsDir || null,
     ].filter(Boolean).join(' · '));
 
-    // Already pointing at a valid local/downloaded install → just start the bridge.
     if (status.installed && status.usingLocalOverride) {
-      setSub('Using local xi-tools checkout.');
-      setBar(55);
+      view.line('Using your local xi-tools checkout.');
+      view.bar(55);
       return await finishOnline(status.bridgeUrl);
     }
 
-    // Not installed → offer download or local folder (auto-try download first).
     if (!status.installed) {
-      setSub('xi-tools is required for Save / Publish and workspaces. Download the latest release?');
-      showActions({
-        action: true,
-        local: true,
-        skip: true,
-        actionLabel: 'Download xi-tools',
-        localLabel: 'Use local folder…',
-        skipLabel: 'Continue offline',
-      });
-      // Auto-start download; on failure the UI offers a local folder.
+      view.line('xi-tools is required. Downloading the latest release…');
       return await doInstall();
     }
 
     if (status.updateAvailable && status.latestVersion) {
-      setSub(`Update available (v${status.localVersion} → v${status.latestVersion}).`);
-      clearBooting();
-      showActions({
-        action: true,
-        skip: true,
-        actionLabel: 'Update now',
-        skipLabel: 'Use installed version',
-      });
-      return new Promise((resolve) => {
-        $('#tools-boot-action').onclick = () => runToolsBoot(bridge).then(resolve);
-        $('#tools-boot-skip').onclick = () => finishOnline(status.bridgeUrl).then(resolve);
-      });
+      view.line(`An update is available: v${status.localVersion} → v${status.latestVersion}.`);
+      const key = await view.choose([
+        { key: 'update', label: 'Update now', primary: true },
+        { key: 'keep', label: 'Keep current version' },
+      ]);
+      return key === 'update'
+        ? await doInstall()
+        : await finishOnline(status.bridgeUrl);
     }
 
-    setSub(`xi-tools v${status.localVersion} is up to date.`);
-    setBar(55);
+    view.line(`xi-tools v${status.localVersion} is up to date.`);
+    view.bar(55);
     return await finishOnline(status.bridgeUrl);
   } catch (e) {
-    // Never leave body.tools-booting stuck — that CSS-hides setup/env forever.
-    logError(String(e?.message || e));
-    clearBooting();
-    showActions({
-      action: true,
-      local: true,
-      skip: true,
-      actionLabel: 'Retry',
-      localLabel: 'Use local folder…',
-      skipLabel: 'Continue offline',
-    });
-    return new Promise((resolve) => {
-      $('#tools-boot-action').onclick = () => runToolsBoot(bridge).then(resolve);
-      $('#tools-boot-local').onclick = () => pickLocalTools().then(resolve);
-      $('#tools-boot-skip').onclick = () => resolve(finishOffline());
-    });
+    view.log(String(e?.message || e), { error: true });
+    view.line('Something went wrong starting the backend.');
+    return await recover('Retry', () => runToolsBoot(bridge, view));
   }
 }
