@@ -4,13 +4,13 @@
 >
 > This project is under active development and **not production-ready**.
 > Expect rough edges, bugs, incomplete features, and the occasional game or
-> editor crash — save often and keep backups of anything you care about.
+> editor crash. Save often and keep backups of anything you care about.
 
 > ## Who this is for
 >
 > This is intended for **advanced FFXI modders** who already know the quirks of
 > the client, DATs, and private-server tooling. You are expected to have a
-> LandSandBoat (or compatible) server set up — locally or remote — be comfortable
+> LandSandBoat server set up, be comfortable
 > editing the database and writing server Lua, and to use a **separate, sandboxed
 > game install** for experimentation rather than your main client.
 
