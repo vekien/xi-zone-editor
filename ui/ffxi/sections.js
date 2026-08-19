@@ -69,12 +69,27 @@ export function parseTexture(bytes, dv, section) {
     // same dynamic headerSize layout, so the palOff math below resolves identically).
     const headerSize = dv.getUint32(ds + 17, true);
     const palOff = ds + 17 + headerSize;
+    // Last dword of the BITMAPINFOHEADER is bits-per-palette-entry: 0x20 = 32-bit
+    // BGRA (1024 bytes), 0x10 = 16-bit A1R5G5B5 (512). Prototype zones use the
+    // narrow form for a few textures; reading it as 32-bit scrambles the colours
+    // and shifts the pixels by 512 bytes. Retail is always 32-bit.
+    const paletteBits = dv.getUint32(ds + 17 + 36, true);
+    const narrow = paletteBits === 0x10;
     const palette = [];
     for (let i = 0; i < 256; i++) {
-      const po = palOff + i * 4;
-      palette.push({ b: bytes[po], g: bytes[po+1], r: bytes[po+2], a: bytes[po+3] });
+      if (narrow) {
+        const v = dv.getUint16(palOff + i * 2, true);
+        const f = (c) => ((c * 255 / 31) | 0);
+        palette.push({
+          b: f(v & 0x1F), g: f((v >>> 5) & 0x1F), r: f((v >>> 10) & 0x1F),
+          a: (v >>> 15) & 1 ? 0xFF : 0x00,
+        });
+      } else {
+        const po = palOff + i * 4;
+        palette.push({ b: bytes[po], g: bytes[po+1], r: bytes[po+2], a: bytes[po+3] });
+      }
     }
-    const pixOff = palOff + 1024;
+    const pixOff = palOff + (narrow ? 512 : 1024);
     const rgba = new Uint8Array(width * height * 4);
     for (let i = 0; i < width * height; i++) {
       const idx = bytes[pixOff + i];
