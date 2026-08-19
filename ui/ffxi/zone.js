@@ -148,9 +148,37 @@ function decryptZoneObjects(bytes, dv, section, table1) {
 }
 
 // ── 0x2E geometry parse ─────────────────────────────────────────────────────
+/** True if `p` looks like a submesh header (texture name + sane nverts).
+ *  Pre-production zones often leave the 16-byte texture name blank (all NUL/space),
+ *  so the name alone can't gate it — the vert/index counts have to check out too. */
+function looksLikeSubmesh(bytes, dv, p, sectionEnd, stride) {
+  if (p + 20 > sectionEnd) return false;
+  let printable = 0;
+  let blank = true;
+  for (let i = 0; i < 16; i++) {
+    const c = bytes[p + i];
+    if (c === 0 || c === 0x20) continue;
+    blank = false;
+    if (c < 0x20 || c > 0x7e) return false;
+    printable++;
+  }
+  if (!blank && printable < 2) return false;
+  const numVerts = dv.getUint16(p + 16, true);
+  if (numVerts === 0 || numVerts > 20000) return false;
+  if (p + 20 + numVerts * stride + 4 > sectionEnd) return false;
+  // Blank-name headers still need a plausible index count after the verts.
+  const niAt = p + 20 + numVerts * stride;
+  const numIdx = dv.getUint16(niAt, true);
+  if (numIdx === 0 || numIdx > 60000) return false;
+  if (niAt + 4 + numIdx * 2 > sectionEnd) return false;
+  return true;
+}
+
 function parseZoneMeshSection(bytes, dv, section) {
   const ds = section.dataStart;
   const config = u32at(dv, ds + 4) & 0xFF;
+  // Bit0 = strip. Some pre-production MMBs leave the flag clear even when the
+  // index buffer is clearly a strip (count not divisible by 3) — detect that below.
   const isStrip = (config & 0x1) !== 0;
   const vertexBlend = (config & 0x2) !== 0;
   const meshName = strAt(bytes, ds + 0x10, 0x10);
@@ -159,13 +187,42 @@ function parseZoneMeshSection(bytes, dv, section) {
   const meshCount0 = u32at(dv, defStart);
   if (meshCount0 === 0) return { meshName, prims: [] }; // collision-only "hit" model
 
-  const section1Off = u32at(dv, ds + 0x3C);
-  const meshCount1 = u32at(dv, ds + 0x40);
-  let p = defStart + section1Off;
+  // Modern layout: after meshCount0 + bbox0 sits section1Off @ +0x3C and
+  // meshCount1 @ +0x40. Pre-production / MZB-era meshes (ROM/0/28, 41, 42, 46…)
+  // often leave those zero and park the data offset at +0x4C or +0x5C instead.
+  // Some large floor meshes then carry FURTHER groups: after the first submesh
+  // stream, another count + bbox + pad, then more submeshes.
+  const offOk = (v) => v > 0 && v < section.size - 0x20;
+  let section1Off = u32at(dv, ds + 0x3C);
+  let meshCount1 = u32at(dv, ds + 0x40);
+  // Prefer the smaller "near header" offsets first — +0x5C can be a large
+  // second-region pointer (see the group walk below), not the primary start.
+  if (!offOk(section1Off) || section1Off > 0x200) {
+    for (const at of [0x4c, 0x5c, 0x50, 0x58]) {
+      const alt = u32at(dv, ds + at);
+      if (offOk(alt) && alt <= 0x200) { section1Off = alt; break; }
+    }
+  }
+  if (!offOk(section1Off)) {
+    for (const at of [0x4c, 0x5c, 0x50, 0x58]) {
+      const alt = u32at(dv, ds + at);
+      if (offOk(alt)) { section1Off = alt; break; }
+    }
+  }
+  // +0x60 is often section-2's count sitting on a second bbox, NOT the submesh
+  // stream length — prefer meshCount0 when +0x40 is empty.
+  if (meshCount1 === 0 || meshCount1 > 256) meshCount1 = meshCount0;
+  if (!offOk(section1Off)) return { meshName, prims: [] };
+
   const stride = vertexBlend ? 48 : 36;
   const prims = [];
+  const sectionEnd = section.start + section.size;
 
-  for (let m = 0; m < meshCount1; m++) {
+  // Reads one submesh at pRef.p, advances the cursor past it, and returns false
+  // (leaving the cursor put) when the bytes there aren't a submesh header.
+  const parseOne = (pRef) => {
+    let p = pRef.p;
+    if (!looksLikeSubmesh(bytes, dv, p, sectionEnd, stride)) return false;
     const textureName = strAt(bytes, p, 0x10); p += 0x10;
     const numVerts = dv.getUint16(p, true);
     const flags = dv.getUint16(p + 2, true); p += 4;
@@ -184,22 +241,40 @@ function parseZoneMeshSection(bytes, dv, section) {
     }
 
     const numIndices = dv.getUint16(p, true); p += 4;
-    const draw = new Array(numIndices);
-    for (let i = 0; i < numIndices; i++) { draw[i] = verts[dv.getUint16(p, true)]; p += 2; }
+    if (p + numIndices * 2 > sectionEnd) return false;
+    // Keep RAW indices: degenerate detection has to compare indices, not vertex
+    // objects, or strip restarts are missed (matches xi_export.py).
+    const indices = new Array(numIndices);
+    for (let i = 0; i < numIndices; i++) { indices[i] = dv.getUint16(p, true); p += 2; }
     p = (p + 3) & ~3; // align0x04 after each mesh
 
+    // Auto-detect strip when the flag is wrong but the index count can't be tris.
+    const useStrip = isStrip || (numIndices > 3 && numIndices % 3 !== 0);
+
     const positions = [], normals = [], uvs = [], colors = [];
-    const push = (vt) => {
+    const pushIdx = (ii) => {
+      const vt = verts[ii];
+      if (!vt) return;
       positions.push(vt[0], vt[1], vt[2]); normals.push(vt[3], vt[4], vt[5]);
       uvs.push(vt[6], vt[7]); colors.push(vt[8], vt[9], vt[10], vt[11]);
     };
-    for (let t = 0; t < draw.length - 2; t++) {
-      if (isStrip) {
-        if (t % 2 === 0) { push(draw[t]); push(draw[t + 1]); push(draw[t + 2]); }
-        else { push(draw[t + 1]); push(draw[t]); push(draw[t + 2]); }
-      } else {
-        if (t % 3 !== 0) continue;
-        push(draw[t]); push(draw[t + 1]); push(draw[t + 2]);
+    if (useStrip) {
+      // Degenerate tris (a repeated index) are strip restarts — reset parity so
+      // winding stays consistent after the break (xi xi_export.py).
+      let parity = 0;
+      for (let t = 0; t < indices.length - 2; t++) {
+        const i0 = indices[t], i1 = indices[t + 1], i2 = indices[t + 2];
+        if (i0 === i1 || i1 === i2 || i0 === i2) { parity = 0; continue; }
+        if (!verts[i0] || !verts[i1] || !verts[i2]) { parity = 0; continue; }
+        if (parity % 2 === 0) { pushIdx(i0); pushIdx(i1); pushIdx(i2); }
+        else { pushIdx(i1); pushIdx(i0); pushIdx(i2); }
+        parity += 1;
+      }
+    } else {
+      for (let t = 0; t < indices.length - 2; t += 3) {
+        const i0 = indices[t], i1 = indices[t + 1], i2 = indices[t + 2];
+        if (!verts[i0] || !verts[i1] || !verts[i2]) continue;
+        pushIdx(i0); pushIdx(i1); pushIdx(i2);
       }
     }
     if (positions.length) {
@@ -213,22 +288,104 @@ function parseZoneMeshSection(bytes, dv, section) {
         colors: new Float32Array(colors),
       });
     }
+    pRef.p = p;
+    return true;
+  };
+
+  // Primary stream (defStart-relative offset).
+  const pRef = { p: defStart + section1Off };
+  // Read while the headers keep looking like submeshes — a high meshCount0 often
+  // means "N groups" with group headers between streams, not N back-to-back parts.
+  for (let m = 0; m < 64; m++) {
+    if (!parseOne(pRef)) break;
   }
+  let highWater = pRef.p;
+
+  // Further groups: count(u32) + bbox(6×f32) + pad(u32) = 0x20, then submeshes.
+  // Large floor/wall meshes chain several. highWater avoids re-reading a region
+  // the cursor already consumed (which would duplicate geometry).
+  const tryGroupAt = (at) => {
+    if (at + 0x30 > sectionEnd) return false;
+    if (at + 0x20 < highWater) return false;
+    const c2 = u32at(dv, at);
+    if (c2 < 1 || c2 > 64) return false;
+    const nameAt = at + 0x20;
+    if (!looksLikeSubmesh(bytes, dv, nameAt, sectionEnd, stride)) return false;
+    const p2 = { p: nameAt };
+    let n = 0;
+    for (let m = 0; m < c2; m++) {
+      if (!parseOne(p2)) break;
+      n++;
+    }
+    if (n > 0) {
+      pRef.p = p2.p;
+      highWater = Math.max(highWater, p2.p);
+    }
+    return n > 0;
+  };
+
+  // Keep consuming group headers from the current cursor.
+  for (let g = 0; g < 8; g++) {
+    if (!tryGroupAt(pRef.p)) break;
+  }
+  // Pointer fallbacks for groups the cursor didn't reach.
+  for (const at of [0x4c, 0x5c]) {
+    const off = u32at(dv, ds + at);
+    if (!offOk(off) || off <= section1Off) continue;
+    if (!tryGroupAt(ds + off)) tryGroupAt(defStart + off);
+    for (let g = 0; g < 8; g++) {
+      if (!tryGroupAt(pRef.p)) break;
+    }
+  }
+
   return { meshName, prims };
 }
 
 // ── 0x1C placement parse ────────────────────────────────────────────────────
+// Retail objects are 0x64 bytes. Pre-production MZB zones (mode <= 5, ROM/0/28·41·46…)
+// pack the same name/pos/rot/scale fields into 0x54 — using 0x64 there misaligns
+// every entry after the first and yields garbage names and positions.
+const OBJ_STRIDE_MODERN = 0x64;
+const OBJ_STRIDE_PROTO = 0x54;
+
+function zoneDefObjectStride(bytes, dv, ds, nodeCount) {
+  const mode = (u32at(dv, ds) >>> 24) & 0xFF;
+  // Score both strides by how many records yield a printable mesh id; fall back to the
+  // mode byte only when neither wins. Mode alone is NOT reliable: a zone whose records
+  // were widened to 0x64 so the retail client can read them still carries the
+  // pre-production mode value.
+  const score = (stride) => {
+    let n = 0;
+    for (let i = 0; i < Math.min(nodeCount, 32); i++) {
+      const id = strAt(bytes, ds + 0x20 + i * stride, 0x10);
+      if (id.length >= 2 && /^[ -~]+$/.test(id)) n++;
+    }
+    return n;
+  };
+  if (nodeCount >= 2) {
+    const s54 = score(OBJ_STRIDE_PROTO), s64 = score(OBJ_STRIDE_MODERN);
+    if (s64 > s54 + 2) return OBJ_STRIDE_MODERN;
+    if (s54 > s64 + 2) return OBJ_STRIDE_PROTO;
+  }
+  return (mode > 0 && mode <= 5) ? OBJ_STRIDE_PROTO : OBJ_STRIDE_MODERN;
+}
+
 function parseZoneDef(bytes, dv, section, table1) {
   const nodeCount = decryptZoneObjects(bytes, dv, section, table1);
   const ds = section.dataStart;
+  const stride = zoneDefObjectStride(bytes, dv, ds, nodeCount);
+  const sectionEnd = section.start + section.size;
   const placements = [];
   for (let i = 0; i < nodeCount; i++) {
-    const b = ds + 0x20 + i * 0x64;
+    const b = ds + 0x20 + i * stride;
+    if (b + 0x34 > sectionEnd) break;
     const meshId = strAt(bytes, b, 0x10);
     placements.push({
       meshId,
       index: i,   // stable DAT object index — lets edits target the EXACT instance of a shared mesh name
-      fileIdLink: dv.getUint32(b + 0x50, true) || null,  // sub-area id this object is a placeholder for (0 = none); hide it when that interior is shown
+      stride,     // record size this zone uses — publish must write back the same layout
+      // fileIdLink sits at +0x50 in the 0x64 record; the 0x54 proto record has no room for it.
+      fileIdLink: stride >= OBJ_STRIDE_MODERN ? (dv.getUint32(b + 0x50, true) || null) : null,  // sub-area id this object is a placeholder for (0 = none); hide it when that interior is shown
       pos: [dv.getFloat32(b + 0x10, true), dv.getFloat32(b + 0x14, true), dv.getFloat32(b + 0x18, true)],
       rot: [dv.getFloat32(b + 0x1C, true), dv.getFloat32(b + 0x20, true), dv.getFloat32(b + 0x24, true)],
       scale: [dv.getFloat32(b + 0x28, true), dv.getFloat32(b + 0x2C, true), dv.getFloat32(b + 0x30, true)],
@@ -404,10 +561,12 @@ function decodePalette(r, width, height, paletted) {
 function parseTexture(bytes, dv, section) {
   const r = new Reader(dv, section.dataStart);
   const texType = r.u8();
-  // 0x81: older 8-bit-paletted variant in prototype/beta zones (e.g. rom/0/28.dat);
-  // identical header+data layout to 0x91, so it decodes via the same paletted path.
-  // Without it the zone parses 0 textures and renders untextured (Noesis handles 0x81).
-  if (![0x81, 0x91, 0xA1, 0xB1].includes(texType)) return null;
+  // Paletted: 0x01 / 0x05 (common in field and pre-production zones), 0x81
+  // (proto/beta, e.g. rom/0/28.dat), 0x91, 0xB1. DXT: 0xA1.
+  // 0x01/0x05/0x81 share the 0x91 header+payload layout, so they decode via the
+  // same paletted path; without them those zones parse 0 textures and render
+  // untextured (Noesis handles them the same way).
+  if (![0x01, 0x05, 0x81, 0x91, 0xA1, 0xB1].includes(texType)) return null;
   const name = r.str(0x10);
   r.u32();
   const width = r.u32(), height = r.u32();
@@ -432,9 +591,20 @@ function parseTexture(bytes, dv, section) {
 const norm = (s) => s.replace(/ /g, '').replace(/_/g, '').toLowerCase();
 
 export function resolveMeshName(meshId, meshes) {
+  if (!meshId) return null;
   if (meshes.has(meshId)) return meshId;
   const base = ['_l', '_m', '_h'].includes(meshId.slice(-2)) ? meshId.slice(0, -2) : meshId;
   for (const suffix of ['_h', '_m', '_l']) if (meshes.has(base + suffix)) return base + suffix;
+  // Pre-production zones: the mesh DAT name is often "category meshid"
+  // (e.g. "twr2bai ue_wallh") while the placement stores just "ue_wallh".
+  const want = norm(meshId);
+  if (want.length >= 2) {
+    for (const key of meshes.keys()) {
+      const k = norm(key);
+      if (k === want) return key;
+      if (k.endsWith(want) || k.split(/\s+/).includes(want) || want.endsWith(k)) return key;
+    }
+  }
   return null;
 }
 

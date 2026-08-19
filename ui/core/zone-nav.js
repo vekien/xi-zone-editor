@@ -333,8 +333,11 @@ export async function populateZones() {
     const romOf = (z) => (z.path.match(/game\/(ROM\d*)\//i)?.[1] || 'ROM').toUpperCase();
     const groupOf = (z) => z.group || romOf(z);
     const groupLabel = (g) => g === 'ROM' ? 'ROM (base)' : g;
+    // ROM groups by number first, then the two curated groups at the bottom.
+    const TAIL = ['Dev / Prototype', 'Rooms'];
     const groups = [...new Set(zones.map(groupOf))].sort((a, b) => {
-      if (a === 'Rooms') return 1; if (b === 'Rooms') return -1;
+      const ta = TAIL.indexOf(a), tb = TAIL.indexOf(b);
+      if (ta !== -1 || tb !== -1) return (ta === -1 ? -1 : ta) - (tb === -1 ? -1 : tb);
       return (+a.slice(3) || 1) - (+b.slice(3) || 1);
     });
     for (const grp of groups) {

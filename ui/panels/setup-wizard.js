@@ -700,6 +700,33 @@ async function loadSettingsValues() {
   }
 }
 
+// Settings → Setup → XI Tools. The Rust side already supports a local-checkout
+// override (tools_set_local_path writes xi-tools-path.txt, and xi_tools_dir()
+// prefers it over the downloaded release) — it was only reachable from the splash
+// when a download failed, so there was no way to switch back and forth on purpose.
+async function refreshToolsPane() {
+  const input = document.getElementById('set-tools-path');
+  const clear = document.getElementById('set-tools-clear');
+  if (!input) return;
+  let st = null;
+  try { st = await tauriInvoke('tools_status'); } catch { /* offline / not desktop */ }
+  if (!st) {
+    setState('set-tools-msg', 'Only available in the desktop app.', 'bad');
+    for (const id of ['set-tools-browse', 'set-tools-apply', 'set-tools-clear']) {
+      const b = document.getElementById(id);
+      if (b) b.disabled = true;
+    }
+    return;
+  }
+  input.value = st.toolsDir || '';
+  if (clear) clear.disabled = !st.usingLocalOverride;
+  setState('set-tools-msg',
+    st.usingLocalOverride
+      ? `Using your local checkout — ${st.toolsDir}`
+      : `Using the downloaded release${st.localVersion ? ` (v${st.localVersion})` : ''} — ${st.toolsDir}`,
+    'ok');
+}
+
 async function refreshShortcutPane() {
   const msg = document.getElementById('set-shortcut-msg');
   const btn = document.getElementById('set-shortcut-btn');
@@ -814,6 +841,37 @@ export function initSetupSettings() {
     } catch (e) { setState('set-ws-msg', e?.message || 'Could not set that folder.', 'bad'); }
   });
 
+  document.getElementById('set-tools-browse')?.addEventListener('click', async () => {
+    const path = await tauriInvoke('pick_tools_folder', {
+      initial: document.getElementById('set-tools-path')?.value || '',
+    });
+    if (path) document.getElementById('set-tools-path').value = path;
+  });
+
+  document.getElementById('set-tools-apply')?.addEventListener('click', async () => {
+    const path = (document.getElementById('set-tools-path')?.value || '').trim();
+    if (!path) { setState('set-tools-msg', 'Choose a folder first.', 'bad'); return; }
+    try {
+      const st = await tauriInvoke('tools_set_local_path', { path });
+      await refreshToolsPane();
+      // The bridge imports xi at startup, so the running one keeps serving the old
+      // tools until the app restarts — say so rather than implying it's already live.
+      setState('set-tools-msg', `Saved — ${st.toolsDir}. Restart the editor to use it.`, 'ok');
+    } catch (e) {
+      setState('set-tools-msg', String(e?.message || e || 'That folder could not be used.'), 'bad');
+    }
+  });
+
+  document.getElementById('set-tools-clear')?.addEventListener('click', async () => {
+    try {
+      await tauriInvoke('tools_clear_local_path');
+      await refreshToolsPane();
+      setState('set-tools-msg', 'Back to the downloaded release. Restart the editor to use it.', 'ok');
+    } catch (e) {
+      setState('set-tools-msg', String(e?.message || e || 'Could not clear the override.'), 'bad');
+    }
+  });
+
   document.getElementById('set-shortcut-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('set-shortcut-btn');
     btn.disabled = true;
@@ -830,6 +888,7 @@ export function initSetupSettings() {
   document.getElementById('settings-btn')?.addEventListener('click', () => {
     loadSettingsValues();
     refreshShortcutPane();
+    refreshToolsPane();
   });
   onBridgeStatus((online) => {
     if (online && document.getElementById('settings-panel')?.classList.contains('open')) {

@@ -1659,30 +1659,20 @@ function removeObject(c) {
   updateChangesUI();
 }
 
-// True when this zone has a published `.edited` mirror on disk (from a prior Publish): its live
-// DAT can diverge from pristine even with an EMPTY change-set, so Publish must stay enabled to
-// BAKE a removal of previously-published objects. Set by refreshZoneState + each successful Publish.
-let zoneHasEdited = false;
-
-// Publish actually does something when there's a content change OR it'll reset collision.
-function publishWouldDoSomething() {
-  // NOTE: music changes deliberately excluded until Phase B wires publish→DB/SQL, so a
-  // music-only change-set doesn't enable a Publish that wouldn't actually apply the music.
-  if (clearCollisionOnReset
-    || stripActive()
-    || footstepSourceZone
-    || collectChanges().length > 0
-    || collectMarkerChanges().length > 0
-    || (typeof textPlanes !== 'undefined' && textPlanes.length > 0)) return true;
-  // No pending edits — but if the zone was already published, its live DAT still carries the
-  // previously-baked content. A republish (reset-from-pristine + apply the now-empty change-set)
-  // is the ONLY way to BAKE a removal of published objects (e.g. after Removing every add).
-  // Without this, Publish stays stuck at "0 changes" and the baked objects can't be dropped.
-  return zoneHasEdited;
+// Publish is available whenever a zone is loaded — an EMPTY change-set included.
+//
+// This used to be gated on "would publishing change anything?", which sounds right but
+// left no way to push a revert: publish resets from pristine and re-applies, so a
+// contentless publish is exactly how you (a) undo everything and bake that back to the
+// DAT, and (b) drop objects baked by an earlier publish. Both were unreachable because
+// the button disabled itself the moment the change list emptied. Deciding a publish is
+// pointless is the user's call, not ours, and a no-op publish costs a second.
+function publishEnabled() {
+  return !!currentZoneUrl;
 }
 function syncPublishState() {
   const qp = document.getElementById('quick-publish');
-  if (qp) qp.disabled = !publishWouldDoSomething();
+  if (qp) qp.disabled = !publishEnabled();
 }
 
 // "Strip Baked Collision" only makes sense for CUSTOM zones (ID >= 400) that ship with
@@ -2465,14 +2455,14 @@ function closeFileMenu() { fileMenu?.classList.remove('open'); }
 function syncFileMenuGating() {
   const editable = (getMode() === 'edit') && !launcherState.browseOnly;
   const inProject = !!launcherState.currentProject && !launcherState.browseOnly;
-  const canPublish = editable && publishWouldDoSomething();
+  const canPublish = editable && publishEnabled();
   fileMenu.querySelectorAll('button[data-action]').forEach((b) => {
     const a = b.dataset.action;
     // Help is always available, regardless of mode / project state.
     if (a === 'help') { b.disabled = false; return; }
     // New + Duplicate are project-level zone actions — usable in View, before/while a zone loads.
     if (a === 'new' || a === 'duplicate') { b.disabled = !inProject; return; }
-    if (a === 'apply-game') { b.disabled = !canPublish; return; }   // Publish: only when it'd do something
+    if (a === 'apply-game') { b.disabled = !canPublish; return; }   // Publish: needs Edit mode + a loaded zone
     b.disabled = !editable;
   });
   // NavMesh submenu items use ids, not data-action — gate them as edit-only too.
@@ -3155,7 +3145,6 @@ async function refreshZoneState() {
   setModeFetchedZone(currentZoneUrl);
   try {
     const st = await bridgeCall('zone.state', { zone: currentZoneUrl });
-    zoneHasEdited = !!(st && st.hasEdited);   // published-before flag → keep Publish able to bake removals
     syncPublishState();
     const ch = st && st.changes;
     const savedHasContent = snapshotHasContent(ch);
@@ -3205,7 +3194,6 @@ function onZoneLoaded() {
   refreshHdVariant();        // per-zone HD-variant check (de-duped; cheap on mode-toggle reloads)
   refreshCompanionDats();    // async fetch of dialog/npc/event DAT paths for zone info display
   if (getSuppressStateFetch()) return;
-  zoneHasEdited = false;   // genuine navigation → re-fetched for the new zone by refreshZoneState()
   setModeReplayPending(null);
   setModeFetchedZone('');
   refreshZoneState();
@@ -3732,9 +3720,15 @@ async function applyToGame() {
   // published meshes always match the current signs. Must run BEFORE the snapshot is taken.
   await rebuildTextBakes();
   const snap = snapshotChanges();
-  // Allow a contentless publish when "Reset Collision on Publish" is on — wiping the
-  // zone's collision is itself a real operation (e.g. clearing a new map's template collision).
-  if (!snapshotHasContent(snap) && !clearCollisionOnReset) { setStatus('No changes to publish.'); return; }
+  // A contentless publish is a real operation, not a no-op, so it is never blocked:
+  // with "Reset DAT before Publish" on it reverts the game DAT to pristine, which is
+  // how you undo everything and push that (previously you had to publish a dummy edit).
+  // With reset off it applies nothing — harmless. "Reset Collision on Publish" likewise
+  // wipes collision on its own (e.g. clearing a new map's template collision).
+  if (!snapshotHasContent(snap) && !clearCollisionOnReset) {
+    setStatus(publishReset ? 'No changes — publishing reverts the DAT to pristine.'
+                           : 'No changes — publishing will apply nothing.');
+  }
   // Spawn guard — the player's DB spawn must sit a small gap above a collision floor.
   // None under it → falls/crashes; at/below → crashes; too far above → stuck in mid-air.
   if (validateSpawn) {
@@ -3872,7 +3866,6 @@ async function applyToGame() {
   // The zone now has a published `.edited` mirror — UNLESS we just baked an empty change-set
   // (a reset-to-pristine), which leaves it un-edited. Keep Publish state in sync so a follow-up
   // removal stays publishable.
-  zoneHasEdited = snapshotHasContent(snap);
   syncPublishState();
   // Persist the full publish log (both legs) into the standard leg's version-history entry.
   if (stdR && stdR.version && stdR.version.version) {
@@ -3888,7 +3881,12 @@ async function publishHdOnly() {
   if (!bridgeOnline()) { setStatus('Publish needs the backend — run the editor via `xi gui zone`', true); return; }
   if (!hdVariantAvailable) { setStatus('No HD asset-pack DAT exists for this zone.', true); return; }
   const snap = snapshotChanges();
-  if (!snapshotHasContent(snap) && !clearCollisionOnReset) { setStatus('No changes to publish.'); return; }
+  // Same as applyToGame: an empty change-set is allowed through — with reset on it
+  // reverts the HD DAT to pristine, which is a legitimate thing to want to publish.
+  if (!snapshotHasContent(snap) && !clearCollisionOnReset) {
+    setStatus(publishReset ? 'No changes — publishing reverts the HD DAT to pristine.'
+                           : 'No changes — publishing will apply nothing.');
+  }
   const name = (currentZoneUrl || '').split(/[\\/]/).pop();
   const con = openConsole('Publish HD → ' + name);
   setStatus('Publishing to HD zone…');

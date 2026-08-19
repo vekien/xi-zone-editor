@@ -437,6 +437,7 @@
           <button class="snav-btn" data-spane="collision">Collision / NavMesh</button>
           <button class="snav-btn" data-spane="autosave">Save / Publish</button>
           <div class="snav-cat">Setup</div>
+          <button class="snav-btn" data-spane="xitools">XI Tools</button>
           <button class="snav-btn" data-spane="workspace">Workspace</button>
           <button class="snav-btn" data-spane="gamepaths">Game Paths</button>
           <button class="snav-btn" data-spane="database">Server &amp; Database</button>
@@ -540,6 +541,25 @@
                Same fields as the first-run Setup panel. Values come from env.status
                and save straight back to .env via env.save, so there is exactly one
                source of truth for paths and database credentials. -->
+
+          <div class="spane" id="spane-xitools">
+            <div class="spane-grouphead">XI Tools</div>
+            <p class="spane-hint">The Python backend that does DAT I/O, publish and DB work. By default the
+              app downloads a release; point it at a local checkout to run your own build.</p>
+            <div class="form-row">
+              <label class="setting-row wide">Tools folder
+                <input type="text" id="set-tools-path" spellcheck="false" autocomplete="off"
+                  placeholder="D:\xi-tools" />
+              </label>
+            </div>
+            <div class="form-row">
+              <button type="button" id="set-tools-browse">Browse…</button>
+              <button type="button" id="set-tools-apply" class="btn-primary">Use this folder</button>
+              <button type="button" id="set-tools-clear">Use downloaded release</button>
+            </div>
+            <p class="spane-hint" id="set-tools-msg"></p>
+            <p class="spane-hint">Must contain <code>src\xi\</code>. Takes effect after restarting the editor.</p>
+          </div>
 
           <div class="spane" id="spane-workspace">
             <div class="spane-grouphead">Workspace</div>
