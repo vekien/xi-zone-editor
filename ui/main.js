@@ -295,6 +295,7 @@ window.exportsUrl = exportsUrl;
 function applyProjectSettings() {
   disableVfx            = loadProjectSetting('disableVfx', disableVfx);
   showSkybox            = loadProjectSetting('skybox', showSkybox);
+  showUnplaced          = loadProjectSetting('unplaced', showUnplaced);
   skyboxScaled          = loadProjectSetting('skyboxScaled', skyboxScaled);
   publishReset          = loadProjectSetting('publishReset', publishReset);
   hdPublishMode         = loadProjectSetting('hdPublishMode', hdPublishMode);
@@ -819,6 +820,10 @@ let playerSpawn = null;         // { x,y,z,zone,name,charid } last read from cha
 let vfxIconSize = Math.max(10, Math.min(80, Math.round(loadSetting('vfxIconSize', 35) / 5) * 5)); // on-screen px, 5px steps (10–80)
 let showSkybox = loadProjectSetting('skybox', loadSetting('skybox', false));         // project-scoped
 let skyboxScaled = loadProjectSetting('skyboxScaled', loadSetting('skyboxScaled', true)); // project-scoped
+// Meshes the DAT ships but no placement record references. Drawn at the origin
+// (see the build loop below) — on by default, matching how the editor has always
+// behaved; the OBJECTS toggle hides them when they get in the way.
+let showUnplaced = loadProjectSetting('unplaced', true);
 let showCollision = loadSetting('collision', false);
 let isolateCollision = loadSetting('isolateCollision', false);   // Isolate: show ONLY our authored collision prims
 let isolateBaked = loadSetting('isolateBaked', false);           // Baked: show ONLY the collision baked into the DAT
@@ -1269,6 +1274,8 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
   // Sky visibility per zone follows the project's Skybox setting (default off). Re-read it
   // here so each zone build reflects the active project; the Sky toggle still reveals it live.
   showSkybox = loadProjectSetting('skybox', false);
+  showUnplaced = loadProjectSetting('unplaced', true);
+  document.getElementById('obj-unplaced')?.classList.toggle('active', showUnplaced);
   if (typeof skyToggle !== 'undefined' && skyToggle) skyToggle.checked = showSkybox;
   skyGroup = new THREE.Group(); skyGroup.name = 'skybox';
   for (const name of meshes.keys()) {
@@ -1283,8 +1290,9 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
       skyGroup.add(node);
       registerPlacement(node, false, true);
     } else {
+      node.visible = showUnplaced;
       zoneRoot.add(node);
-      registerPlacement(node);
+      registerPlacement(node, false, false, true);
     }
   }
   if (skyGroup.children.length) {
@@ -4770,6 +4778,15 @@ if (hdPublishModeSel) {
     if (Number.isFinite(v) && v >= 0) saveSetting(key, v);
     else e.target.value = String(loadSetting(key, def));
   };
+});
+const unplacedToggle = document.getElementById('obj-unplaced');
+unplacedToggle?.classList.toggle('active', showUnplaced);
+unplacedToggle?.addEventListener('click', () => {
+  showUnplaced = !showUnplaced;
+  saveProjectSetting('unplaced', showUnplaced);
+  unplacedToggle.classList.toggle('active', showUnplaced);
+  for (const p of placements) if (p.isUnplaced && p.node) p.node.visible = showUnplaced;
+  buildObjectList();
 });
 document.getElementById('obj-show')?.addEventListener('click', () => setListedVisibility(false, true));
 document.getElementById('obj-hide')?.addEventListener('click', () => setListedVisibility(false, false));

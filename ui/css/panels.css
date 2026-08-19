@@ -2990,3 +2990,18 @@ input[type="color"].swatch::-moz-color-swatch {
   padding-top: 0;
   padding-bottom: 0;
 }
+
+/* Unplaced meshes: geometry the DAT ships that no placement record references.
+   Amber to read as "informational", distinct from the blue RT badge. */
+.rt-badge.unplaced-badge {
+  color: #d8b070;
+  background: #2a2216;
+  border-color: #6a5430;
+}
+
+/* Pressed state for the OBJECTS "Unplaced" toggle. */
+#obj-unplaced.active {
+  color: #d8b070;
+  background: #2a2216;
+  border-color: #6a5430;
+}

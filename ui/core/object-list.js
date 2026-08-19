@@ -813,6 +813,14 @@ function makeObjectRow(p) {
     badge.title = 'Runtime-positioned — no fixed position in DAT (omit --pos when using xi fx copy)';
     li.appendChild(badge);
   }
+  if (p.isUnplaced) {
+    const badge = document.createElement('span');
+    badge.className = 'rt-badge unplaced-badge';
+    badge.textContent = 'UNPLACED';
+    badge.title = 'No placement record references this mesh — the editor draws it at '
+                + 'the origin, but the game client never spawns it.';
+    li.appendChild(badge);
+  }
   const pGrp = groupForPlacement(p);
   if (pGrp) {
     const dot = document.createElement('span');
@@ -900,7 +908,11 @@ export function buildObjectList() {
   const colsFilterEl = _R.getEl('cols-filter');
 
   const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-  const objs = placements.filter((p) => !p.isEffect && !p.isMarker && !p.isSky && !p.isCollisionPrimitive && !p.isMob && !p.isTextPlane && !p.isTextBaked).sort(byName);
+  const isReal = (p) => !p.isEffect && !p.isMarker && !p.isSky && !p.isCollisionPrimitive && !p.isMob && !p.isTextPlane && !p.isTextBaked;
+  // Unplaced meshes are listed alongside real objects but tagged, so it's obvious
+  // which geometry the client will never spawn. Hidden entirely when the toggle is off.
+  const showUnplaced = document.getElementById('obj-unplaced')?.classList.contains('active') ?? true;
+  const objs = placements.filter((p) => isReal(p) && (showUnplaced || !p.isUnplaced)).sort(byName);
   const cols = placements.filter((p) => p.isCollisionPrimitive).sort(byName);
   const vfx = placements.filter((p) => p.isEffect && !p.isSound && !p.isMarker).sort(byName);
   const sounds = placements.filter((p) => p.isSound).sort(byName);

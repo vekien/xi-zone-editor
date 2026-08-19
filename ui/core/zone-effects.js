@@ -553,14 +553,19 @@ export function addVfxIcon(node) {
   vfxIconGroup.add(sprite);
 }
 
-export function registerPlacement(node, isEffect = false, isSky = false) {
+// `isUnplaced`: geometry present in the DAT that no placement record references.
+// The editor draws it at the origin so you can see what the zone ships, but the
+// client never spawns it — flagged so the list can separate it from real objects.
+export function registerPlacement(node, isEffect = false, isSky = false, isUnplaced = false) {
   const placements = _R.getPlacements();
   const placementSet = _R.getPlacementSet();
   placementSet.add(node);
   if (isEffect) { node.visible = false; addVfxIcon(node); }
   if (isSky) { node.userData.isSkyIcon = true; addVfxIcon(node); }
   node.userData.original = { p: node.position.clone(), q: node.quaternion.clone(), s: node.scale.clone() };
-  placements.push({ node, name: node.name || '(unnamed)', isEffect, isSky, isSound: !!node.userData.effect?.sound });
+  if (isUnplaced) node.userData.isUnplaced = true;
+  placements.push({ node, name: node.name || '(unnamed)', isEffect, isSky, isUnplaced,
+                    isSound: !!node.userData.effect?.sound });
 }
 
 export function setIconVisible(node, vis) { const g = _R.getVfxIconGroup(); if (g) for (const sp of g.children) if (sp.userData.vfxNode === node) sp.visible = vis; }
