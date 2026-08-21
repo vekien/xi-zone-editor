@@ -148,6 +148,35 @@ Asset Browser icons / sprites / manifests are **bundled** in the UI (`ui/public/
 | Downloaded tools, embed Python, bridge log | `%LOCALAPPDATA%\XiZoneEditor\` |
 | Projects / change-sets | Workspace folder chosen at setup (e.g. `…\xi-tools-workspaces\`) |
 
+### Title screen shots
+
+The FFXI login screen flies real zones as a live 3D background. When the open zone is one
+of the 22 that appear there, the **Events** panel gains a **Title Screen** row; opening it
+shows that segment's camera routes.
+
+The routes are stored in `ROM/0/23.DAT` in the same shape as cutscene camera routes — eye,
+look-at and a focal length per keyframe — so the modal reads them directly:
+
+- a **timeline lane**, one clip per shot, coloured by path shape, flagged where the
+  weather turns over
+- a **shot table** with keyframe count, FOV and the eye position in FFXI coordinates
+- **Play** flies the shots in order and loops, the way the screen does
+- **Paths** draws every route in the viewport
+
+Paths are parented to `zoneRoot`, so they use raw FFXI coordinates and the group's
+`(x, y, z) -> (-x, -y, z)` correction applies for free. The camera is in world space, so
+it goes through `zoneRoot.localToWorld()` rather than mirroring axes by hand.
+
+Point count decides a route's shape, the rule the client uses: two keyframes is a straight
+line, three or more is a spline.
+
+Needs a bridge with the `title.*` methods; the block says so when it is missing rather
+than silently not appearing. Shot duration is currently a flat 5s placeholder — the
+timing entries in the scene carry frame counts but their mapping to shots is not
+established.
+
+---
+
 ### Bridge reference
 
 | Endpoint | Purpose |
@@ -157,6 +186,9 @@ Asset Browser icons / sprites / manifests are **bundled** in the UI (`ui/public/
 | `http://127.0.0.1:8777/game-hd/…` | Files under `FFXI_HD_DIR` |
 | `http://127.0.0.1:8777/exports/…` | Optional xi-tools exports (e.g. cached WAVs) |
 | `http://127.0.0.1:8777/health` | Liveness |
+
+Title screen methods: `title.timeline` (segments for a zone, or all), `title.cameraSet`
+(write camera keyframes), `title.setZone` (point a segment at another zone).
 
 ---
 
