@@ -2152,76 +2152,138 @@
 
 /* ── Title screen block ───────────────────────────────────────────────────────
    Shown above the event list when the open zone appears on the login screen.
-   Matches .evt-actor-head metrics so the two blocks read as one list. */
+   The strip is a single timeline lane: one clip per shot, so the shape of the
+   segment and where the weather turns over read at a glance. */
 .ttl-block {
-  border-bottom: 1px solid #2f2f38;
-  margin-bottom: 4px;
+  margin: 0 0 8px;
+  background: linear-gradient(180deg, #262631 0%, #22222b 100%);
+  border: 1px solid #34343f;
+  border-radius: 6px;
+  overflow: hidden;
 }
 .ttl-head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
+  gap: 7px;
+  padding: 7px 9px;
   cursor: pointer;
   user-select: none;
 }
-.ttl-head:hover { background: #2c2c34; }
-.ttl-caret { font-size: 16px; line-height: 1; color: #7a8398; flex-shrink: 0; }
-.ttl-title { font-weight: 600; color: #f7c873; }
-.ttl-count { font-size: 11px; color: #8a90a0; }
-.ttl-paths {
-  margin-left: auto;
-  font-size: 11px;
-  color: #8a90a0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
+.ttl-head:hover { background: #2b2b35; }
+.ttl-caret { font-size: 11px; color: #7a8398; width: 9px; flex-shrink: 0; }
+.ttl-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #f7c873;
+  box-shadow: 0 0 6px rgba(247, 200, 115, 0.7);
+  flex-shrink: 0;
 }
-.ttl-seg {
-  padding: 3px 8px 3px 26px;
-  font-size: 10px;
-  color: #7a8398;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.ttl-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+  color: #f2d9a8; white-space: nowrap;
 }
-.ttl-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px 4px 26px;
-  font-size: 11px;
-  cursor: pointer;
-}
-.ttl-row:hover { background: #2c2c34; }
-.ttl-row-sel {
-  background: color-mix(in srgb, #f7c873 14%, transparent);
-  box-shadow: inset 2px 0 0 #f7c873;
-}
-.ttl-idx { width: 16px; color: #6b7280; text-align: right; }
-.ttl-name { font-family: ui-monospace, Consolas, monospace; color: #d6d9e0; min-width: 42px; }
-.ttl-shape { font-size: 10px; padding: 1px 5px; border-radius: 3px; }
-.ttl-line   { color: #82aaff; background: color-mix(in srgb, #82aaff 16%, transparent); }
-.ttl-spline { color: #c792ea; background: color-mix(in srgb, #c792ea 16%, transparent); }
-.ttl-kf, .ttl-fov { color: #8a90a0; font-size: 10px; }
-.ttl-weather {
-  margin-left: auto;
-  font-size: 10px;
-  color: #7fd88f;
-  background: color-mix(in srgb, #7fd88f 16%, transparent);
-  padding: 1px 5px;
-  border-radius: 3px;
+.ttl-sub {
+  font-size: 10px; color: #868da0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .ttl-warn { color: #e0a458; }
-.ttl-play {
+.ttl-btn {
   margin-left: auto;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  border: 1px solid #3a3a44;
-  background: #26262e;
-  color: #d6d9e0;
+  width: 22px; height: 20px;
+  display: grid; place-items: center;
+  font-size: 10px; line-height: 1;
+  border: 1px solid #3a3a46;
+  border-radius: 4px;
+  background: #2a2a34;
+  color: #b9bfcc;
   cursor: pointer;
+  flex-shrink: 0;
 }
-.ttl-play:hover { background: #32323c; border-color: #4a4a56; }
-.ttl-head .ttl-paths { margin-left: 8px; }
+.ttl-btn + .ttl-btn { margin-left: 0; }
+.ttl-btn:hover { background: #34343f; color: #e8ecf4; }
+.ttl-btn.on {
+  background: color-mix(in srgb, #f7c873 22%, #2a2a34);
+  border-color: #7a6236; color: #f7c873;
+}
+
+/* timeline lane */
+.ttl-strip {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 26px;
+  padding: 0 8px 8px;
+}
+.ttl-clip {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+.ttl-clip.line {
+  background: color-mix(in srgb, #82aaff 22%, transparent);
+  border-color: color-mix(in srgb, #82aaff 40%, transparent);
+  color: #a9c5ff;
+}
+.ttl-clip.spline {
+  background: color-mix(in srgb, #c792ea 22%, transparent);
+  border-color: color-mix(in srgb, #c792ea 40%, transparent);
+  color: #d9b6f2;
+}
+.ttl-clip:hover { filter: brightness(1.35); }
+.ttl-clip.sel {
+  border-color: #f7c873;
+  box-shadow: 0 0 0 1px rgba(247, 200, 115, 0.45) inset;
+  color: #ffe7bd;
+}
+.ttl-clip-name {
+  font-family: ui-monospace, Consolas, monospace;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0 3px;
+}
+.ttl-clip-w {
+  position: absolute; top: 0; right: 0;
+  width: 0; height: 0;
+  border-top: 7px solid #7fd88f;
+  border-left: 7px solid transparent;
+  font-size: 0;
+}
+.ttl-playhead {
+  position: absolute; top: 0; bottom: 8px; left: 0;
+  width: 2px; margin-left: -1px;
+  background: #ffd479;
+  box-shadow: 0 0 6px rgba(255, 212, 121, 0.9);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* shot list */
+.ttl-row {
+  display: grid;
+  grid-template-columns: 18px 44px auto 34px 30px auto;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px;
+  font-size: 10px;
+  cursor: pointer;
+  border-top: 1px solid #2b2b34;
+}
+.ttl-row:hover { background: #2b2b35; }
+.ttl-row.sel {
+  background: color-mix(in srgb, #f7c873 12%, transparent);
+  box-shadow: inset 2px 0 0 #f7c873;
+}
+.ttl-idx { color: #666d7d; text-align: right; }
+.ttl-name { font-family: ui-monospace, Consolas, monospace; color: #d6d9e0; }
+.ttl-meta { color: #868da0; }
+.ttl-chip {
+  font-size: 9px; padding: 1px 5px; border-radius: 3px;
+  justify-self: start; white-space: nowrap;
+}
+.ttl-line   { color: #82aaff; background: color-mix(in srgb, #82aaff 16%, transparent); }
+.ttl-spline { color: #c792ea; background: color-mix(in srgb, #c792ea 16%, transparent); }
+.ttl-w      { color: #7fd88f; background: color-mix(in srgb, #7fd88f 16%, transparent); justify-self: end; }

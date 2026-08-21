@@ -260,18 +260,39 @@ export function titleRenderTick(dt, camera, renderer) {
     if (_onChanged) _onChanged();
   }
 
+  _movePlayhead((titleState.shotIndex + titleState.shotTime / secs) / shots.length);
+
   const cam = shots[titleState.shotIndex];
   const s = _sampleShot(cam, titleState.shotTime / secs);
   if (!s) return;
-  // zoneRoot mirrors X and Z, so a world-space camera mirrors them back.
-  camera.position.set(-s.eye.x, s.eye.y, -s.eye.z);
-  camera.lookAt(-s.look.x, s.look.y, -s.look.z);
+  camera.position.copy(_toWorld(s.eye.x, s.eye.y, s.eye.z));
+  camera.lookAt(_toWorld(s.look.x, s.look.y, s.look.z));
   if (camera.fov !== s.fov) { camera.fov = s.fov; camera.updateProjectionMatrix(); }
+}
+
+function _movePlayhead(frac) {
+  const el = document.querySelector('[data-title-playhead]');
+  if (el) el.style.left = `${Math.max(0, Math.min(1, frac)) * 100}%`;
 }
 
 export function setTitlePathsVisible(on) {
   titleState.showPaths = !!on;
   if (titleState.showPaths) drawTitlePaths(); else _clearPaths();
+}
+
+
+/** FFXI coordinates -> world space, by asking zoneRoot rather than hardcoding the axes.
+ *
+ * zoneRoot carries a 180-degree rotation about X *and* a (-1, 1, -1) scale, which compose
+ * to (x, y, z) -> (-x, -y, z): Y negated because FFXI's Y points down, X negated to fix
+ * the east/west mirror, Z preserved. Hand-mirroring it is what broke playback -- the
+ * camera flew with Y unflipped and Z inverted. Deriving it from the group means a future
+ * change to that transform carries over for free.
+ */
+function _toWorld(x, y, z) {
+  const v = new _THREE.Vector3(x, y, z);
+  const root = _getZoneRoot && _getZoneRoot();
+  return root ? root.localToWorld(v) : v;
 }
 
 /** Put the viewport camera where a shot's keyframe sits, looking where it looks. */
@@ -284,9 +305,8 @@ export function titleFlyTo(trackName, kfIndex = 0) {
     if (!track) continue;
     const k = track.keyframes[Math.min(kfIndex, track.keyframes.length - 1)];
     if (!k) return;
-    // zoneRoot mirrors X and Z, so a world-space camera has to mirror them back.
-    cam.position.set(-k.eye[0], k.eye[1], -k.eye[2]);
-    cam.lookAt(-k.look[0], k.look[1], -k.look[2]);
+    cam.position.copy(_toWorld(k.eye[0], k.eye[1], k.eye[2]));
+    cam.lookAt(_toWorld(k.look[0], k.look[1], k.look[2]));
     if (k.fovDeg) { cam.fov = k.fovDeg; cam.updateProjectionMatrix(); }
     titleState.selected = trackName;
     if (titleState.showPaths) drawTitlePaths();
@@ -309,54 +329,75 @@ export function titleSectionHtml() {
     // bridge running an xi-tools build without the title.* methods, which otherwise
     // looks exactly like a zone that has no shots.
     const hint = /unknown method|not found|no such method/i.test(titleState.error)
-      ? 'bridge has no title.* methods — point it at an xi-tools checkout with them'
+      ? 'bridge has no title.* methods'
       : esc(titleState.error);
     return `<div class="ttl-block"><div class="ttl-head">
-      <span class="ttl-title">Title Screen</span>
-      <span class="ttl-count ttl-warn">unavailable — ${hint}</span>
-    </div></div>`;
+      <span class="ttl-dot"></span><span class="ttl-title">Title Screen</span>
+      <span class="ttl-sub ttl-warn">${hint}</span></div></div>`;
   }
   if (!titleHasShots()) return '';
+
   const secs = titleState.data.sections;
-  const shots = secs.reduce((n, s) => n + s.cameras.length, 0);
-  const caret = titleState.open ? '▾' : '▸';
+  const shots = _allShots();
+  const zoneName = secs[0] ? secs[0].zoneName : '';
+  const weatherCount = secs.reduce((n, x) => n + x.weather.length, 0);
+
+  // Timeline strip: one clip per shot, equal width because shot duration is not yet
+  // known (see titleRenderTick). Reads as a lane so the shape and weather changes are
+  // visible at a glance rather than only in the list below.
+  let clips = '';
+  shots.forEach((cam, i) => {
+    const sel = titleState.selected === cam.name;
+    const w = _weatherFor(cam.name);
+    clips += `<div class="ttl-clip ${cam.shape}${sel ? ' sel' : ''}"
+      data-title-track="${esc(cam.name)}" title="${esc(cam.name)} · ${cam.shape} · ${cam.keyframes.length} keyframes">
+      <span class="ttl-clip-name">${esc(cam.name)}</span>
+      ${w ? `<span class="ttl-clip-w">${esc(w.tag)}</span>` : ''}
+    </div>`;
+  });
 
   let rows = '';
   if (titleState.open) {
-    for (const sec of secs) {
-      const weatherBy = {};
-      for (const w of sec.weather) if (w.camera) weatherBy[w.camera] = w;
-      rows += `<div class="ttl-seg">segment ${sec.section} · ${esc(sec.zoneName)} ·
-        ${sec.cameras.length} shots · ${sec.weather.length} weather</div>`;
-      sec.cameras.forEach((cam, i) => {
-        const w = weatherBy[cam.name];
-        const kf = cam.keyframes || [];
-        const fov = kf.length ? Math.round(kf[0].fovDeg) : '';
-        const sel = titleState.selected === cam.name ? ' ttl-row-sel' : '';
-        rows += `<div class="ttl-row${sel}" data-title-track="${esc(cam.name)}">
-          <span class="ttl-idx">${i + 1}</span>
-          <span class="ttl-name">${esc(cam.name)}</span>
-          <span class="ttl-shape ttl-${cam.shape}">${cam.shape}</span>
-          <span class="ttl-kf">${kf.length} kf</span>
-          <span class="ttl-fov">${fov}&deg;</span>
-          ${w ? `<span class="ttl-weather" title="weather changes as this shot begins">${esc(w.tag)}</span>` : ''}
-        </div>`;
-      });
-    }
+    shots.forEach((cam, i) => {
+      const w = _weatherFor(cam.name);
+      const kf = cam.keyframes || [];
+      const fov = kf.length ? Math.round(kf[0].fovDeg) : '';
+      const sel = titleState.selected === cam.name ? ' sel' : '';
+      rows += `<div class="ttl-row${sel}" data-title-track="${esc(cam.name)}">
+        <span class="ttl-idx">${i + 1}</span>
+        <span class="ttl-name">${esc(cam.name)}</span>
+        <span class="ttl-chip ttl-${cam.shape}">${cam.shape}</span>
+        <span class="ttl-meta">${kf.length} kf</span>
+        <span class="ttl-meta">${fov}&deg;</span>
+        ${w ? `<span class="ttl-chip ttl-w">${esc(w.tag)}</span>` : '<span></span>'}
+      </div>`;
+    });
   }
 
   return `<div class="ttl-block">
     <div class="ttl-head" data-title-toggle="1">
-      <span class="ttl-caret">${caret}</span>
+      <span class="ttl-caret">${titleState.open ? '&#9662;' : '&#9656;'}</span>
+      <span class="ttl-dot"></span>
       <span class="ttl-title">Title Screen</span>
-      <span class="ttl-count">(${shots} shots)</span>
-      <button class="ttl-play" data-title-play="1"
-        title="Fly the shots in order, looping">${titleState.playing ? '&#9632; stop' : '&#9654; play'}</button>
-      <label class="ttl-paths"><input type="checkbox" data-title-paths="1"
-        ${titleState.showPaths ? 'checked' : ''}> paths</label>
+      <span class="ttl-sub">${esc(zoneName)} &middot; ${shots.length} shots &middot; ${weatherCount} weather</span>
+      <button class="ttl-btn${titleState.playing ? ' on' : ''}" data-title-play="1"
+        title="Fly the shots in order, looping">${titleState.playing ? '&#9632;' : '&#9654;'}</button>
+      <button class="ttl-btn${titleState.showPaths ? ' on' : ''}" data-title-paths="1"
+        title="Draw the camera paths in the viewport">&#9585;&#9586;</button>
     </div>
+    <div class="ttl-strip">${clips}<div class="ttl-playhead" data-title-playhead="1"></div></div>
     ${rows}
   </div>`;
+}
+
+/** The weather record that names this shot, if any — i.e. the weather turns over here. */
+function _weatherFor(trackName) {
+  if (!titleHasShots()) return null;
+  for (const sec of titleState.data.sections) {
+    const hit = sec.weather.find((w) => w.camera === trackName);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 /** Wire clicks for the Title block. Call after the Events panel writes its HTML. */
@@ -369,12 +410,16 @@ export function wireTitleSection(rootEl) {
   });
   const head = rootEl.querySelector('[data-title-toggle]');
   if (head) head.addEventListener('click', (e) => {
-    if (e.target && e.target.closest('[data-title-paths], [data-title-play]')) return;
+    if (e.target && e.target.closest('[data-title-paths], [data-title-play], .ttl-strip')) return;
     titleState.open = !titleState.open;
     if (_onChanged) _onChanged();
   });
   const paths = rootEl.querySelector('[data-title-paths]');
-  if (paths) paths.addEventListener('change', (e) => setTitlePathsVisible(e.target.checked));
+  if (paths) paths.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setTitlePathsVisible(!titleState.showPaths);
+    if (_onChanged) _onChanged();
+  });
   rootEl.querySelectorAll('[data-title-track]').forEach((el) => {
     const name = el.getAttribute('data-title-track');
     el.addEventListener('click', () => titleFlyTo(name, 0));
