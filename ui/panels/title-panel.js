@@ -36,6 +36,13 @@ export function titleHasShots() {
   return !!(titleState.data && titleState.data.sections && titleState.data.sections.length);
 }
 
+/** True when the lookup itself failed, as opposed to the zone simply not being on the
+ *  title screen. Worth showing: an unreachable or outdated bridge looks identical to a
+ *  zone with no shots, and silently rendering nothing gives no way to tell them apart. */
+export function titleUnavailable() {
+  return !!titleState.error;
+}
+
 export function titleInvalidate() {
   titleState.loadedFor = null;
   titleState.data = null;
@@ -49,7 +56,11 @@ export async function ensureTitleLoaded() {
   const zoneId = _getZoneId ? _getZoneId() : null;
   if (zoneId == null) return;
   if (titleState.loading || titleState.loadedFor === zoneId) return;
-  if (!bridgeOnline()) return;                 // silent: the section simply will not appear
+  if (!bridgeOnline()) {
+    titleState.error = 'bridge offline';
+    titleState.loadedFor = zoneId;
+    return;
+  }
 
   titleState.loading = true;
   let r = null, err = null;
@@ -171,8 +182,20 @@ function esc(s) {
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-/** HTML for the Title block, or '' when this zone is not on the title screen. */
+/** HTML for the Title block, '' when this zone is not on the title screen. */
 export function titleSectionHtml() {
+  if (titleState.error) {
+    // Distinguish "not on the title screen" from "could not ask". The usual cause is a
+    // bridge running an xi-tools build without the title.* methods, which otherwise
+    // looks exactly like a zone that has no shots.
+    const hint = /unknown method|not found|no such method/i.test(titleState.error)
+      ? 'bridge has no title.* methods — point it at an xi-tools checkout with them'
+      : esc(titleState.error);
+    return `<div class="ttl-block"><div class="ttl-head">
+      <span class="ttl-title">Title Screen</span>
+      <span class="ttl-count ttl-warn">unavailable — ${hint}</span>
+    </div></div>`;
+  }
   if (!titleHasShots()) return '';
   const secs = titleState.data.sections;
   const shots = secs.reduce((n, s) => n + s.cameras.length, 0);

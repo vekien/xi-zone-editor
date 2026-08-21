@@ -6,7 +6,7 @@ import { loadZoneSetting, saveZoneSetting } from '../editor/settings.js';
 import { csCloseSequencer, csStop, csIsAuthorMode, csAuthorRefresh, CS_BEAT_META, CS_LANE_ORDER, csLaneOf } from '../viewport/cutscene.js';
 import { openCutsceneAuthorFrom } from './cutscene-author.js';
 import { ensureTitleLoaded, titleHasShots, titleSectionHtml, wireTitleSection,
-         titleInvalidate } from './title-panel.js';
+         titleInvalidate, titleUnavailable } from './title-panel.js';
 
 // ── Injected dependencies (set by initEventsPanel) ───────────────────────────
 let _getCurrentZoneUrl;   // () => currentZoneUrl
