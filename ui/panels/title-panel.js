@@ -8,6 +8,12 @@
 // leaves the Title block out entirely rather than showing an empty one.
 
 import { bridgeOnline, bridgeCall } from '../ffxi/bridge.js';
+// Line2 rather than THREE.Line: WebGL ignores linewidth on most drivers, so a plain line
+// is always one pixel however thick you ask for. Line2 draws screen-space quads, which is
+// what makes a camera path readable against zone geometry.
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 
 let _scene = null;          // THREE, injected so this module carries no renderer import
 let _THREE = null;
@@ -20,9 +26,12 @@ let _onChanged = null;      // ask the Events panel to re-render
 const titleState = {
   loadedFor: null, loading: false, data: null, error: null,
   open: true, selected: null, showPaths: true,
+  // Playback: walks the segment's shots in order, flying each route.
+  playing: false, shotIndex: 0, shotTime: 0, shotSecs: 5,
 };
 
 let _pathGroup = null;
+let _materials = [];        // Line2 materials need their resolution kept in sync
 
 export function initTitlePanel({ THREE, getZoneRoot, getCamera, getZoneId, onChanged }) {
   _THREE = THREE;
@@ -82,6 +91,7 @@ export async function ensureTitleLoaded() {
 // ── viewport paths ───────────────────────────────────────────────────────────
 
 function _clearPaths() {
+  _materials = [];
   if (!_pathGroup) return;
   _pathGroup.traverse((o) => {
     if (o.geometry) o.geometry.dispose();
@@ -109,44 +119,154 @@ export function drawTitlePaths() {
 
   for (const sec of titleState.data.sections) {
     for (const cam of sec.cameras) {
-      const kf = cam.keyframes || [];
-      if (kf.length < 2) continue;
-      const eyes = kf.map((k) => new THREE.Vector3(k.eye[0], k.eye[1], k.eye[2]));
-      let pts = eyes;
-      if (eyes.length > 2) {
-        try { pts = new THREE.CatmullRomCurve3(eyes).getPoints(kf.length * 12); } catch (e) { pts = eyes; }
-      }
+      const pts = _shotPoints(cam);
+      if (!pts.length) continue;
       const sel = titleState.selected === cam.name;
-      const line = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(pts),
-        new THREE.LineBasicMaterial({
-          color: sel ? 0xffd479 : (cam.weatherChange ? 0x7fd88f : 0x82aaff),
-          transparent: true, opacity: sel ? 1 : 0.55, depthTest: false,
-        }));
+
+      const geom = new LineGeometry();
+      geom.setPositions(pts.flatMap((v) => [v.x, v.y, v.z]));
+      const mat = new LineMaterial({
+        color: sel ? 0xffd479 : (cam.weatherChange ? 0x7fd88f : 0x82aaff),
+        linewidth: sel ? 5 : 3,          // pixels, thanks to Line2
+        transparent: true, opacity: sel ? 1 : 0.75,
+        depthTest: false, dashed: false,
+      });
+      mat.resolution.set(window.innerWidth, window.innerHeight);
+      _materials.push(mat);
+      const line = new Line2(geom, mat);
+      line.computeLineDistances();
       line.renderOrder = 998;
       line.userData.titleTrack = cam.name;
       _pathGroup.add(line);
 
-      // A short spur from each eye toward what it is looking at: a path alone does not
-      // show which way the shot faces, and these routes often move and turn separately.
-      for (const k of kf) {
+      // A spur from each eye toward what it is looking at: the path alone does not show
+      // which way a shot faces, and these routes often move and turn separately.
+      for (const k of cam.keyframes) {
         const eye = new THREE.Vector3(k.eye[0], k.eye[1], k.eye[2]);
         const look = new THREE.Vector3(k.look[0], k.look[1], k.look[2]);
         const dir = look.clone().sub(eye);
         const len = dir.length() || 1;
-        dir.multiplyScalar(Math.min(6, len) / len);
-        const spur = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([eye, eye.clone().add(dir)]),
-          new THREE.LineBasicMaterial({
-            color: sel ? 0xffd479 : 0xf7c873,
-            transparent: true, opacity: sel ? 0.95 : 0.4, depthTest: false,
-          }));
+        dir.multiplyScalar(Math.min(8, len) / len);
+        const tip = eye.clone().add(dir);
+        const sg = new LineGeometry();
+        sg.setPositions([eye.x, eye.y, eye.z, tip.x, tip.y, tip.z]);
+        const sm = new LineMaterial({
+          color: sel ? 0xffd479 : 0xf7c873,
+          linewidth: sel ? 3 : 2,
+          transparent: true, opacity: sel ? 0.95 : 0.5, depthTest: false,
+        });
+        sm.resolution.set(window.innerWidth, window.innerHeight);
+        _materials.push(sm);
+        const spur = new Line2(sg, sm);
+        spur.computeLineDistances();
         spur.renderOrder = 999;
         _pathGroup.add(spur);
       }
     }
   }
   root.add(_pathGroup);
+}
+
+/** Sampled points for a shot: a spline when it has 3+ keyframes, a straight line at 2 —
+ *  the same rule the client uses to decide a camera route's shape. */
+function _shotPoints(cam) {
+  const kf = cam.keyframes || [];
+  if (kf.length < 2) return [];
+  const eyes = kf.map((k) => new _THREE.Vector3(k.eye[0], k.eye[1], k.eye[2]));
+  if (eyes.length > 2) {
+    try { return new _THREE.CatmullRomCurve3(eyes).getPoints(kf.length * 16); } catch (e) {}
+  }
+  return eyes;
+}
+
+function _allShots() {
+  if (!titleHasShots()) return [];
+  const out = [];
+  for (const sec of titleState.data.sections) for (const c of sec.cameras) out.push(c);
+  return out;
+}
+
+/** Sample a shot at normalised time: eye along the path, look-at and FOV interpolated
+ *  between the surrounding keyframes. */
+function _sampleShot(cam, t) {
+  const kf = cam.keyframes || [];
+  if (!kf.length) return null;
+  const THREE = _THREE;
+  const clamped = Math.max(0, Math.min(1, t));
+
+  const eyes = kf.map((k) => new THREE.Vector3(k.eye[0], k.eye[1], k.eye[2]));
+  let eye;
+  if (eyes.length > 2) {
+    try { eye = new THREE.CatmullRomCurve3(eyes).getPoint(clamped); }
+    catch (e) { eye = eyes[0].clone(); }
+  } else if (eyes.length === 2) {
+    eye = eyes[0].clone().lerp(eyes[1], clamped);
+  } else {
+    eye = eyes[0].clone();
+  }
+
+  // look-at and FOV walk the keyframe list by their own t values, which are not evenly
+  // spaced (a 3-point route sits at 0, 0.667, 1).
+  let a = kf[0], b = kf[kf.length - 1];
+  for (let i = 0; i < kf.length - 1; i++) {
+    if (clamped >= kf[i].t && clamped <= kf[i + 1].t) { a = kf[i]; b = kf[i + 1]; break; }
+  }
+  const span = (b.t - a.t) || 1;
+  const u = Math.max(0, Math.min(1, (clamped - a.t) / span));
+  const look = new THREE.Vector3(a.look[0], a.look[1], a.look[2])
+    .lerp(new THREE.Vector3(b.look[0], b.look[1], b.look[2]), u);
+  const fov = (a.fovDeg || 57) + ((b.fovDeg || 57) - (a.fovDeg || 57)) * u;
+  return { eye, look, fov };
+}
+
+/** Start playing the open zone's shots in order. */
+export function titlePlay(fromIndex = 0) {
+  if (!titleHasShots()) return;
+  titleState.playing = true;
+  titleState.shotIndex = Math.max(0, Math.min(fromIndex, _allShots().length - 1));
+  titleState.shotTime = 0;
+  if (_onChanged) _onChanged();
+}
+
+export function titleStop() {
+  titleState.playing = false;
+  if (_onChanged) _onChanged();
+}
+
+export function titleIsPlaying() { return titleState.playing; }
+
+/** Drive playback and keep Line2 resolution in sync. Called from the render loop. */
+export function titleRenderTick(dt, camera, renderer) {
+  if (_materials.length && renderer) {
+    const w = renderer.domElement ? renderer.domElement.clientWidth : window.innerWidth;
+    const h = renderer.domElement ? renderer.domElement.clientHeight : window.innerHeight;
+    for (const m of _materials) m.resolution.set(w || 1, h || 1);
+  }
+  if (!titleState.playing || !camera) return;
+
+  const shots = _allShots();
+  if (!shots.length) { titleState.playing = false; return; }
+
+  titleState.shotTime += Math.max(0, dt || 0);
+  const secs = titleState.shotSecs || 5;
+  if (titleState.shotTime >= secs) {
+    titleState.shotTime = 0;
+    titleState.shotIndex += 1;
+    if (titleState.shotIndex >= shots.length) {   // loop, as the title screen does
+      titleState.shotIndex = 0;
+    }
+    titleState.selected = shots[titleState.shotIndex].name;
+    if (titleState.showPaths) drawTitlePaths();
+    if (_onChanged) _onChanged();
+  }
+
+  const cam = shots[titleState.shotIndex];
+  const s = _sampleShot(cam, titleState.shotTime / secs);
+  if (!s) return;
+  // zoneRoot mirrors X and Z, so a world-space camera mirrors them back.
+  camera.position.set(-s.eye.x, s.eye.y, -s.eye.z);
+  camera.lookAt(-s.look.x, s.look.y, -s.look.z);
+  if (camera.fov !== s.fov) { camera.fov = s.fov; camera.updateProjectionMatrix(); }
 }
 
 export function setTitlePathsVisible(on) {
@@ -230,6 +350,8 @@ export function titleSectionHtml() {
       <span class="ttl-caret">${caret}</span>
       <span class="ttl-title">Title Screen</span>
       <span class="ttl-count">(${shots} shots)</span>
+      <button class="ttl-play" data-title-play="1"
+        title="Fly the shots in order, looping">${titleState.playing ? '&#9632; stop' : '&#9654; play'}</button>
       <label class="ttl-paths"><input type="checkbox" data-title-paths="1"
         ${titleState.showPaths ? 'checked' : ''}> paths</label>
     </div>
@@ -240,15 +362,25 @@ export function titleSectionHtml() {
 /** Wire clicks for the Title block. Call after the Events panel writes its HTML. */
 export function wireTitleSection(rootEl) {
   if (!rootEl) return;
+  const play = rootEl.querySelector('[data-title-play]');
+  if (play) play.addEventListener('click', (e) => {
+    e.stopPropagation();
+    titleState.playing ? titleStop() : titlePlay(0);
+  });
   const head = rootEl.querySelector('[data-title-toggle]');
   if (head) head.addEventListener('click', (e) => {
-    if (e.target && e.target.matches('[data-title-paths]')) return;
+    if (e.target && e.target.closest('[data-title-paths], [data-title-play]')) return;
     titleState.open = !titleState.open;
     if (_onChanged) _onChanged();
   });
   const paths = rootEl.querySelector('[data-title-paths]');
   if (paths) paths.addEventListener('change', (e) => setTitlePathsVisible(e.target.checked));
   rootEl.querySelectorAll('[data-title-track]').forEach((el) => {
-    el.addEventListener('click', () => titleFlyTo(el.getAttribute('data-title-track'), 0));
+    const name = el.getAttribute('data-title-track');
+    el.addEventListener('click', () => titleFlyTo(name, 0));
+    el.addEventListener('dblclick', () => {
+      const idx = _allShots().findIndex((c) => c.name === name);
+      if (idx >= 0) titlePlay(idx);
+    });
   });
 }

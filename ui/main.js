@@ -137,7 +137,7 @@ import {
   fetchEventCutscene, renderCutsceneView,
 } from './panels/events-panel.js';
 import { initCutsceneAuthor, openCutsceneAuthorFrom, resumeAuthor } from './panels/cutscene-author.js';
-import { initTitlePanel } from './panels/title-panel.js';
+import { initTitlePanel, titleRenderTick } from './panels/title-panel.js';
 import {
   initSelection,
   select, lastSelectedEntry, snapshotTRS, reselectAfterEdit, pushSelectionTransformCommand,
@@ -5334,6 +5334,7 @@ function animate() {
   if (zoneVfx && zoneVfx.emitters.length) { zoneVfx.camera = activeCamera; try { zoneVfx.update(); } catch (e) {} }
 
   csRenderTick(dt, activeCamera);   // cutscene NPC anims + VFX + actor outline/tag
+  titleRenderTick(dt, activeCamera, renderer);   // title shot playback + Line2 resolution
   for (const p of placements) { if (p.isMob && p.node.userData.mobMixer) p.node.userData.mobMixer.update(dt); }   // placed-mob idle anims
   if (vfxIconGroup && vfxIconGroup.visible) {
     const sc = vfxIconScale();
