@@ -2149,3 +2149,66 @@
 .cse-create:active {
   transform: translateY(1px);
 }
+
+/* ── Title screen block ───────────────────────────────────────────────────────
+   Shown above the event list when the open zone appears on the login screen.
+   Matches .evt-actor-head metrics so the two blocks read as one list. */
+.ttl-block {
+  border-bottom: 1px solid #2f2f38;
+  margin-bottom: 4px;
+}
+.ttl-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.ttl-head:hover { background: #2c2c34; }
+.ttl-caret { font-size: 16px; line-height: 1; color: #7a8398; flex-shrink: 0; }
+.ttl-title { font-weight: 600; color: #f7c873; }
+.ttl-count { font-size: 11px; color: #8a90a0; }
+.ttl-paths {
+  margin-left: auto;
+  font-size: 11px;
+  color: #8a90a0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.ttl-seg {
+  padding: 3px 8px 3px 26px;
+  font-size: 10px;
+  color: #7a8398;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ttl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 26px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.ttl-row:hover { background: #2c2c34; }
+.ttl-row-sel {
+  background: color-mix(in srgb, #f7c873 14%, transparent);
+  box-shadow: inset 2px 0 0 #f7c873;
+}
+.ttl-idx { width: 16px; color: #6b7280; text-align: right; }
+.ttl-name { font-family: ui-monospace, Consolas, monospace; color: #d6d9e0; min-width: 42px; }
+.ttl-shape { font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+.ttl-line   { color: #82aaff; background: color-mix(in srgb, #82aaff 16%, transparent); }
+.ttl-spline { color: #c792ea; background: color-mix(in srgb, #c792ea 16%, transparent); }
+.ttl-kf, .ttl-fov { color: #8a90a0; font-size: 10px; }
+.ttl-weather {
+  margin-left: auto;
+  font-size: 10px;
+  color: #7fd88f;
+  background: color-mix(in srgb, #7fd88f 16%, transparent);
+  padding: 1px 5px;
+  border-radius: 3px;
+}

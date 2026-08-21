@@ -131,12 +131,13 @@ import {
   musicChanges, musicBaseline, _MUSIC_SLOT_NAME,
 } from './panels/zone-music.js';
 import {
-  initEventsPanel, evtEsc, eventsCutscene,
+  initEventsPanel, refreshEventsView, evtEsc, eventsCutscene,
   invalidateEvents, ensureEventsLoaded,
   openEventDialog, showDialogView, closeEventDialog,
   fetchEventCutscene, renderCutsceneView,
 } from './panels/events-panel.js';
 import { initCutsceneAuthor, openCutsceneAuthorFrom, resumeAuthor } from './panels/cutscene-author.js';
+import { initTitlePanel } from './panels/title-panel.js';
 import {
   initSelection,
   select, lastSelectedEntry, snapshotTRS, reselectAfterEdit, pushSelectionTransformCommand,
@@ -4212,6 +4213,17 @@ initEventsPanel({
   fetchEventCutscene,
   renderCutsceneView,
   loadZone,
+});
+
+// Title screen shots: the Events panel shows a Title block when the open zone appears on
+// the login screen. Paths are drawn under zoneRoot, which carries the FFXI->display
+// correction, so the module works in raw FFXI coordinates.
+initTitlePanel({
+  THREE,
+  getZoneRoot: () => zoneRoot,
+  getCamera:   () => camera,
+  getZoneId:   () => currentZoneId(),
+  onChanged:   () => { try { refreshEventsView(); } catch (e) {} },
 });
 
 // Wire cutscene author modal — button is in the Events pane header (#cs-author-btn).

@@ -5,6 +5,8 @@ import { bridgeOnline, bridgeCall } from '../ffxi/bridge.js';
 import { loadZoneSetting, saveZoneSetting } from '../editor/settings.js';
 import { csCloseSequencer, csStop, csIsAuthorMode, csAuthorRefresh, CS_BEAT_META, CS_LANE_ORDER, csLaneOf } from '../viewport/cutscene.js';
 import { openCutsceneAuthorFrom } from './cutscene-author.js';
+import { ensureTitleLoaded, titleHasShots, titleSectionHtml, wireTitleSection,
+         titleInvalidate } from './title-panel.js';
 
 // ── Injected dependencies (set by initEventsPanel) ───────────────────────────
 let _getCurrentZoneUrl;   // () => currentZoneUrl
@@ -102,6 +104,7 @@ export function evtEsc(s) {
 
 // ── Events loading ────────────────────────────────────────────────────────────
 export function invalidateEvents() {
+  titleInvalidate();
   const currentZoneUrl = _getCurrentZoneUrl();
   eventsState.loadedFor = null;
   eventsState.data = null;
@@ -131,6 +134,9 @@ export function invalidateEvents() {
 export function ensureEventsLoaded() {
   const currentZoneUrl = _getCurrentZoneUrl();
   if (!currentZoneUrl) { renderEventsMessage('Load a zone to see its events.'); return; }
+  // Title shots are a separate DAT and load independently: a zone with no events can
+  // still appear on the login screen, and a zone with events usually does not.
+  ensureTitleLoaded();
   if (eventsState.loading) return;
   if (eventsState.loadedFor === currentZoneUrl && (eventsState.data || eventsState.error)) {
     renderEvents();
@@ -256,15 +262,25 @@ function evtEventRowHtml(a, e, { showActor = false } = {}) {
     + `</li>`;
 }
 
+/** Re-render the events list. Used when the Title block's state changes (expanded,
+ *  a shot selected) so the panel refreshes without refetching either data source. */
+export function refreshEventsView() {
+  if (eventsState.loadedFor) renderEvents();
+}
+
 function renderEvents() {
   renderEventsCats();
   if (!evtListEl) return;
   if (eventsState.loading) return;
+  const titleHtml = titleSectionHtml();
   if (eventsState.error) { renderEventsMessage(eventsState.error); return; }
   const data = eventsState.data;
   if (!data) { renderEventsMessage('No event data.'); return; }
   if (!data.actors.length) {
-    renderEventsMessage('This zone has no events.');
+    // A zone with no events may still have title screen shots, so the block is kept
+    // rather than replaced by the empty-state message.
+    evtListEl.innerHTML = titleHtml + `<div class="evt-msg">This zone has no events.</div>`;
+    if (titleHtml) wireTitleSection(evtListEl);
     if (evtCountEl) evtCountEl.textContent = '(0)';
     return;
   }
@@ -347,8 +363,9 @@ function renderEvents() {
     parts.push('</li>');
   }
 
-  evtListEl.innerHTML = (pinnedParts.join('') + parts.join(''))
-    || '<li class="evt-msg">No events match the filter.</li>';
+  evtListEl.innerHTML = titleHtml + ((pinnedParts.join('') + parts.join(''))
+    || '<li class="evt-msg">No events match the filter.</li>');
+  if (titleHtml) wireTitleSection(evtListEl);
   if (evtCountEl) {
     const totA = data.stats.actorCount, totE = data.stats.eventCount;
     evtCountEl.textContent = (q || catF)
