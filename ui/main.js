@@ -4224,6 +4224,7 @@ initTitlePanel({
   getCamera:   () => camera,
   getZoneId:   () => currentZoneId(),
   onChanged:   () => { try { refreshEventsView(); } catch (e) {} },
+  openModal,
 });
 
 // Wire cutscene author modal — button is in the Events pane header (#cs-author-btn).

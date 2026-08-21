@@ -2150,140 +2150,135 @@
   transform: translateY(1px);
 }
 
-/* ── Title screen block ───────────────────────────────────────────────────────
-   Shown above the event list when the open zone appears on the login screen.
-   The strip is a single timeline lane: one clip per shot, so the shape of the
-   segment and where the weather turns over read at a glance. */
-.ttl-block {
-  margin: 0 0 8px;
-  background: linear-gradient(180deg, #262631 0%, #22222b 100%);
-  border: 1px solid #34343f;
-  border-radius: 6px;
-  overflow: hidden;
-}
-.ttl-head {
+/* ── Title screen ─────────────────────────────────────────────────────────────
+   One row in the Events list opens a modal; the panel is far too narrow to hold a
+   timeline lane, and this matches how an event or cutscene opens. */
+.ttl-entry {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 9px;
+  gap: 8px;
+  padding: 6px 9px;
+  margin-bottom: 6px;
+  background: linear-gradient(180deg, #2a2a35 0%, #25252e 100%);
+  border: 1px solid #3a3a46;
+  border-left: 3px solid #f7c873;
+  border-radius: 5px;
   cursor: pointer;
-  user-select: none;
 }
-.ttl-head:hover { background: #2b2b35; }
-.ttl-caret { font-size: 11px; color: #7a8398; width: 9px; flex-shrink: 0; }
-.ttl-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #f7c873;
-  box-shadow: 0 0 6px rgba(247, 200, 115, 0.7);
-  flex-shrink: 0;
-}
-.ttl-title {
-  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
-  color: #f2d9a8; white-space: nowrap;
-}
-.ttl-sub {
+.ttl-entry:hover { background: #31313c; border-color: #4a4a58; }
+.ttl-entry-warn { cursor: default; border-left-color: #e0a458; }
+.ttl-ico { font-size: 15px; color: #f7c873; }
+.ttl-entry-name { font-size: 11px; font-weight: 600; color: #f2d9a8; }
+.ttl-entry-sub {
   font-size: 10px; color: #868da0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ttl-warn { color: #e0a458; }
-.ttl-btn {
+.ttl-entry-count {
   margin-left: auto;
-  width: 22px; height: 20px;
-  display: grid; place-items: center;
-  font-size: 10px; line-height: 1;
-  border: 1px solid #3a3a46;
-  border-radius: 4px;
-  background: #2a2a34;
-  color: #b9bfcc;
-  cursor: pointer;
-  flex-shrink: 0;
+  font-size: 10px; padding: 1px 7px; border-radius: 9px;
+  background: color-mix(in srgb, #f7c873 18%, transparent);
+  color: #f7c873;
 }
-.ttl-btn + .ttl-btn { margin-left: 0; }
+
+/* modal */
+.ttl-modal { width: 620px; }
+.ttl-modal .modal-body { padding: 0; overflow: auto; }
+.ttl-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 11px;
+  border-bottom: 1px solid #32323c;
+}
+.ttl-bar-sub {
+  margin-left: auto; font-size: 10px; color: #868da0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ttl-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; padding: 4px 9px;
+  border: 1px solid #3a3a46; border-radius: 5px;
+  background: #2a2a34; color: #c3c9d6; cursor: pointer;
+}
+.ttl-btn .material-symbols-outlined { font-size: 15px; }
 .ttl-btn:hover { background: #34343f; color: #e8ecf4; }
 .ttl-btn.on {
-  background: color-mix(in srgb, #f7c873 22%, #2a2a34);
+  background: color-mix(in srgb, #f7c873 20%, #2a2a34);
   border-color: #7a6236; color: #f7c873;
 }
 
 /* timeline lane */
 .ttl-strip {
   position: relative;
-  display: flex;
-  gap: 2px;
-  height: 26px;
-  padding: 0 8px 8px;
+  display: flex; gap: 3px;
+  height: 34px;
+  padding: 10px 11px 12px;
 }
 .ttl-clip {
   position: relative;
-  flex: 1 1 0;
-  min-width: 0;
-  border-radius: 3px;
+  flex: 1 1 0; min-width: 0;
+  border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 9px;
-  cursor: pointer;
-  overflow: hidden;
+  font-size: 10px;
+  cursor: pointer; overflow: hidden;
   border: 1px solid transparent;
 }
 .ttl-clip.line {
   background: color-mix(in srgb, #82aaff 22%, transparent);
-  border-color: color-mix(in srgb, #82aaff 40%, transparent);
+  border-color: color-mix(in srgb, #82aaff 45%, transparent);
   color: #a9c5ff;
 }
 .ttl-clip.spline {
   background: color-mix(in srgb, #c792ea 22%, transparent);
-  border-color: color-mix(in srgb, #c792ea 40%, transparent);
+  border-color: color-mix(in srgb, #c792ea 45%, transparent);
   color: #d9b6f2;
 }
 .ttl-clip:hover { filter: brightness(1.35); }
 .ttl-clip.sel {
   border-color: #f7c873;
-  box-shadow: 0 0 0 1px rgba(247, 200, 115, 0.45) inset;
+  box-shadow: 0 0 0 1px rgba(247, 200, 115, 0.5) inset;
   color: #ffe7bd;
 }
 .ttl-clip-name {
   font-family: ui-monospace, Consolas, monospace;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  padding: 0 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px;
 }
 .ttl-clip-w {
   position: absolute; top: 0; right: 0;
   width: 0; height: 0;
-  border-top: 7px solid #7fd88f;
-  border-left: 7px solid transparent;
-  font-size: 0;
+  border-top: 8px solid #7fd88f;
+  border-left: 8px solid transparent;
 }
 .ttl-playhead {
-  position: absolute; top: 0; bottom: 8px; left: 0;
+  position: absolute; top: 10px; bottom: 12px; left: 11px;
   width: 2px; margin-left: -1px;
   background: #ffd479;
-  box-shadow: 0 0 6px rgba(255, 212, 121, 0.9);
+  box-shadow: 0 0 7px rgba(255, 212, 121, 0.9);
   pointer-events: none;
-  opacity: 0.9;
 }
 
-/* shot list */
-.ttl-row {
-  display: grid;
-  grid-template-columns: 18px 44px auto 34px 30px auto;
-  align-items: center;
-  gap: 7px;
-  padding: 3px 9px;
-  font-size: 10px;
-  cursor: pointer;
-  border-top: 1px solid #2b2b34;
+/* shot table */
+.ttl-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.ttl-table th {
+  text-align: left; font-weight: 500;
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #6f7688;
+  padding: 5px 8px;
+  border-bottom: 1px solid #32323c;
+  position: sticky; top: 0; background: #25252a;
 }
-.ttl-row:hover { background: #2b2b35; }
-.ttl-row.sel {
-  background: color-mix(in srgb, #f7c873 12%, transparent);
-  box-shadow: inset 2px 0 0 #f7c873;
-}
-.ttl-idx { color: #666d7d; text-align: right; }
+.ttl-table td { padding: 4px 8px; border-bottom: 1px solid #2b2b34; }
+.ttl-tr { cursor: pointer; }
+.ttl-tr:hover { background: #2c2c36; }
+.ttl-tr.sel { background: color-mix(in srgb, #f7c873 12%, transparent); }
+.ttl-tr.sel td:first-child { box-shadow: inset 2px 0 0 #f7c873; }
+.ttl-idx { color: #666d7d; text-align: right; width: 26px; }
 .ttl-name { font-family: ui-monospace, Consolas, monospace; color: #d6d9e0; }
 .ttl-meta { color: #868da0; }
-.ttl-chip {
-  font-size: 9px; padding: 1px 5px; border-radius: 3px;
-  justify-self: start; white-space: nowrap;
-}
+.ttl-xyz { font-family: ui-monospace, Consolas, monospace; color: #8f96a8; font-size: 10px; }
+.ttl-chip { font-size: 9px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
 .ttl-line   { color: #82aaff; background: color-mix(in srgb, #82aaff 16%, transparent); }
 .ttl-spline { color: #c792ea; background: color-mix(in srgb, #c792ea 16%, transparent); }
-.ttl-w      { color: #7fd88f; background: color-mix(in srgb, #7fd88f 16%, transparent); justify-self: end; }
+.ttl-w      { color: #7fd88f; background: color-mix(in srgb, #7fd88f 16%, transparent); }
+.ttl-foot {
+  padding: 7px 11px; font-size: 10px; color: #6f7688;
+  border-top: 1px solid #32323c;
+}

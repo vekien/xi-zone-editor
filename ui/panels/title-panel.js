@@ -33,7 +33,10 @@ const titleState = {
 let _pathGroup = null;
 let _materials = [];        // Line2 materials need their resolution kept in sync
 
-export function initTitlePanel({ THREE, getZoneRoot, getCamera, getZoneId, onChanged }) {
+let _openModal = null;
+
+export function initTitlePanel({ THREE, getZoneRoot, getCamera, getZoneId, onChanged, openModal }) {
+  _openModal = openModal;
   _THREE = THREE;
   _getZoneRoot = getZoneRoot;
   _getCamera = getCamera;
@@ -257,7 +260,7 @@ export function titleRenderTick(dt, camera, renderer) {
     }
     titleState.selected = shots[titleState.shotIndex].name;
     if (titleState.showPaths) drawTitlePaths();
-    if (_onChanged) _onChanged();
+    if (document.getElementById('title-modal')?.classList.contains('open')) renderTitleModal();
   }
 
   _movePlayhead((titleState.shotIndex + titleState.shotTime / secs) / shots.length);
@@ -322,71 +325,26 @@ function esc(s) {
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-/** HTML for the Title block, '' when this zone is not on the title screen. */
+/** One row in the Events list. Everything else lives in the modal: the panel is far too
+ *  narrow for a timeline lane, and this matches how an event or cutscene is opened. */
 export function titleSectionHtml() {
   if (titleState.error) {
-    // Distinguish "not on the title screen" from "could not ask". The usual cause is a
-    // bridge running an xi-tools build without the title.* methods, which otherwise
-    // looks exactly like a zone that has no shots.
     const hint = /unknown method|not found|no such method/i.test(titleState.error)
       ? 'bridge has no title.* methods'
       : esc(titleState.error);
-    return `<div class="ttl-block"><div class="ttl-head">
-      <span class="ttl-dot"></span><span class="ttl-title">Title Screen</span>
-      <span class="ttl-sub ttl-warn">${hint}</span></div></div>`;
+    return `<div class="ttl-entry ttl-entry-warn">
+      <span class="material-symbols-outlined ttl-ico">movie</span>
+      <span class="ttl-entry-name">Title Screen</span>
+      <span class="ttl-entry-sub">${hint}</span></div>`;
   }
   if (!titleHasShots()) return '';
-
-  const secs = titleState.data.sections;
   const shots = _allShots();
-  const zoneName = secs[0] ? secs[0].zoneName : '';
-  const weatherCount = secs.reduce((n, x) => n + x.weather.length, 0);
-
-  // Timeline strip: one clip per shot, equal width because shot duration is not yet
-  // known (see titleRenderTick). Reads as a lane so the shape and weather changes are
-  // visible at a glance rather than only in the list below.
-  let clips = '';
-  shots.forEach((cam, i) => {
-    const sel = titleState.selected === cam.name;
-    const w = _weatherFor(cam.name);
-    clips += `<div class="ttl-clip ${cam.shape}${sel ? ' sel' : ''}"
-      data-title-track="${esc(cam.name)}" title="${esc(cam.name)} · ${cam.shape} · ${cam.keyframes.length} keyframes">
-      <span class="ttl-clip-name">${esc(cam.name)}</span>
-      ${w ? `<span class="ttl-clip-w">${esc(w.tag)}</span>` : ''}
-    </div>`;
-  });
-
-  let rows = '';
-  if (titleState.open) {
-    shots.forEach((cam, i) => {
-      const w = _weatherFor(cam.name);
-      const kf = cam.keyframes || [];
-      const fov = kf.length ? Math.round(kf[0].fovDeg) : '';
-      const sel = titleState.selected === cam.name ? ' sel' : '';
-      rows += `<div class="ttl-row${sel}" data-title-track="${esc(cam.name)}">
-        <span class="ttl-idx">${i + 1}</span>
-        <span class="ttl-name">${esc(cam.name)}</span>
-        <span class="ttl-chip ttl-${cam.shape}">${cam.shape}</span>
-        <span class="ttl-meta">${kf.length} kf</span>
-        <span class="ttl-meta">${fov}&deg;</span>
-        ${w ? `<span class="ttl-chip ttl-w">${esc(w.tag)}</span>` : '<span></span>'}
-      </div>`;
-    });
-  }
-
-  return `<div class="ttl-block">
-    <div class="ttl-head" data-title-toggle="1">
-      <span class="ttl-caret">${titleState.open ? '&#9662;' : '&#9656;'}</span>
-      <span class="ttl-dot"></span>
-      <span class="ttl-title">Title Screen</span>
-      <span class="ttl-sub">${esc(zoneName)} &middot; ${shots.length} shots &middot; ${weatherCount} weather</span>
-      <button class="ttl-btn${titleState.playing ? ' on' : ''}" data-title-play="1"
-        title="Fly the shots in order, looping">${titleState.playing ? '&#9632;' : '&#9654;'}</button>
-      <button class="ttl-btn${titleState.showPaths ? ' on' : ''}" data-title-paths="1"
-        title="Draw the camera paths in the viewport">&#9585;&#9586;</button>
-    </div>
-    <div class="ttl-strip">${clips}<div class="ttl-playhead" data-title-playhead="1"></div></div>
-    ${rows}
+  const zoneName = titleState.data.sections[0]?.zoneName || '';
+  return `<div class="ttl-entry" data-title-open="1" title="Open the title screen shots">
+    <span class="material-symbols-outlined ttl-ico">movie</span>
+    <span class="ttl-entry-name">Title Screen</span>
+    <span class="ttl-entry-sub">${esc(zoneName)}</span>
+    <span class="ttl-entry-count">${shots.length}</span>
   </div>`;
 }
 
@@ -400,32 +358,101 @@ function _weatherFor(trackName) {
   return null;
 }
 
-/** Wire clicks for the Title block. Call after the Events panel writes its HTML. */
-export function wireTitleSection(rootEl) {
-  if (!rootEl) return;
-  const play = rootEl.querySelector('[data-title-play]');
-  if (play) play.addEventListener('click', (e) => {
-    e.stopPropagation();
+function _fmt(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+
+/** Render the modal body. Kept in one place so play/paths/selection all refresh here. */
+function renderTitleModal() {
+  const body = document.getElementById('title-modal-body');
+  if (!body || !titleHasShots()) return;
+  const shots = _allShots();
+  const sec = titleState.data.sections[0];
+  const weatherCount = titleState.data.sections.reduce((n, x) => n + x.weather.length, 0);
+
+  let clips = '';
+  shots.forEach((cam) => {
+    const w = _weatherFor(cam.name);
+    const sel = titleState.selected === cam.name ? ' sel' : '';
+    clips += `<div class="ttl-clip ${cam.shape}${sel}" data-title-track="${esc(cam.name)}"
+      title="${esc(cam.name)} · ${cam.shape} · ${cam.keyframes.length} keyframes">
+      <span class="ttl-clip-name">${esc(cam.name)}</span>
+      ${w ? `<span class="ttl-clip-w" title="weather turns over: ${esc(w.tag)}"></span>` : ''}
+    </div>`;
+  });
+
+  let rows = '';
+  shots.forEach((cam, i) => {
+    const w = _weatherFor(cam.name);
+    const kf = cam.keyframes || [];
+    const k0 = kf[0] || { eye: [0, 0, 0], fovDeg: 0 };
+    const sel = titleState.selected === cam.name ? ' sel' : '';
+    rows += `<tr class="ttl-tr${sel}" data-title-track="${esc(cam.name)}">
+      <td class="ttl-idx">${i + 1}</td>
+      <td class="ttl-name">${esc(cam.name)}</td>
+      <td><span class="ttl-chip ttl-${cam.shape}">${cam.shape}</span></td>
+      <td class="ttl-meta">${kf.length}</td>
+      <td class="ttl-meta">${Math.round(k0.fovDeg)}&deg;</td>
+      <td class="ttl-xyz">${_fmt(k0.eye[0])}, ${_fmt(k0.eye[1])}, ${_fmt(k0.eye[2])}</td>
+      <td>${w ? `<span class="ttl-chip ttl-w">${esc(w.tag)}</span>` : ''}</td>
+    </tr>`;
+  });
+
+  body.innerHTML = `
+    <div class="ttl-bar">
+      <button class="ttl-btn${titleState.playing ? ' on' : ''}" data-title-play="1">
+        <span class="material-symbols-outlined">${titleState.playing ? 'stop' : 'play_arrow'}</span>
+        ${titleState.playing ? 'Stop' : 'Play'}
+      </button>
+      <button class="ttl-btn${titleState.showPaths ? ' on' : ''}" data-title-paths="1">
+        <span class="material-symbols-outlined">timeline</span> Paths
+      </button>
+      <span class="ttl-bar-sub">${esc(sec.zoneName)} &middot; segment ${sec.section} &middot;
+        ${shots.length} shots &middot; ${weatherCount} weather</span>
+    </div>
+    <div class="ttl-strip">${clips}<div class="ttl-playhead" data-title-playhead="1"></div></div>
+    <table class="ttl-table">
+      <thead><tr><th></th><th>shot</th><th>path</th><th>kf</th><th>fov</th>
+        <th>eye (FFXI x, y, z)</th><th>weather</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="ttl-foot">Click a shot to jump the camera &middot; double-click to play from it</div>`;
+
+  wireTitleModal(body);
+}
+
+/** Open the modal for the current zone. */
+export function openTitleModal(anchor) {
+  const modal = document.getElementById('title-modal');
+  if (!modal || !titleHasShots()) return;
+  const t = document.getElementById('ttl-modal-title');
+  if (t) t.textContent = `Title Screen — ${titleState.data.sections[0]?.zoneName || ''}`;
+  renderTitleModal();
+  if (_openModal) _openModal(modal, anchor); else modal.classList.add('open');
+}
+
+function wireTitleModal(body) {
+  const play = body.querySelector('[data-title-play]');
+  if (play) play.addEventListener('click', () => {
     titleState.playing ? titleStop() : titlePlay(0);
+    renderTitleModal();
   });
-  const head = rootEl.querySelector('[data-title-toggle]');
-  if (head) head.addEventListener('click', (e) => {
-    if (e.target && e.target.closest('[data-title-paths], [data-title-play], .ttl-strip')) return;
-    titleState.open = !titleState.open;
-    if (_onChanged) _onChanged();
-  });
-  const paths = rootEl.querySelector('[data-title-paths]');
-  if (paths) paths.addEventListener('click', (e) => {
-    e.stopPropagation();
+  const paths = body.querySelector('[data-title-paths]');
+  if (paths) paths.addEventListener('click', () => {
     setTitlePathsVisible(!titleState.showPaths);
-    if (_onChanged) _onChanged();
+    renderTitleModal();
   });
-  rootEl.querySelectorAll('[data-title-track]').forEach((el) => {
+  body.querySelectorAll('[data-title-track]').forEach((el) => {
     const name = el.getAttribute('data-title-track');
-    el.addEventListener('click', () => titleFlyTo(name, 0));
+    el.addEventListener('click', () => { titleFlyTo(name, 0); renderTitleModal(); });
     el.addEventListener('dblclick', () => {
       const idx = _allShots().findIndex((c) => c.name === name);
-      if (idx >= 0) titlePlay(idx);
+      if (idx >= 0) { titlePlay(idx); renderTitleModal(); }
     });
   });
+}
+
+/** Wire the Events-list row. Call after the Events panel writes its HTML. */
+export function wireTitleSection(rootEl) {
+  if (!rootEl) return;
+  const entry = rootEl.querySelector('[data-title-open]');
+  if (entry) entry.addEventListener('click', () => openTitleModal(entry));
 }
