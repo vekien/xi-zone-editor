@@ -2240,25 +2240,13 @@ if (settingsBtn) settingsBtn.onclick = () => toggleModal(settingsPanel, settings
 // These read and write .env through the bridge, the same as the first-run wizard.
 initSetupSettings();
 
-// ── View dropdown menu ────────────────────────────────────────────────────────
-const viewBtn = document.getElementById('view-btn');
+// ── View flyout (inside the Menu dropdown) ────────────────────────────────────
+// View is a hover flyout inside the Menu dropdown (it used to be its own topbar
+// button), so it opens with CSS — the only wiring left is the item actions, and
+// "close" means closing the Menu popover that owns it.
 const viewMenu = document.getElementById('view-menu');
-function closeViewMenu() { viewMenu?.classList.remove('open'); }
-function openViewMenu() {
-  const r = viewBtn.getBoundingClientRect();
-  viewMenu.style.left = r.left + 'px';
-  viewMenu.style.top = (r.bottom + 6) + 'px';
-  viewMenu.classList.add('open');
-}
-if (viewBtn && viewMenu) {
-  viewBtn.onclick = (e) => {
-    e.stopPropagation();
-    viewMenu.classList.contains('open') ? closeViewMenu() : openViewMenu();
-  };
-  document.addEventListener('pointerdown', (e) => {
-    if (viewMenu.classList.contains('open') && !viewMenu.contains(e.target) && e.target !== viewBtn) closeViewMenu();
-  });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeViewMenu(); });
+function closeViewMenu() { closeFileMenu(); }
+if (viewMenu) {
   viewMenu.querySelector('[data-action="grid"]').onclick = () => {
     grid.visible = !grid.visible;
     saveSetting('grid', grid.visible);
@@ -2299,7 +2287,7 @@ if (viewBtn && viewMenu) {
     closeViewMenu();
   };
   viewMenu.querySelector('[data-action="perf"]').onclick = () => {
-    toggleModal(perfPanel, viewBtn);
+    toggleModal(perfPanel, fileBtn);
     closeViewMenu();
   };
   viewMenu.querySelector('[data-action="reset-windows"]').onclick = () => {
@@ -2452,10 +2440,14 @@ if (_cullDistEl) {
 }
 _syncCullUI();
 
-// ── File dropdown menu (New / Import GLB / Export JSON / Export Commands) ─────
+// ── Menu dropdown (New / Import GLB / Export JSON / Export Commands / View) ───
 // A lightweight popover, not a draggable modal: clicking anywhere outside closes it.
 const fileBtn = document.getElementById('file-btn');
 const fileMenu = document.getElementById('file-menu');
+// The View flyout lives inside this menu but owns its own handlers, so every
+// data-action sweep below has to skip it.
+const fileActionBtns = () =>
+  [...fileMenu.querySelectorAll('button[data-action]')].filter((b) => !viewMenu?.contains(b));
 const glbFileInput = document.getElementById('glb-file-input');
 const jsonFileInput = document.getElementById('json-file-input');
 function closeFileMenu() { fileMenu?.classList.remove('open'); }
@@ -2465,7 +2457,7 @@ function syncFileMenuGating() {
   const editable = (getMode() === 'edit') && !launcherState.browseOnly;
   const inProject = !!launcherState.currentProject && !launcherState.browseOnly;
   const canPublish = editable && publishEnabled();
-  fileMenu.querySelectorAll('button[data-action]').forEach((b) => {
+  fileActionBtns().forEach((b) => {
     const a = b.dataset.action;
     // Help is always available, regardless of mode / project state.
     if (a === 'help') { b.disabled = false; return; }
@@ -2474,11 +2466,6 @@ function syncFileMenuGating() {
     if (a === 'apply-game') { b.disabled = !canPublish; return; }   // Publish: needs Edit mode + a loaded zone
     b.disabled = !editable;
   });
-  // NavMesh submenu items use ids, not data-action — gate them as edit-only too.
-  for (const id of ['navmesh-refresh', 'navmesh-generate']) {
-    const b = document.getElementById(id);
-    if (b) b.disabled = !editable;
-  }
 }
 function openFileMenu() {
   const r = fileBtn.getBoundingClientRect();
@@ -2497,7 +2484,7 @@ if (fileBtn && fileMenu) {
     if (fileMenu.classList.contains('open') && !fileMenu.contains(e.target) && e.target !== fileBtn) closeFileMenu();
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFileMenu(); });
-  fileMenu.querySelectorAll('button[data-action]').forEach((b) => {
+  fileActionBtns().forEach((b) => {
     b.onclick = () => {
       closeFileMenu();
       switch (b.dataset.action) {
@@ -2523,13 +2510,42 @@ if (fileBtn && fileMenu) {
       }
     };
   });
+  // Settings is a plain item in this menu (no data-action) — its own handler opens
+  // the panel, this just dismisses the popover behind it.
+  settingsBtn?.addEventListener('click', () => closeFileMenu());
 }
 
-// Quick-action buttons in the topbar — mirror the matching File-menu items.
+// ── Tools dropdown menu (Navmesh) ────────────────────────────────────────────
+const toolsBtn = document.getElementById('tools-btn');
+const toolsMenu = document.getElementById('tools-menu');
+function closeToolsMenu() { toolsMenu?.classList.remove('open'); }
+function syncToolsMenuGating() {
+  const editable = (getMode() === 'edit') && !launcherState.browseOnly;
+  for (const id of ['navmesh-refresh', 'navmesh-generate']) {
+    const b = document.getElementById(id);
+    if (b) b.disabled = !editable;
+  }
+}
+function openToolsMenu() {
+  const r = toolsBtn.getBoundingClientRect();
+  toolsMenu.style.left = r.left + 'px';
+  toolsMenu.style.top = (r.bottom + 6) + 'px';
+  syncToolsMenuGating();
+  toolsMenu.classList.add('open');
+}
+if (toolsBtn && toolsMenu) {
+  toolsBtn.onclick = (e) => {
+    e.stopPropagation();
+    toolsMenu.classList.contains('open') ? closeToolsMenu() : openToolsMenu();
+  };
+  document.addEventListener('pointerdown', (e) => {
+    if (toolsMenu.classList.contains('open') && !toolsMenu.contains(e.target) && e.target !== toolsBtn) closeToolsMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeToolsMenu(); });
+}
+
+// Publish — the one quick action left in the topbar, mirroring Menu > Publish.
 document.getElementById('quick-publish')?.addEventListener('click', () => applyToGame());
-document.getElementById('quick-glb')?.addEventListener('click', () => importGlbViaPicker());
-document.getElementById('quick-sfx')?.addEventListener('click', () => document.getElementById('cb-sound-file')?.click());
-document.getElementById('quick-navmesh')?.addEventListener('click', () => document.getElementById('navmesh-generate')?.click());
 if (glbFileInput) {
   glbFileInput.onchange = () => {
     const f = glbFileInput.files?.[0];
@@ -3303,7 +3319,6 @@ function notifyBridgeOffline(wasConnected) {
 onBridgeStatus((online) => {
   if (bridgeStatusEl) {
     bridgeStatusEl.classList.toggle('off', !online);
-    bridgeStatusEl.textContent = online ? 'android_wifi_3_bar' : 'android_wifi_3_bar_off';
     bridgeStatusEl.title = online
       ? 'Connected to Python XI Tools'
       : 'Disconnected from XI Tools — Save / Publish unavailable. Run via `xi gui zone`.';
@@ -4668,11 +4683,11 @@ const navmeshRefreshBtn  = document.getElementById('navmesh-refresh');
 const navmeshGenerateBtn = document.getElementById('navmesh-generate');
 
 if (navmeshRefreshBtn) {
-  navmeshRefreshBtn.onclick = () => { closeFileMenu(); if (currentZoneUrl) reloadNavmesh(); };
+  navmeshRefreshBtn.onclick = () => { closeToolsMenu(); if (currentZoneUrl) reloadNavmesh(); };
 }
 if (navmeshGenerateBtn) {
   navmeshGenerateBtn.onclick = async () => {
-    closeFileMenu();
+    closeToolsMenu();
     if (!currentZoneUrl) return;
     if (!bridgeOnline()) { await xi_alert('Bridge Offline', 'Start the editor server first (xi gui zone).'); return; }
     navmeshGenerateBtn.disabled = true;
