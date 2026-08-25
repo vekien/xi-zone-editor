@@ -2240,13 +2240,25 @@ if (settingsBtn) settingsBtn.onclick = () => toggleModal(settingsPanel, settings
 // These read and write .env through the bridge, the same as the first-run wizard.
 initSetupSettings();
 
-// ── View flyout (inside the Menu dropdown) ────────────────────────────────────
-// View is a hover flyout inside the Menu dropdown (it used to be its own topbar
-// button), so it opens with CSS — the only wiring left is the item actions, and
-// "close" means closing the Menu popover that owns it.
+// ── View dropdown menu ────────────────────────────────────────────────────────
+const viewBtn = document.getElementById('view-btn');
 const viewMenu = document.getElementById('view-menu');
-function closeViewMenu() { closeFileMenu(); }
-if (viewMenu) {
+function closeViewMenu() { viewMenu?.classList.remove('open'); }
+function openViewMenu() {
+  const r = viewBtn.getBoundingClientRect();
+  viewMenu.style.left = r.left + 'px';
+  viewMenu.style.top = (r.bottom + 6) + 'px';
+  viewMenu.classList.add('open');
+}
+if (viewBtn && viewMenu) {
+  viewBtn.onclick = (e) => {
+    e.stopPropagation();
+    viewMenu.classList.contains('open') ? closeViewMenu() : openViewMenu();
+  };
+  document.addEventListener('pointerdown', (e) => {
+    if (viewMenu.classList.contains('open') && !viewMenu.contains(e.target) && e.target !== viewBtn) closeViewMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeViewMenu(); });
   viewMenu.querySelector('[data-action="grid"]').onclick = () => {
     grid.visible = !grid.visible;
     saveSetting('grid', grid.visible);
@@ -2287,7 +2299,7 @@ if (viewMenu) {
     closeViewMenu();
   };
   viewMenu.querySelector('[data-action="perf"]').onclick = () => {
-    toggleModal(perfPanel, fileBtn);
+    toggleModal(perfPanel, viewBtn);
     closeViewMenu();
   };
   viewMenu.querySelector('[data-action="reset-windows"]').onclick = () => {
@@ -2440,14 +2452,10 @@ if (_cullDistEl) {
 }
 _syncCullUI();
 
-// ── Menu dropdown (New / Import GLB / Export JSON / Export Commands / View) ───
+// ── Menu dropdown (New / Import GLB / Export JSON / Export Commands) ─────────
 // A lightweight popover, not a draggable modal: clicking anywhere outside closes it.
 const fileBtn = document.getElementById('file-btn');
 const fileMenu = document.getElementById('file-menu');
-// The View flyout lives inside this menu but owns its own handlers, so every
-// data-action sweep below has to skip it.
-const fileActionBtns = () =>
-  [...fileMenu.querySelectorAll('button[data-action]')].filter((b) => !viewMenu?.contains(b));
 const glbFileInput = document.getElementById('glb-file-input');
 const jsonFileInput = document.getElementById('json-file-input');
 function closeFileMenu() { fileMenu?.classList.remove('open'); }
@@ -2457,7 +2465,7 @@ function syncFileMenuGating() {
   const editable = (getMode() === 'edit') && !launcherState.browseOnly;
   const inProject = !!launcherState.currentProject && !launcherState.browseOnly;
   const canPublish = editable && publishEnabled();
-  fileActionBtns().forEach((b) => {
+  fileMenu.querySelectorAll('button[data-action]').forEach((b) => {
     const a = b.dataset.action;
     // Help is always available, regardless of mode / project state.
     if (a === 'help') { b.disabled = false; return; }
@@ -2484,7 +2492,7 @@ if (fileBtn && fileMenu) {
     if (fileMenu.classList.contains('open') && !fileMenu.contains(e.target) && e.target !== fileBtn) closeFileMenu();
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFileMenu(); });
-  fileActionBtns().forEach((b) => {
+  fileMenu.querySelectorAll('button[data-action]').forEach((b) => {
     b.onclick = () => {
       closeFileMenu();
       switch (b.dataset.action) {
@@ -2492,6 +2500,7 @@ if (fileBtn && fileMenu) {
         case 'apply-game':     applyToGame(); break;
         case 'reset':          resetZone(); break;
         case 'reset-collision': resetCollision(); break;
+        case 'reset-baked-collision': resetBakedCollision(); break;
         case 'clear-versions': clearVersionHistory(); break;
         case 'version-history': openVersionHistory(); break;
         case 'package-changes': packageChanges(); break;
@@ -4000,6 +4009,27 @@ async function resetCollision() {
   buildObjectList();
   updateChangesUI();
   setStatus(`Removed ${prims.length} collision primitive${prims.length === 1 ? '' : 's'}.`);
+}
+
+// Menu > Reset > Reset Baked Collision — `zone.clearCollision`: strip the zone's OWN baked
+// collision mesh (the 0x1C geometry that shipped in the DAT) while leaving every placement,
+// including your collision primitives, alone. Writes the DAT in place; Reset Zone restores the
+// pristine bytes from the .base backup.
+async function resetBakedCollision() {
+  if (!bridgeOnline()) { setStatus('Reset Baked Collision needs the backend — run the editor via `xi gui zone`', true); return; }
+  if (!currentZoneUrl) { setStatus('Load a zone first', true); return; }
+  if (!await xi_confirm('Reset Baked Collision',
+    "Strips the collision mesh baked into this zone's DAT — the walls and floors the zone "
+    + 'shipped with. Collision primitives you placed are not touched, and neither is any other '
+    + 'geometry.\n\nOnly Reset Zone (restore from .base) undoes this. Continue?', 'Reset')) return;
+  setStatus('Clearing baked collision…');
+  try {
+    const r = await bridgeCall('zone.clearCollision', { zone: currentZoneUrl });
+    CACHE_BUST = Date.now();            // the DAT was rewritten on disk → bypass the browser cache
+    await reloadCollisionOverlay();     // scoped rebuild: scene, selection, and undo all survive
+    const n = (r && r.removed) || 0;
+    setStatus(`Baked collision cleared — removed ${n} mesh${n === 1 ? '' : 'es'}.`);
+  } catch (e) { setStatus(`Reset Baked Collision failed: ${e.message}`, true); }
 }
 
 // Success popup after a Reset completes — a centred modal like the New Zone dialog.

@@ -149,103 +149,66 @@ button.pkg-wizard-primary:hover {
   box-shadow: 0 8px 20px -8px #46b47f;
 }
 
-/* ── First-run workspace setup gate ─────────────────────────────────────────── */
+/* ── Projects launcher ──────────────────────────────────────────────────────── */
 .projects-overlay {
   position: fixed;
   inset: 0;
   z-index: 10040;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Full-screen scrim: swallows every click and blurs the editor behind it, so the
+     launcher reads as a layer over the scene rather than a replacement for it. */
+  background: rgba(8, 9, 13, 0.62);
+  backdrop-filter: blur(9px) saturate(0.85);
 }
 .projects-shell {
   display: flex;
-  width: 100%;
-  height: 100%;
+  width: 90%;
+  height: 90%;
+  max-width: 1680px;
+  max-height: 1250px;
+  background: #191a20;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 0 50px 0 #00000063;
   font: 13px/1.5 Roboto, sans-serif;
 }
-.projects-sidebar {
-  flex: 0 0 280px;
+/* Header: the brand + version the old sidebar carried, and the Close button. */
+.projects-head {
   display: flex;
-  flex-direction: column;
-  background: #14141a;
-  border-right: 1px solid #2a2a36;
-  padding: 26px 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 34px;
 }
 .projects-brand {
-  padding: 6px 26px 22px;
-  border-bottom: 1px solid #24242e;
-  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .projects-logo {
-  max-height: 54px;
-  max-width: 190px;
+  height: 26px;
+  width: auto;
   opacity: 0.95;
   display: block;
 }
 .projects-version {
-  margin-top: 14px;
   font-size: 12px;
   letter-spacing: 0.03em;
   color: #7e8493;
-}
-.projects-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0 14px;
-}
-.projects-cat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 14px;
-  font-size: 14px;
-  text-align: left;
-  color: #c2c2ce;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.projects-cat:hover:not(:disabled) {
-  background: #20202b;
-  color: #fff;
-}
-.projects-cat.active {
-  background: #2a3550;
-  color: #fff;
-}
-.projects-cat:disabled {
-  color: #565c6b;
-  cursor: default;
-}
-.projects-cat .soon {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6a7080;
-  padding: 2px 6px;
-  border-radius: 3px;
 }
 .projects-main {
   position: relative;
   flex: 1 1 auto;
   background: #191a20;
-  padding: 60px 56px;
+  padding: 30px 48px 48px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   overflow-y: auto;
 }
-.projects-top-actions {
-  position: absolute;
-  top: 22px;
-  right: 28px;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.projects-back-btn {
+.projects-close-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -259,34 +222,12 @@ button.pkg-wizard-primary:hover {
   border-radius: 9px;
   transition: color 0.12s, background 0.12s, border-color 0.12s;
 }
-.projects-back-btn:hover {
+.projects-close-btn:hover {
   color: #eef1f8;
   background: #20222b;
   border-color: #454652;
 }
-.projects-back-btn .material-symbols-outlined {
-  font-size: 20px;
-}
-.projects-delete-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: #ff9b9b;
-  background: color-mix(in srgb, #ff8f8f 12%, transparent);
-  border: 1px solid color-mix(in srgb, #ff8f8f 34%, transparent);
-  border-radius: 9px;
-  transition: color 0.12s, background 0.12s, border-color 0.12s;
-}
-.projects-delete-btn:hover {
-  color: #fff;
-  background: color-mix(in srgb, #ff8f8f 22%, transparent);
-  border-color: #ff8f8f;
-}
-.projects-delete-btn .material-symbols-outlined {
+.projects-close-btn .material-symbols-outlined {
   font-size: 20px;
 }
 .projects-pane-title {
@@ -403,7 +344,7 @@ button.pkg-wizard-primary:hover {
   gap: 12px;
 }
 
-/* Delete Project modal */
+/* Delete Project — an edit-only action inside the New/Edit Project modal */
 .dp-note {
   font-size: 12px;
   color: #9aa0ad;
@@ -421,16 +362,15 @@ button.pkg-wizard-primary:hover {
   border: 1px solid #6a531e;
   border-radius: 5px;
 }
-.dp-select {
-  font: 13px/1.4 Roboto, sans-serif;
-  color: #e6e6ee;
-  background-color: #0d0e12;   /* longhand so the base select chevron survives */
-  border: none;
-  border-radius: 8px;
-  padding: 9px 11px;
+/* Delete sits left, Save right — the default action lands under the cursor's exit path,
+   the destructive one is off on its own. New Project hides Delete, leaving Save at left. */
+.np-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 .dp-delete-btn {
-  align-self: flex-start;
   padding: 10px 22px;
   font-weight: 600;
   color: #fff;

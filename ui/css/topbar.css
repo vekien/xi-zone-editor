@@ -52,6 +52,11 @@
   opacity: 0.85;
   margin-bottom: -2px;
 }
+/* Publish sits in the nav as the one write-to-the-game action, so it carries a
+   faint green wash at rest; hover deepens it to the full tint. */
+.topbar #quick-publish {
+  background: #228b3733;
+}
 .topbar #quick-publish:hover {
   background: #228b37ee;
 } /* publish = green tint */
@@ -414,12 +419,14 @@
 .menu .submenu-parent {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
 }
+/* auto margin, not space-between: the parents lead with an icon, so with three
+   children in the row the arrow still has to sit at the right edge. */
 .menu .submenu-arrow {
   font-size: 18px;
-  margin-left: 8px;
+  margin-left: auto;
+  padding-left: 8px;
   opacity: 0.55;
 }
 .menu .menu-item:hover > .submenu-parent {
