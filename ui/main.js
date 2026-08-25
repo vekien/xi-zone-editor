@@ -2452,7 +2452,7 @@ if (_cullDistEl) {
 }
 _syncCullUI();
 
-// ── File dropdown menu (New / Import GLB / Export JSON / Export Commands) ─────
+// ── Menu dropdown (New / Import GLB / Export JSON / Export Commands) ─────────
 // A lightweight popover, not a draggable modal: clicking anywhere outside closes it.
 const fileBtn = document.getElementById('file-btn');
 const fileMenu = document.getElementById('file-menu');
@@ -2474,11 +2474,6 @@ function syncFileMenuGating() {
     if (a === 'apply-game') { b.disabled = !canPublish; return; }   // Publish: needs Edit mode + a loaded zone
     b.disabled = !editable;
   });
-  // NavMesh submenu items use ids, not data-action — gate them as edit-only too.
-  for (const id of ['navmesh-refresh', 'navmesh-generate']) {
-    const b = document.getElementById(id);
-    if (b) b.disabled = !editable;
-  }
 }
 function openFileMenu() {
   const r = fileBtn.getBoundingClientRect();
@@ -2505,6 +2500,7 @@ if (fileBtn && fileMenu) {
         case 'apply-game':     applyToGame(); break;
         case 'reset':          resetZone(); break;
         case 'reset-collision': resetCollision(); break;
+        case 'reset-baked-collision': resetBakedCollision(); break;
         case 'clear-versions': clearVersionHistory(); break;
         case 'version-history': openVersionHistory(); break;
         case 'package-changes': packageChanges(); break;
@@ -2523,13 +2519,42 @@ if (fileBtn && fileMenu) {
       }
     };
   });
+  // Settings is a plain item in this menu (no data-action) — its own handler opens
+  // the panel, this just dismisses the popover behind it.
+  settingsBtn?.addEventListener('click', () => closeFileMenu());
 }
 
-// Quick-action buttons in the topbar — mirror the matching File-menu items.
+// ── Tools dropdown menu (Navmesh) ────────────────────────────────────────────
+const toolsBtn = document.getElementById('tools-btn');
+const toolsMenu = document.getElementById('tools-menu');
+function closeToolsMenu() { toolsMenu?.classList.remove('open'); }
+function syncToolsMenuGating() {
+  const editable = (getMode() === 'edit') && !launcherState.browseOnly;
+  for (const id of ['navmesh-refresh', 'navmesh-generate']) {
+    const b = document.getElementById(id);
+    if (b) b.disabled = !editable;
+  }
+}
+function openToolsMenu() {
+  const r = toolsBtn.getBoundingClientRect();
+  toolsMenu.style.left = r.left + 'px';
+  toolsMenu.style.top = (r.bottom + 6) + 'px';
+  syncToolsMenuGating();
+  toolsMenu.classList.add('open');
+}
+if (toolsBtn && toolsMenu) {
+  toolsBtn.onclick = (e) => {
+    e.stopPropagation();
+    toolsMenu.classList.contains('open') ? closeToolsMenu() : openToolsMenu();
+  };
+  document.addEventListener('pointerdown', (e) => {
+    if (toolsMenu.classList.contains('open') && !toolsMenu.contains(e.target) && e.target !== toolsBtn) closeToolsMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeToolsMenu(); });
+}
+
+// Publish — the one quick action left in the topbar, mirroring Menu > Publish.
 document.getElementById('quick-publish')?.addEventListener('click', () => applyToGame());
-document.getElementById('quick-glb')?.addEventListener('click', () => importGlbViaPicker());
-document.getElementById('quick-sfx')?.addEventListener('click', () => document.getElementById('cb-sound-file')?.click());
-document.getElementById('quick-navmesh')?.addEventListener('click', () => document.getElementById('navmesh-generate')?.click());
 if (glbFileInput) {
   glbFileInput.onchange = () => {
     const f = glbFileInput.files?.[0];
@@ -3303,7 +3328,6 @@ function notifyBridgeOffline(wasConnected) {
 onBridgeStatus((online) => {
   if (bridgeStatusEl) {
     bridgeStatusEl.classList.toggle('off', !online);
-    bridgeStatusEl.textContent = online ? 'android_wifi_3_bar' : 'android_wifi_3_bar_off';
     bridgeStatusEl.title = online
       ? 'Connected to Python XI Tools'
       : 'Disconnected from XI Tools — Save / Publish unavailable. Run via `xi gui zone`.';
@@ -3987,6 +4011,27 @@ async function resetCollision() {
   setStatus(`Removed ${prims.length} collision primitive${prims.length === 1 ? '' : 's'}.`);
 }
 
+// Menu > Reset > Reset Baked Collision — `zone.clearCollision`: strip the zone's OWN baked
+// collision mesh (the 0x1C geometry that shipped in the DAT) while leaving every placement,
+// including your collision primitives, alone. Writes the DAT in place; Reset Zone restores the
+// pristine bytes from the .base backup.
+async function resetBakedCollision() {
+  if (!bridgeOnline()) { setStatus('Reset Baked Collision needs the backend — run the editor via `xi gui zone`', true); return; }
+  if (!currentZoneUrl) { setStatus('Load a zone first', true); return; }
+  if (!await xi_confirm('Reset Baked Collision',
+    "Strips the collision mesh baked into this zone's DAT — the walls and floors the zone "
+    + 'shipped with. Collision primitives you placed are not touched, and neither is any other '
+    + 'geometry.\n\nOnly Reset Zone (restore from .base) undoes this. Continue?', 'Reset')) return;
+  setStatus('Clearing baked collision…');
+  try {
+    const r = await bridgeCall('zone.clearCollision', { zone: currentZoneUrl });
+    CACHE_BUST = Date.now();            // the DAT was rewritten on disk → bypass the browser cache
+    await reloadCollisionOverlay();     // scoped rebuild: scene, selection, and undo all survive
+    const n = (r && r.removed) || 0;
+    setStatus(`Baked collision cleared — removed ${n} mesh${n === 1 ? '' : 'es'}.`);
+  } catch (e) { setStatus(`Reset Baked Collision failed: ${e.message}`, true); }
+}
+
 // Success popup after a Reset completes — a centred modal like the New Zone dialog.
 function showResetDone(msg) {
   const panel = document.getElementById('reset-done-panel');
@@ -4668,11 +4713,11 @@ const navmeshRefreshBtn  = document.getElementById('navmesh-refresh');
 const navmeshGenerateBtn = document.getElementById('navmesh-generate');
 
 if (navmeshRefreshBtn) {
-  navmeshRefreshBtn.onclick = () => { closeFileMenu(); if (currentZoneUrl) reloadNavmesh(); };
+  navmeshRefreshBtn.onclick = () => { closeToolsMenu(); if (currentZoneUrl) reloadNavmesh(); };
 }
 if (navmeshGenerateBtn) {
   navmeshGenerateBtn.onclick = async () => {
-    closeFileMenu();
+    closeToolsMenu();
     if (!currentZoneUrl) return;
     if (!bridgeOnline()) { await xi_alert('Bridge Offline', 'Start the editor server first (xi gui zone).'); return; }
     navmeshGenerateBtn.disabled = true;

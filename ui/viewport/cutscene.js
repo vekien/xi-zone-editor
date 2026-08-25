@@ -3586,7 +3586,7 @@ export function csUpdateLetterbox() {
   const seqOpen = !!(csSeqEl && !csSeqEl.hidden);
   // Hide UI — independent DOM visibility.
   const hideUi = csHideUi && seqOpen;
-  ['gizmo-tools', 'topbar', 'quick-bar', 'side-tabs', 'sel-panel']
+  ['gizmo-tools', 'topbar', 'side-tabs', 'sel-panel']
     .forEach((id) => { const el = document.getElementById(id); if (el) el.style.visibility = hideUi ? 'hidden' : ''; });
 
   // Fixed ratio — the framed 16:9 rect the camera renders into (else full canvas).

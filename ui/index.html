@@ -127,24 +127,24 @@
       <div id="cs-seq-now" class="cs-seq-now"></div>
     </div>
 
+    <!-- Top nav — three floating groups: mode+menus / content tools / publish+bridge -->
     <div class="topbar" id="topbar">
-      <button class="mode-btn" id="mode-btn" title="Switch editor mode">MODE: Editing</button>
-      <button id="file-btn">File</button>
-      <button id="projects-btn" title="Back to the Projects launcher">Projects</button>
-      <button id="assets-btn">Assets</button>
-      <button id="database-btn">Database</button>
-      <button id="changes-btn">Changes <span id="changes-badge" class="hidden changes-badge">0</span></button>
-      <button id="settings-btn">Settings</button>
-      <button id="view-btn">View</button>
-      <span id="bridge-status" class="bridge-dot off material-symbols-outlined" title="Disconnected from XI Tools — Save / Publish unavailable. Run via `xi gui zone`.">android_wifi_3_bar_off</span>
-    </div>
-
-    <!-- Quick-action bar — a separate pill of one-click File-menu shortcuts -->
-    <div class="quick-bar" id="quick-bar">
-      <button id="quick-publish" class="quick-btn" data-bridge title="Publish the change-set to the game DAT (File &gt; Publish)"><span class="material-symbols-outlined">publish</span>Publish</button>
-      <button id="quick-navmesh" class="quick-btn" data-bridge title="Bake a navmesh from the collision (File &gt; NavMesh &gt; Generate)">Navmesh</button>
-      <button id="quick-glb" class="quick-btn" title="Import a GLB model into the scene (File &gt; Import &gt; GLB)">GLB</button>
-      <button id="quick-sfx" class="quick-btn" title="Import a .wav/.ogg as a new sound effect — converts it and adds it to the Sound FX browser to drag into the zone (File &gt; Import &gt; Sound FX)">SFX</button>
+      <div class="topbar-group">
+        <button class="mode-btn" id="mode-btn" title="Switch editor mode">MODE: Editing</button>
+        <button id="file-btn">Menu</button>
+        <button id="projects-btn" title="Back to the Projects launcher">Projects</button>
+        <button id="changes-btn">Changes <span id="changes-badge" class="hidden changes-badge">0</span></button>
+        <button id="view-btn" title="Viewport display toggles">View</button>
+      </div>
+      <div class="topbar-group">
+        <button id="tools-btn" title="Zone tools">Tools</button>
+        <button id="assets-btn">Assets</button>
+        <button id="database-btn">Database</button>
+      </div>
+      <div class="topbar-group">
+        <button id="quick-publish" class="quick-btn" data-bridge title="Publish the change-set to the game DAT (Menu &gt; Publish)"><span class="material-symbols-outlined">publish</span>Publish</button>
+        <span id="bridge-status" class="bridge-dot off" title="Disconnected from XI Tools — Save / Publish unavailable. Run via `xi gui zone`."></span>
+      </div>
     </div>
 
     <!-- Mode dropdown (click-out closes) -->
@@ -160,59 +160,55 @@
 
     <!-- File dropdown menu (click-out closes, unlike the draggable modals) -->
     <div id="file-menu" class="menu">
-      <button data-action="new" title="Create a new zone from a template">New</button>
-      <button data-action="duplicate" data-bridge title="Duplicate this zone to a new zone ID — copies model, event, dialog, and NPC DATs, then clones zone settings">Duplicate</button>
+      <button data-action="new" title="Create a new zone from a template"><span class="material-symbols-outlined">add_box</span>New</button>
+      <button data-action="duplicate" data-bridge title="Duplicate this zone to a new zone ID — copies model, event, dialog, and NPC DATs, then clones zone settings"><span class="material-symbols-outlined">content_copy</span>Duplicate</button>
       <div class="menu-sep"></div>
-      <button data-action="save" data-bridge title="Save the change-set to this zone's workspace (zone-changes.json) via the backend, so it auto-restores next time">Save <span class="menu-kbd">Ctrl+S</span></button>
-      <button data-action="apply-game" data-bridge title="Publish the current change-set into the game DAT via the backend — same as `xi zone import-json` (applies to the current DAT, no reset)">Publish</button>
-      <button data-action="version-history">Version History</button>
+      <button data-action="save" data-bridge title="Save the change-set to this zone's workspace (zone-changes.json) via the backend, so it auto-restores next time"><span class="material-symbols-outlined">save</span>Save <span class="menu-kbd">Ctrl+S</span></button>
+      <button data-action="apply-game" data-bridge title="Publish the current change-set into the game DAT via the backend — same as `xi zone import-json` (applies to the current DAT, no reset)"><span class="material-symbols-outlined">publish</span>Publish</button>
+      <button data-action="version-history"><span class="material-symbols-outlined">history</span>Version History</button>
       <div class="menu-item has-submenu">
-        <button class="submenu-parent" title="Package and template tools">Package Changes<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <button class="submenu-parent" title="Package and template tools"><span class="material-symbols-outlined">inventory_2</span>Package Changes<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
         <div class="submenu">
-          <button id="menu-make-template" data-action="make-template" data-bridge title="Package this Published zone into a reusable template bundle (zone + event + dialog + npc DATs) stored in the workspaces repo">Make Template</button>
-          <button data-action="package-changes" data-bridge title="Open the Package wizard: pick which of this project's edited zones to bundle, then zip their game + HD DATs into one deployable package (workspaces/packages/&lt;project&gt;.zip) matching the client's override-DAT folder layout.">Package Project</button>
+          <button id="menu-make-template" data-action="make-template" data-bridge title="Package this Published zone into a reusable template bundle (zone + event + dialog + npc DATs) stored in the workspaces repo"><span class="material-symbols-outlined">library_add</span>Make Template</button>
+          <button data-action="package-changes" data-bridge title="Open the Package wizard: pick which of this project's edited zones to bundle, then zip their game + HD DATs into one deployable package (workspaces/packages/&lt;project&gt;.zip) matching the client's override-DAT folder layout."><span class="material-symbols-outlined">folder_zip</span>Package Project</button>
         </div>
       </div>
       <div class="menu-sep"></div>
       <div class="menu-item has-submenu">
-        <button class="submenu-parent" title="Import into the scene">Import<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <button class="submenu-parent" title="Import into the scene"><span class="material-symbols-outlined">input</span>Import<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
         <div class="submenu">
-          <button data-action="load" title="Load a zone-changes.json and replay its edits onto the current scene">JSON</button>
-          <button data-action="import" title="Load a GLB model from disk into the scene as a new object (scaled by Settings → Import → GLB Import Scale)">GLB</button>
-          <button data-action="import-sound" title="Import a .wav/.ogg as a new sound effect — installs it and adds it to the Sound FX browser to drag into the zone">Sound FX</button>
-          <button data-action="import-music" title="Import a .wav/.ogg as new music — installs it and adds it to the Music browser (assign it to a zone via the database / zone music)">Music</button>
-          <button data-action="import-col-obj" title="Import a xi collision OBJ — replaces the zone's entire baked collision. Use xi zone export --collision to get the correct OBJ format (Y-negated, col_wall/col_floor materials). Writes directly to the DAT; no publish needed.">Collision OBJ</button>
+          <button data-action="load" title="Load a zone-changes.json and replay its edits onto the current scene"><span class="material-symbols-outlined">data_object</span>JSON</button>
+          <button data-action="import" title="Load a GLB model from disk into the scene as a new object (scaled by Settings → Import → GLB Import Scale)"><span class="material-symbols-outlined">view_in_ar</span>GLB</button>
+          <button data-action="import-sound" title="Import a .wav/.ogg as a new sound effect — installs it and adds it to the Sound FX browser to drag into the zone"><span class="material-symbols-outlined">graphic_eq</span>Sound FX</button>
+          <button data-action="import-music" title="Import a .wav/.ogg as new music — installs it and adds it to the Music browser (assign it to a zone via the database / zone music)"><span class="material-symbols-outlined">music_note</span>Music</button>
+          <button data-action="import-col-obj" title="Import a xi collision OBJ — replaces the zone's entire baked collision. Use xi zone export --collision to get the correct OBJ format (Y-negated, col_wall/col_floor materials). Writes directly to the DAT; no publish needed."><span class="material-symbols-outlined">deployed_code</span>Collision OBJ</button>
         </div>
       </div>
       <div class="menu-item has-submenu">
-        <button class="submenu-parent" title="Download the current change-set">Export<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <button class="submenu-parent" title="Download the current change-set"><span class="material-symbols-outlined">output</span>Export<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
         <div class="submenu">
-          <button data-action="export-json" title="Download changes as JSON (for xi zone import-json)">JSON</button>
-          <button data-action="export-cmds" title="Download as individual xi CLI commands">Commands</button>
+          <button data-action="export-json" title="Download changes as JSON (for xi zone import-json)"><span class="material-symbols-outlined">data_object</span>JSON</button>
+          <button data-action="export-cmds" title="Download as individual xi CLI commands"><span class="material-symbols-outlined">terminal</span>Commands</button>
         </div>
       </div>
       <div class="menu-sep"></div>
       <div class="menu-item has-submenu">
-        <button class="submenu-parent" title="Navmesh tools">NavMesh<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
+        <button class="submenu-parent" title="Destructive zone actions"><span class="material-symbols-outlined">restart_alt</span>Reset<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
         <div class="submenu">
-          <button id="navmesh-refresh" data-bridge title="Reload the .nav file from disk">Refresh</button>
-          <button id="navmesh-generate" data-bridge title="Bake a new .nav from this zone's collision mesh (requires native xi_navmesh lib)">Generate</button>
+          <button data-action="reset" data-bridge class="menu-danger" title="Reset this zone to its pristine baseline (xi zone reset) — restores the DAT from its .base backup and clears your pending edits for this zone. Cannot be undone."><span class="material-symbols-outlined">restart_alt</span>Reset Zone</button>
+          <button data-action="reset-collision" class="menu-danger" title="Remove all user-placed collision primitives (boxes/planes) from this zone. The zone's original collision mesh is not affected. Cannot be undone."><span class="material-symbols-outlined">layers_clear</span>Reset Collision</button>
+          <button data-action="reset-baked-collision" data-bridge class="menu-danger" title="Strip the zone's baked collision mesh out of the DAT (zone.clearCollision) — the walls and floors that shipped with the zone, not the prims you placed. Writes the DAT directly; Reset Zone restores it from the .base backup. Cannot be undone."><span class="material-symbols-outlined">oven_gen</span>Reset Baked Collision</button>
+          <button data-action="clear-versions" data-bridge class="menu-danger" title="Delete all published version snapshots for this zone and reset its version counter to v1. Your current scene and saved change-set are not affected. Cannot be undone."><span class="material-symbols-outlined">history_toggle_off</span>Clear Version History</button>
+          <button id="menu-delete-zone" data-action="delete-zone" class="menu-danger" title="Permanently delete this custom zone from game files (only available for custom zones 400+)"><span class="material-symbols-outlined">delete_forever</span>Delete Zone</button>
         </div>
       </div>
       <div class="menu-sep"></div>
-      <div class="menu-item has-submenu">
-        <button class="submenu-parent" title="Destructive zone actions">Reset<span class="submenu-arrow material-symbols-outlined">chevron_right</span></button>
-        <div class="submenu">
-          <button data-action="reset" data-bridge class="menu-danger" title="Reset this zone to its pristine baseline (xi zone reset) — restores the DAT from its .base backup and clears your pending edits for this zone. Cannot be undone.">Reset Zone</button>
-          <button data-action="reset-collision" class="menu-danger" title="Remove all user-placed collision primitives (boxes/planes) from this zone. The zone's original collision mesh is not affected. Cannot be undone.">Reset Collision</button>
-          <button data-action="clear-versions" data-bridge class="menu-danger" title="Delete all published version snapshots for this zone and reset its version counter to v1. Your current scene and saved change-set are not affected. Cannot be undone.">Clear Version History</button>
-          <button id="menu-delete-zone" data-action="delete-zone" class="menu-danger" title="Permanently delete this custom zone from game files (only available for custom zones 400+)">Delete Zone</button>
-        </div>
-      </div>
+      <button id="settings-btn" title="Editor, project, and setup settings"><span class="material-symbols-outlined">settings</span>Settings</button>
       <div class="menu-sep"></div>
-      <button data-action="help" title="Controls, shortcuts, and about">Help</button>
+      <button data-action="help" title="Controls, shortcuts, and about"><span class="material-symbols-outlined">help</span>Help</button>
     </div>
-    <!-- View dropdown menu -->
+
+    <!-- View dropdown menu — viewport display toggles -->
     <div id="view-menu" class="menu">
       <button data-action="grid"><span class="material-symbols-outlined">grid_on</span>Grid</button>
       <button data-action="center"><span class="material-symbols-outlined">my_location</span>Center</button>
@@ -223,6 +219,13 @@
       <button data-action="perf"><span class="material-symbols-outlined">speed</span>Performance</button>
       <div class="menu-sep"></div>
       <button data-action="reset-windows" title="Move every floating window back on-screen, cascaded from the top-left"><span class="material-symbols-outlined">grid_goldenratio</span>Reset Windows</button>
+    </div>
+
+    <!-- Tools dropdown menu -->
+    <div id="tools-menu" class="menu">
+      <div class="menu-label">Navmesh</div>
+      <button id="navmesh-generate" data-bridge title="Bake a new .nav from this zone's collision mesh (requires native xi_navmesh lib)">Generate</button>
+      <button id="navmesh-refresh" data-bridge title="Reload the .nav file from disk">Refresh</button>
     </div>
     <input type="file" id="glb-file-input" accept=".glb,.gltf,model/gltf-binary" hidden />
     <input type="file" id="json-file-input" accept=".json,application/json" hidden />
@@ -1318,27 +1321,18 @@
       <pre class="wiz-log" id="wiz-tools-log" hidden></pre>
     </div>
 
-    <!-- Projects launcher — two-tone, edge-to-edge entry screen -->
+    <!-- Projects launcher — a centred, semi-fullscreen card over a blurred backdrop.
+         The backdrop covers the viewport, so the editor behind it is inert while it's up. -->
     <div id="projects-overlay" class="projects-overlay" style="display:none">
       <div class="projects-shell">
-        <aside class="projects-sidebar">
-          <div class="projects-brand">
-            <img class="projects-logo" src="./icon.png" alt="XI Zone Editor" />
-            <div class="projects-version" id="projects-version">XI Zone Editor</div>
-          </div>
-          <nav class="projects-nav" id="projects-nav">
-            <button class="projects-cat active" data-cat="zones">Zones</button>
-            <button class="projects-cat" data-cat="effects" disabled>Effects <span class="soon">soon</span></button>
-            <button class="projects-cat" data-cat="weapons" disabled>Weapons <span class="soon">soon</span></button>
-            <button class="projects-cat" data-cat="npcs" disabled>NPCs <span class="soon">soon</span></button>
-            <button class="projects-cat" data-cat="animations" disabled>Animations <span class="soon">soon</span></button>
-          </nav>
-        </aside>
         <main class="projects-main" id="projects-main">
-          <div class="projects-top-actions">
-            <button id="projects-back-btn" class="projects-back-btn" title="Close projects and return to editor" style="display:none"><span class="material-symbols-outlined">arrow_back</span>Go Back</button>
-            <button id="projects-delete-btn" class="projects-delete-btn" title="Delete a project"><span class="material-symbols-outlined">delete</span>Delete Project</button>
-          </div>
+          <header class="projects-head">
+            <div class="projects-brand">
+              <img class="projects-logo" src="./icon.png" alt="" />
+              <span class="projects-version" id="projects-version">XI Zone Editor</span>
+            </div>
+            <button id="projects-close-btn" class="projects-close-btn" title="Close projects and return to the editor" style="display:none"><span class="material-symbols-outlined">close</span>Close</button>
+          </header>
           <div class="projects-pane" data-pane="zones">
             <h2 class="projects-pane-title">Zones</h2>
             <p class="projects-pane-sub">Open a project to edit, or browse zones read-only.</p>
@@ -1375,26 +1369,13 @@
             <input id="np-tags" type="text" autocomplete="off" spellcheck="false" placeholder="comma, separated, tags" />
           </label>
           <div id="np-error" class="projects-new-error" hidden></div>
-          <button id="np-create" class="projects-create-btn">Create Project</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Delete Project modal -->
-    <div id="delete-project-overlay" class="np-overlay" style="display:none">
-      <div class="np-modal">
-        <div class="np-modal-bar">
-          <span class="np-modal-title">Delete Project</span>
-          <button class="np-modal-close" id="dp-close" title="Close">×</button>
-        </div>
-        <div class="np-modal-body">
-          <label class="projects-field">Project
-            <select class="dp-select" id="dp-select"></select>
-          </label>
-          <p class="dp-note">Removes the project folder and its <code>projects.json</code> entry, then commits. Its <b>git history is preserved</b>, so it can be recovered later.</p>
-          <div id="dp-confirm" class="dp-confirm" hidden></div>
-          <div id="dp-error" class="projects-new-error" hidden></div>
-          <button id="dp-delete" class="dp-delete-btn">Delete Project</button>
+          <!-- Edit-only: deleting a project is done from the project it belongs to. -->
+          <p id="np-delete-note" class="dp-note" hidden>Deleting removes the project folder and its <code>projects.json</code> entry, then commits. Its <b>git history is preserved</b>, so it can be recovered later.</p>
+          <div id="np-confirm" class="dp-confirm" hidden></div>
+          <div class="np-modal-actions">
+            <button id="np-delete" class="dp-delete-btn" hidden>Delete Project</button>
+            <button id="np-create" class="projects-create-btn">Create Project</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1797,12 +1778,12 @@
             <input id="db-spawn-y" class="db-spawn-num" type="number" step="any" value="0" title="Y / height (pos_y)" placeholder="Y">
             <span class="db-spawn-label">ID</span>
             <input id="db-spawn-id" class="db-spawn-num" type="number" step="1" value="1" title="Character ID (chars.charid)" placeholder="ID">
-            <button class="db-set-spawn" id="db-set-spawn">Set Spawn Point</button>
-            <button class="db-force-offline" id="db-force-offline" title="Delete this character's login session (accounts_sessions) — force logout after a client crash so you can log back in without waiting for the server timeout">Force Offline</button>
-            <button class="db-reset-spawn" id="db-reset-spawn" title="Move this character to a safe spot in Southern San d'Oria (zone 230). Use when stuck in geometry or a broken zone. Takes effect on next login — log out first.">Reset Spawn</button>
+            <button class="db-set-spawn btn-primary" id="db-set-spawn">Set Spawn Point</button>
+            <button class="db-force-offline btn-danger" id="db-force-offline" title="Delete this character's login session (accounts_sessions) — force logout after a client crash so you can log back in without waiting for the server timeout">Force Offline</button>
+            <button class="db-reset-spawn btn-success" id="db-reset-spawn" title="Move this character to a safe spot in Southern San d'Oria (zone 230). Use when stuck in geometry or a broken zone. Takes effect on next login — log out first.">Reset Spawn</button>
           </div>
           <span class="db-query-hint">Ctrl+Enter</span>
-          <button class="db-query-run" id="db-query-run">&#9654; Run</button>
+          <button class="db-query-run btn-primary" id="db-query-run">&#9654; Run</button>
           <button class="db-table-refresh" id="db-table-refresh" title="Refresh current table">&#8635;</button>
         </div>
       </div>

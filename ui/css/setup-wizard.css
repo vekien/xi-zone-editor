@@ -601,7 +601,6 @@
 
 /* Everything behind the wizard stays hidden while it owns the screen. */
 body.wiz-active #topbar,
-body.wiz-active #quick-bar,
 body.wiz-active #gizmo-tools,
 body.wiz-active #side-tabs,
 body.wiz-active #panel {

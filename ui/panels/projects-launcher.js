@@ -112,8 +112,10 @@ export function openProjectsLauncher() {
   refreshProjectsList();
   const ov = document.getElementById('projects-overlay');
   if (ov) ov.style.display = 'flex';
-  const backBtn = document.getElementById('projects-back-btn');
-  if (backBtn) backBtn.style.display = launcherState.currentProject ? '' : 'none';
+  // Nothing to go back TO until a project is open — that's also what makes the
+  // launcher dismissable (see the backdrop click in initProjectsLauncher).
+  const closeBtn = document.getElementById('projects-close-btn');
+  if (closeBtn) closeBtn.style.display = launcherState.currentProject ? '' : 'none';
 }
 
 export function closeProjectsLauncher() {
@@ -359,6 +361,7 @@ function showNpError(msg) {
 }
 
 let _editingProjectId = null;   // null = create, otherwise the project id being edited
+let _editingProjectName = '';
 function setNpModal(title, btnText) {
   const t = document.getElementById('np-modal-title'); if (t) t.textContent = title;
   const b = document.getElementById('np-create'); if (b) b.textContent = btnText;
@@ -368,17 +371,21 @@ function clearNpFields() {
 }
 function openNewProjectModal() {
   _editingProjectId = null;
+  _editingProjectName = '';
   showNpError('');
   clearNpFields();
   setNpModal('New Project', 'Create Project');
+  showDeleteSection(false);
   const ov = document.getElementById('new-project-overlay');
   if (ov) ov.style.display = 'flex';
   document.getElementById('np-name')?.focus();
 }
 function openEditProjectModal(p) {
   _editingProjectId = p.id;
+  _editingProjectName = p.name || p.id;
   showNpError('');
   setNpModal('Edit Project', 'Save Changes');
+  showDeleteSection(true);
   document.getElementById('np-name').value = p.name || '';
   document.getElementById('np-desc').value = p.description || '';
   document.getElementById('np-authors').value = Array.isArray(p.authors) ? p.authors.join(', ') : (p.authors || '');
@@ -391,6 +398,8 @@ function closeNewProjectModal() {
   const ov = document.getElementById('new-project-overlay');
   if (ov) ov.style.display = 'none';
   _editingProjectId = null;
+  _editingProjectName = '';
+  showDeleteSection(false);
 }
 
 let _creatingProject = false;
@@ -430,79 +439,54 @@ async function submitProjectForm() {
 }
 
 // ── Delete Project ────────────────────────────────────────────────────────────
-function dpError(msg) {
-  const el = document.getElementById('dp-error');
+// Lives inside the Edit Project modal: you delete the project you opened, so there's
+// no picker to get wrong. Two clicks — the first arms the button, the second deletes.
+function showDeleteSection(on) {
+  for (const id of ['np-delete', 'np-delete-note']) {
+    const el = document.getElementById(id);
+    if (el) el.hidden = !on;
+  }
+  resetNpDelete();
+}
+function npConfirmMsg(msg) {
+  const el = document.getElementById('np-confirm');
   if (!el) return;
   if (msg) { el.textContent = msg; el.hidden = false; } else { el.hidden = true; }
 }
-function dpConfirmMsg(msg) {
-  const el = document.getElementById('dp-confirm');
-  if (!el) return;
-  if (msg) { el.textContent = msg; el.hidden = false; } else { el.hidden = true; }
-}
-let _dpConfirmId = null;
-function resetDpButton() {
-  _dpConfirmId = null;
-  dpConfirmMsg('');
-  const btn = document.getElementById('dp-delete');
+let _npDeleteArmed = false;
+function resetNpDelete() {
+  _npDeleteArmed = false;
+  npConfirmMsg('');
+  const btn = document.getElementById('np-delete');
   if (btn) { btn.disabled = false; btn.textContent = 'Delete Project'; btn.classList.remove('confirm'); }
 }
-async function populateDpSelect() {
-  const sel = document.getElementById('dp-select');
-  if (!sel) return;
-  const path = workspacePath();
-  if (!bridgeOnline() || !path) { sel.innerHTML = '<option value="">Backend offline</option>'; return; }
-  try {
-    const r = await bridgeCall('project.list', { path });
-    const projects = (r && r.projects) || [];
-    sel.innerHTML = '';
-    if (!projects.length) { sel.innerHTML = '<option value="">No projects</option>'; return; }
-    for (const p of projects) {
-      const o = document.createElement('option');
-      o.value = p.id; o.textContent = p.name || p.id;
-      sel.appendChild(o);
-    }
-  } catch { sel.innerHTML = '<option value="">Could not load</option>'; }
-}
-function openDeleteProjectModal() {
-  dpError(''); resetDpButton();
-  populateDpSelect();
-  const ov = document.getElementById('delete-project-overlay');
-  if (ov) ov.style.display = 'flex';
-}
-function closeDeleteProjectModal() {
-  const ov = document.getElementById('delete-project-overlay');
-  if (ov) ov.style.display = 'none';
-  resetDpButton();
-}
-async function onDpDelete() {
-  const sel = document.getElementById('dp-select');
-  const id = sel?.value || '';
+async function onNpDelete() {
+  const id = _editingProjectId;
   if (!id) return;
-  const name = sel.options[sel.selectedIndex]?.textContent || id;
-  const btn = document.getElementById('dp-delete');
-  // First click on a project → ask to confirm.
-  if (_dpConfirmId !== id) {
-    _dpConfirmId = id;
-    dpError('');
-    dpConfirmMsg(`Are you sure? Delete "${name}"? Its git history is kept.`);
+  const name = _editingProjectName || id;
+  const btn = document.getElementById('np-delete');
+  // First click → arm and ask.
+  if (!_npDeleteArmed) {
+    _npDeleteArmed = true;
+    showNpError('');
+    npConfirmMsg(`Are you sure? Delete "${name}"? Its git history is kept.`);
     if (btn) { btn.textContent = 'Yes, delete'; btn.classList.add('confirm'); }
     return;
   }
   // Second click → delete for real.
-  dpError('');
+  showNpError('');
   if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
   try {
     const r = await bridgeCall('project.delete', { path: workspacePath(), id });
-    if (!r || !r.ok) { dpError((r && r.error) || 'Delete failed.'); resetDpButton(); return; }
+    if (!r || !r.ok) { showNpError((r && r.error) || 'Delete failed.'); resetNpDelete(); return; }
     removeMyProject(id);
     const m = loadProjectLastZones(); if (m[id]) { delete m[id]; localStorage.setItem(PROJECT_LASTZONE_KEY, JSON.stringify(m)); }
-    closeDeleteProjectModal();   // dismiss on success (was: stay open with a "Deleted…" message)
+    closeNewProjectModal();      // dismiss on success
     refreshProjectsList();       // the launcher behind it reflects the removal
     _deps.setStatus(`Deleted project "${r.name || name}" (recoverable from git history)`);
   } catch (e) {
-    dpError((e && e.message) ? e.message : 'Delete failed.');
-    resetDpButton();
+    showNpError((e && e.message) ? e.message : 'Delete failed.');
+    resetNpDelete();
   }
 }
 
@@ -559,13 +543,14 @@ export function initProjectsLauncher(deps) {
   document.getElementById('np-close')?.addEventListener('click', closeNewProjectModal);
   const nov = document.getElementById('new-project-overlay');
   nov?.addEventListener('click', (e) => { if (e.target === nov) closeNewProjectModal(); });
-  document.getElementById('projects-back-btn')?.addEventListener('click', closeProjectsLauncher);
-  document.getElementById('projects-delete-btn')?.addEventListener('click', openDeleteProjectModal);
-  document.getElementById('dp-close')?.addEventListener('click', closeDeleteProjectModal);
-  document.getElementById('dp-delete')?.addEventListener('click', onDpDelete);
-  document.getElementById('dp-select')?.addEventListener('change', resetDpButton);
-  const dov = document.getElementById('delete-project-overlay');
-  dov?.addEventListener('click', (e) => { if (e.target === dov) closeDeleteProjectModal(); });
+  document.getElementById('np-delete')?.addEventListener('click', onNpDelete);
+  document.getElementById('projects-close-btn')?.addEventListener('click', closeProjectsLauncher);
+  // Click the backdrop to dismiss — but only when there's an editor to go back to,
+  // which is exactly when the Close button is showing.
+  const pov = document.getElementById('projects-overlay');
+  pov?.addEventListener('click', (e) => {
+    if (e.target === pov && launcherState.currentProject) closeProjectsLauncher();
+  });
   document.getElementById('welcome-got-it')?.addEventListener('click', hideWelcome);
   document.getElementById('welcome-close')?.addEventListener('click', hideWelcome);
   const wov = document.getElementById('welcome-overlay');

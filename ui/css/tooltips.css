@@ -3,7 +3,10 @@
   position: fixed;
   left: -9999px;
   top: 0;
-  z-index: 10000;
+  /* Above every overlay in the app (launcher 10040, modals 10060, event popouts
+     100000) — a tooltip belongs to whatever is on top, and it can't steal clicks
+     anyway (pointer-events: none below). */
+  z-index: 100001;
   max-width: 280px;
   padding: 6px 9px;
   font: 500 12px/1.4 Roboto, sans-serif;

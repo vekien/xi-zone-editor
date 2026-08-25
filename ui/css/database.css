@@ -240,56 +240,18 @@
   color: #6b7280;
   user-select: none;
 }
-/* Toolbar action buttons — colour-coded admin actions, premium tinted pills. */
-.db-query-run,
-.db-set-spawn,
-.db-force-offline,
-.db-reset-spawn,
-.db-table-refresh {
-  padding: 7px 13px;
-  border-radius: 8px;
+/* Toolbar action buttons — the app's base button theme (base.css) with the shared
+   semantic colours (.btn-primary / .btn-danger / .btn-success in the markup); the
+   bespoke tinted pills read as a different app. Fixed to the same 30px row height
+   as the spawn inputs so the whole bar lines up. */
+.db-query-actions button {
+  height: 30px;
+  padding: 0 13px;
   font-weight: 600;
-  border: 1px solid transparent;
-  transition: background 0.12s, border-color 0.12s, filter 0.12s;
-}
-.db-query-run,
-.db-set-spawn {
-  color: #7fd6e6;
-  background: color-mix(in srgb, #7fd6e6 16%, transparent);
-  border-color: color-mix(in srgb, #7fd6e6 38%, transparent);
-}
-.db-query-run:hover:not(:disabled),
-.db-set-spawn:hover:not(:disabled) {
-  background: color-mix(in srgb, #7fd6e6 24%, transparent);
-  border-color: #7fd6e6;
+  box-sizing: border-box;
 }
 .db-table-refresh {
-  color: #7fd6e6;
-  background: color-mix(in srgb, #7fd6e6 16%, transparent);
-  border-color: color-mix(in srgb, #7fd6e6 38%, transparent);
   font-size: 14px;
-}
-.db-table-refresh:hover:not(:disabled) {
-  background: color-mix(in srgb, #7fd6e6 24%, transparent);
-  border-color: #7fd6e6;
-}
-.db-force-offline {
-  color: #f7c873;
-  background: color-mix(in srgb, #f7c873 14%, transparent);
-  border-color: color-mix(in srgb, #f7c873 36%, transparent);
-}
-.db-force-offline:hover:not(:disabled) {
-  background: color-mix(in srgb, #f7c873 22%, transparent);
-  border-color: #f7c873;
-}
-.db-reset-spawn {
-  color: #7fd88f;
-  background: color-mix(in srgb, #7fd88f 14%, transparent);
-  border-color: color-mix(in srgb, #7fd88f 36%, transparent);
-}
-.db-reset-spawn:hover:not(:disabled) {
-  background: color-mix(in srgb, #7fd88f 22%, transparent);
-  border-color: #7fd88f;
 }
 
 /* ── Set Spawn Point ─────────────────────────────────── */
@@ -308,7 +270,9 @@
 }
 .db-spawn-num {
   width: 54px !important;
-  padding: 6px 8px !important;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 8px !important;
   font-size: 12px !important;
   font-family: "Roboto Mono", ui-monospace, monospace !important;
   background: #0d0e12 !important;
