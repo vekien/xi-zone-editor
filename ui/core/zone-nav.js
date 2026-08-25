@@ -298,8 +298,13 @@ export async function refreshCustomZones() {
   try {
     const r = await bridgeCall('zone.list-custom', {});
     sel.querySelector('optgroup[label="ROM10 — CUSTOM"]')?.remove();
+    // Prefer the real zone_settings name the bridge resolves; "Zone 507" is a
+    // last resort for when the DB is unreachable.
     const customZonesData = (r?.zones || []).map((z) => ({
-      id: z.zoneId, name: `Zone ${z.zoneId}`, path: z.datUrl, fileId: z.fileId,
+      id: z.zoneId,
+      name: z.name ? `${z.zoneId} — ${z.name}` : `Zone ${z.zoneId}`,
+      path: z.datUrl,
+      fileId: z.fileId,
     }));
     _deps.setCustomZonesData(customZonesData);
     if (!customZonesData.length) return;
