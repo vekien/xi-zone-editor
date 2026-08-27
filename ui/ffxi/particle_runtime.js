@@ -981,11 +981,6 @@ export class ParticleEmitter {
       this.framesPerEmission = 3; // emit every 3 frames
     }
 
-    // Singleton → infinite lifetime, emit once
-    if (this.continuousSingleton) {
-      this.framesPerEmission = Infinity;
-    }
-
     // Timing
     this.lifetime = 0;
     this.framesUntilNext = 0;
@@ -1146,6 +1141,19 @@ export class ParticleEmitter {
     return p;
   }
 
+  // Editor visibility / pause. When off, particles freeze (no age/emit) so toggling a
+  // weather VFX off and back on restores the same sky/singleton instead of leaving it dead.
+  setActive(on) {
+    if (on) {
+      this.enabled = true;
+      this.emitting = true;
+      // continuousSingleton may have finished while we were inactive — force a fresh emit.
+      if (this.continuousSingleton && this.aliveCount() === 0) this.framesUntilNext = 0;
+    } else {
+      this.enabled = false;
+    }
+  }
+
   update(dt) {
     if (!this.enabled || dt <= 0 || dt > 1) return;
 
@@ -1155,7 +1163,12 @@ export class ParticleEmitter {
 
     // ── Emit ──
     this.framesUntilNext -= elapsedFrames;
-    const aliveCount = this.particles.filter(p => p.alive).length;
+    let aliveCount = this.particles.filter(p => p.alive).length;
+    // continuousSingleton keeps exactly one particle alive; when it dies, emit again
+    // immediately rather than waiting on framesPerEmission (which may be huge).
+    if (this.continuousSingleton && aliveCount === 0 && this.emitting) {
+      this.framesUntilNext = Math.min(this.framesUntilNext, 0);
+    }
 
     while (this.emitting && this.framesUntilNext <= 0) {
       if (this.continuousSingleton && aliveCount > 0) break;
@@ -1168,6 +1181,8 @@ export class ParticleEmitter {
         this._emitParticle();
         if (this.continuousSingleton) break;
       }
+      aliveCount = this.particles.filter(p => p.alive).length;
+      if (this.continuousSingleton) break;
     }
 
     // ── Update alive particles ──

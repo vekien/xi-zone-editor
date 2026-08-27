@@ -296,6 +296,7 @@ export async function buildSourceEffectPreviewNode(sourceDatRel, effectId, sourc
   root.userData.effect = { mesh: effectMesh, sectionId: effectId, sourceOffset: gen.start };
   const em = new ParticleEmitter(gen, runtimeEffects, scene, camera, root);
   em.meshGroup.position.set(-(basePos[0] || 0), -(basePos[1] || 0), -(basePos[2] || 0));
+  root.userData.vfxEmitter = em;
   node = root;
   node.rotation.order = 'ZYX';
   return node;

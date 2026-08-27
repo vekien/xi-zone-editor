@@ -350,6 +350,7 @@ export function buildRuntimeZoneEffects(datBuf, meshes, templates, texMap, meshI
     try {
       const em = new ParticleEmitter(gen, runtimeEffects, scene, _R.getCamera(), root);
       em.meshGroup.position.set(-(basePos[0] || 0), -(basePos[1] || 0), -(basePos[2] || 0));
+      root.userData.vfxEmitter = em;
       _zoneVfxSystem.emitters.push(em);
       group.add(root);
       registerPlacement(root, true);
@@ -570,6 +571,17 @@ export function registerPlacement(node, isEffect = false, isSky = false, isUnpla
 
 export function setIconVisible(node, vis) { const g = _R.getVfxIconGroup(); if (g) for (const sp of g.children) if (sp.userData.vfxNode === node) sp.visible = vis; }
 export function iconVisible(node) { const g = _R.getVfxIconGroup(); if (g) for (const sp of g.children) if (sp.userData.vfxNode === node) return sp.visible; return true; }
+
+// Visibility for a VFX placement: node + icon + particle emitter pause/resume.
+// Without pausing the emitter, continuousSingleton weather (sky domes, fog sheets)
+// ages out while hidden and never re-emits — sky stays gone until zone reload.
+export function setEffectNodeVisible(node, vis) {
+  if (!node) return;
+  node.visible = !!vis;
+  setIconVisible(node, !!vis);
+  const em = node.userData?.vfxEmitter;
+  if (em && typeof em.setActive === 'function') em.setActive(!!vis);
+}
 
 export function pickIcon(e) {
   const camera = _R.getCamera();

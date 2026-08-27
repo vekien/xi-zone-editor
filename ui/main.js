@@ -181,7 +181,7 @@ import {
 import {
   initZoneEffects, buildRuntimeZoneEffects, buildPlainVfxMeshes, buildSurfaceEffects,
   clearZoneVfxSystem, updateEmittedEffects, addVfxIcon, pickIcon,
-  setIconVisible, iconVisible, registerPlacement, addXZoneEffect, applyDisableVfx,
+  setIconVisible, setEffectNodeVisible, iconVisible, registerPlacement, addXZoneEffect, applyDisableVfx,
   isLegacyZoneEnvMesh, vfxIconDistFactor, VFX_ICON_MIN, VFX_ICON_FADE_MIN, addPointLightEffect,
   makeParticleMaterial, tuneSurfaceForEditor, makeSpriteTemplate, addParticleMeshes,
   makeParticleInstance, addEmittedEffect, addPlainVfxMesh, addSoundEmitters,
@@ -5085,6 +5085,7 @@ initObjectList({
   rebuildSelectionOutline,
   updateSelectionReadout,
   setIconVisible,
+  setEffectNodeVisible,
   iconVisible,
   playSound,
   stopSound,

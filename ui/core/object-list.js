@@ -42,7 +42,8 @@ export function restoreVisibilityOverrides(url) {
     if (!Object.prototype.hasOwnProperty.call(overrides, key)) continue;
     const vis = !!overrides[key];
     if (p.isSound) { _R.setIconVisible(p.node, vis); }
-    else { p.node.visible = vis; if (p.isEffect) _R.setIconVisible(p.node, vis); }
+    else if (p.isEffect) { _R.setEffectNodeVisible(p.node, vis); }
+    else { p.node.visible = vis; }
   }
 }
 
@@ -556,7 +557,8 @@ export function applyWorkspaceViewState(changes) {
     if (hasVis && Object.prototype.hasOwnProperty.call(visibility, key)) {
       const vis = !!visibility[key];
       if (p.isSound) { _R.setIconVisible(p.node, vis); }
-      else { p.node.visible = vis; if (p.isEffect) _R.setIconVisible(p.node, vis); }
+      else if (p.isEffect) { _R.setEffectNodeVisible(p.node, vis); }
+      else { p.node.visible = vis; }
     }
     if (hasLocks) p.node.userData.locked = !!locks[key];
     if (_R.isInitAnchor(p)) p.node.visible = false;
@@ -628,10 +630,12 @@ function addObjectContextItems(p, addItem, addDivider) {
     const vis = p.isSound ? !_R.iconVisible(p.node) : !p.node.visible;
     for (const t of _vlTargets) {
       if (t.isSound) { _R.setIconVisible(t.node, vis); setVisibilityOverride(t, vis); }
-      else {
+      else if (t.isEffect) {
+        _R.setEffectNodeVisible(t.node, vis);
+        setVisibilityOverride(t, vis);
+      } else {
         t.node.visible = vis;
         setVisibilityOverride(t, t.node.visible);
-        if (t.isEffect) _R.setIconVisible(t.node, t.node.visible);
       }
     }
     buildObjectList();
@@ -786,9 +790,9 @@ function makeObjectRow(p) {
       cb.checked = p.node.visible;
       cb.onclick = (e) => {
         e.stopPropagation();
-        p.node.visible = cb.checked;
-        setVisibilityOverride(p, p.node.visible);
-        if (p.isEffect) _R.setIconVisible(p.node, cb.checked);
+        if (p.isEffect) _R.setEffectNodeVisible(p.node, cb.checked);
+        else p.node.visible = cb.checked;
+        setVisibilityOverride(p, cb.checked);
       };
     }
   }
@@ -947,9 +951,9 @@ export function buildObjectList() {
 export function setListedVisibility(isEffect, visible) {
   for (const p of _R.getPlacements()) {
     if (p.isMarker || p.isSound || p.isSky || p.isEffect !== isEffect || !p.li) continue;
-    p.node.visible = visible;
+    if (isEffect) _R.setEffectNodeVisible(p.node, visible);
+    else p.node.visible = visible;
     setVisibilityOverride(p, visible);
-    if (isEffect) _R.setIconVisible(p.node, visible);
     const cb = p.li.querySelector('input.vis');
     if (cb) cb.checked = visible;
   }
