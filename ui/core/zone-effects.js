@@ -557,7 +557,7 @@ export function addVfxIcon(node) {
 // `isUnplaced`: geometry present in the DAT that no placement record references.
 // The editor draws it at the origin so you can see what the zone ships, but the
 // client never spawns it — flagged so the list can separate it from real objects.
-export function registerPlacement(node, isEffect = false, isSky = false, isUnplaced = false) {
+export function registerPlacement(node, isEffect = false, isSky = false, isUnplaced = false, kind = null) {
   const placements = _R.getPlacements();
   const placementSet = _R.getPlacementSet();
   placementSet.add(node);
@@ -565,7 +565,10 @@ export function registerPlacement(node, isEffect = false, isSky = false, isUnpla
   if (isSky) { node.userData.isSkyIcon = true; addVfxIcon(node); }
   node.userData.original = { p: node.position.clone(), q: node.quaternion.clone(), s: node.scale.clone() };
   if (isUnplaced) node.userData.isUnplaced = true;
-  placements.push({ node, name: node.name || '(unnamed)', isEffect, isSky, isUnplaced,
+  // kind: null world geometry | 'collision' | 'farlod' | 'subarea' — the
+  // placement classes the client does not draw in the base zone view.
+  if (kind) node.userData.placementKind = kind;
+  placements.push({ node, name: node.name || '(unnamed)', isEffect, isSky, isUnplaced, kind,
                     isSound: !!node.userData.effect?.sound });
 }
 

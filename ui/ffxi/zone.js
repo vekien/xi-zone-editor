@@ -386,6 +386,8 @@ function parseZoneDef(bytes, dv, section, table1) {
       stride,     // record size this zone uses — publish must write back the same layout
       // fileIdLink sits at +0x50 in the 0x64 record; the 0x54 proto record has no room for it.
       fileIdLink: stride >= OBJ_STRIDE_MODERN ? (dv.getUint32(b + 0x50, true) || null) : null,  // sub-area id this object is a placeholder for (0 = none); hide it when that interior is shown
+      // Draw distance at +0x40 (0 = no limit). See COLLISION_DRAW_DIST.
+      drawDist: stride >= OBJ_STRIDE_MODERN ? dv.getFloat32(b + 0x40, true) : null,
       pos: [dv.getFloat32(b + 0x10, true), dv.getFloat32(b + 0x14, true), dv.getFloat32(b + 0x18, true)],
       rot: [dv.getFloat32(b + 0x1C, true), dv.getFloat32(b + 0x20, true), dv.getFloat32(b + 0x24, true)],
       scale: [dv.getFloat32(b + 0x28, true), dv.getFloat32(b + 0x2C, true), dv.getFloat32(b + 0x30, true)],
@@ -600,6 +602,80 @@ function parseTexture(bytes, dv, section) {
     rgba = decodePalette(r, width, height, bitCount !== 32, paletteBits);
   }
   return { name: name.trim(), width, height, rgba };
+}
+
+// ── placement classes the client does not draw in the base zone view ────────
+// A straight "draw every placement" pass stacks three kinds of hidden geometry
+// on the zone. Ru'Aun Gardens is the worst case in retail: 45% of its 3283
+// placements are collision proxies, 592 belong to sub-areas, 139 are far copies.
+
+// Draw distance (record +0x40) of exactly 1.0 is the authoring sentinel for
+// "collision only, never rendered". 15.8k placements across retail carry it and
+// their names say what it is: `hitwall_*`, `kabe-atariyou` (壁当たり用, "for wall
+// collision"), `hit_*`, `id_board*` / `id_box*`. Real geometry uses 0 (no limit)
+// or 30–1000.
+const COLLISION_DRAW_DIST = 1;
+
+/** True when a 0x1C placement is a collision-only proxy the game never draws. */
+export const isCollisionPlacement = (p) => p?.drawDist === COLLISION_DRAW_DIST;
+
+// `m_`/`lnd_` name a cheap stand-in for geometry the zone also places at full
+// detail — Ru'Aun's `m_osid_fl_b_d` (405 v) over `osid_fl_b_d_h` (2379 v), and
+// `m_bri_wl_00i` (279 v) inside `bri_wl_00i_h` (930 v). The client shows one or
+// the other by region, so drawing both puts the cheap copy inside the good one.
+//
+// The prefix alone is not evidence: `m_` also names ordinary props — Mog House
+// furniture (`m_bed_02`, `m_dsk_06`), Bastok's `m_pot`, Ro'Maeve's `m_pol01_h`
+// pillars — and hiding those would gut those zones. So require a twin: same
+// stem, no far prefix, actually placed here, and the richer mesh. In retail this
+// fires on Ru'Aun Gardens and its Escha copy (25 meshes each) plus one
+// `m_wall01` in an unlisted DAT, and nowhere else.
+const FAR_PREFIX = /^(m_|lnd_)/;
+const detailStem = (n) => n.replace(/_(h|m|n|l)$/, '');
+
+/** Mesh names that are a cheaper stand-in for richer geometry in this zone. */
+export function farCopyMeshNames(meshes, placements) {
+  const verts = new Map();
+  const meshVerts = (name) => {
+    if (!verts.has(name)) {
+      const prims = meshes.get(name);
+      verts.set(name, prims ? prims.reduce((a, x) => a + (x.positions?.length || 0) / 3, 0) : 0);
+    }
+    return verts.get(name);
+  };
+  const plainByStem = new Map();
+  const resolved = new Map();
+  const nameFor = (p) => {
+    if (!resolved.has(p.meshId)) resolved.set(p.meshId, resolveMeshName(p.meshId, meshes));
+    return resolved.get(p.meshId);
+  };
+  for (const p of placements) {
+    if (isCollisionPlacement(p)) continue;
+    const m = nameFor(p);
+    if (!m || FAR_PREFIX.test(m)) continue;
+    const stem = detailStem(m);
+    if (!plainByStem.has(stem)) plainByStem.set(stem, new Set());
+    plainByStem.get(stem).add(m);
+  }
+  const far = new Set();
+  const checked = new Set();
+  for (const p of placements) {
+    const m = nameFor(p);
+    if (!m || checked.has(m) || !FAR_PREFIX.test(m)) continue;
+    checked.add(m);
+    const stem = detailStem(m.replace(FAR_PREFIX, ''));
+    const own = meshVerts(m);
+    for (const [plainStem, names] of plainByStem) {
+      // Exact stem, or the full-detail version split into parts beneath it:
+      // `m_osid_cen_a` stands in for `osid_cen_a_lf_h` + `osid_cen_a_rt_h`.
+      // The `_` boundary keeps `m_pot` off anything starting with `pot`.
+      if (plainStem !== stem && !plainStem.startsWith(`${stem}_`)) continue;
+      let richer = false;
+      for (const t of names) if (meshVerts(t) > own) { richer = true; break; }
+      if (richer) { far.add(m); break; }
+    }
+  }
+  return far;
 }
 
 // ── name resolution helpers (LOD suffix + fuzzy texture match) ───────────────

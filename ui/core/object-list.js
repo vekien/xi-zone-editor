@@ -825,6 +825,22 @@ function makeObjectRow(p) {
                 + 'the origin, but the game client never spawns it.';
     li.appendChild(badge);
   }
+  const KIND_BADGE = {
+    collision: ['COLLISION', 'Draw distance 1.0 — the sentinel for collision-only geometry. '
+                           + 'The client never renders this object.'],
+    farlod: ['FAR LOD', 'A cheaper stand-in for richer geometry this zone also places. '
+                      + 'The client shows one or the other by region, never both.'],
+    subarea: ['SUB-AREA', 'Belongs to a sub-area (+0x50): a shop or inn interior, or in '
+                        + "Ru'Aun Gardens a low-detail copy of the sky. Drawn inside its own volume."],
+  };
+  const kindBadge = KIND_BADGE[p.kind];
+  if (kindBadge) {
+    const badge = document.createElement('span');
+    badge.className = 'rt-badge unplaced-badge';
+    badge.textContent = kindBadge[0];
+    badge.title = kindBadge[1];
+    li.appendChild(badge);
+  }
   const pGrp = groupForPlacement(p);
   if (pGrp) {
     const dot = document.createElement('span');
@@ -916,7 +932,17 @@ export function buildObjectList() {
   // Unplaced meshes are listed alongside real objects but tagged, so it's obvious
   // which geometry the client will never spawn. Hidden entirely when the toggle is off.
   const showUnplaced = document.getElementById('obj-unplaced')?.classList.contains('active') ?? true;
-  const objs = placements.filter((p) => isReal(p) && (showUnplaced || !p.isUnplaced)).sort(byName);
+  // Same treatment for the classes the client does not draw in the base zone:
+  // collision-only proxies, far copies of richer geometry, sub-area sets.
+  const kindOn = (id, dflt) => document.getElementById(id)?.classList.contains('active') ?? dflt;
+  const showKind = {
+    collision: kindOn('obj-collision-proxies', false),
+    farlod: kindOn('obj-far-lod', false),
+    subarea: kindOn('obj-subareas', true),
+  };
+  const objs = placements.filter((p) => isReal(p)
+    && (showUnplaced || !p.isUnplaced)
+    && (!p.kind || showKind[p.kind] !== false)).sort(byName);
   const cols = placements.filter((p) => p.isCollisionPrimitive).sort(byName);
   const vfx = placements.filter((p) => p.isEffect && !p.isSound && !p.isMarker).sort(byName);
   const sounds = placements.filter((p) => p.isSound).sort(byName);

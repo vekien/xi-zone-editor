@@ -9,7 +9,7 @@ import { STORAGE_PREFIX, ZONE_SETTINGS_KEY, projectSettings, loadSetting, saveSe
 import * as THREE from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { parseZone, extractKeyTables, resolveMeshName, resolveTexture, isSkyName } from './ffxi/zone.js';
+import { parseZone, extractKeyTables, resolveMeshName, resolveTexture, isSkyName, isCollisionPlacement, farCopyMeshNames } from './ffxi/zone.js';
 import { parseEffects, describeSurface, describeEmitter, describePointLight, describeSound, decodeBlend, parseEnvironments } from './ffxi/effects.js';
 import { initUndoRedo, pushCommand, undo, redo, clearHistory, updateHistoryButtons, enforceHistoryLimit } from './editor/undo-redo.js';
 import { initFlyCamera, flyState, flySpeed, heldKeys, flyClock, WORLD_UP, FLY_SPEED_MIN, FLY_SPEED_MAX, flyUpdate, onFlyLook, endFlyLook, setFlySpeed, setFlyTarget, updateZoomSpeedUi, speedToSlider } from './viewport/fly-camera.js';
@@ -825,6 +825,13 @@ let skyboxScaled = loadProjectSetting('skyboxScaled', loadSetting('skyboxScaled'
 // (see the build loop below) — on by default, matching how the editor has always
 // behaved; the OBJECTS toggle hides them when they get in the way.
 let showUnplaced = loadProjectSetting('unplaced', true);
+// Placement classes the client does not draw in the base zone view. Collision
+// proxies and far copies are off by default (they stack invisible or duplicate
+// geometry on the zone); sub-area placeholders stay on — they are the closed
+// shells you see from outside, and the interior swap already hides them.
+let showCollisionProxies = loadProjectSetting('collisionProxies', false);
+let showFarLod = loadProjectSetting('farLod', false);
+let showSubAreas = loadProjectSetting('subAreas', true);
 let showCollision = loadSetting('collision', false);
 let isolateCollision = loadSetting('isolateCollision', false);   // Isolate: show ONLY our authored collision prims
 let isolateBaked = loadSetting('isolateBaked', false);           // Baked: show ONLY the collision baked into the DAT
@@ -1242,9 +1249,19 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
 
   const placedNames = new Set();
   const nameCounts = new Map();
+  // Which meshes are far copies of richer geometry this zone also places.
+  const farCopies = farCopyMeshNames(meshes, plc);
+  showCollisionProxies = loadProjectSetting('collisionProxies', false);
+  showFarLod = loadProjectSetting('farLod', false);
+  showSubAreas = loadProjectSetting('subAreas', true);
+  document.getElementById('obj-collision-proxies')?.classList.toggle('active', showCollisionProxies);
+  document.getElementById('obj-far-lod')?.classList.toggle('active', showFarLod);
+  document.getElementById('obj-subareas')?.classList.toggle('active', showSubAreas);
   for (const p of plc) {
     const resolved = resolveMeshName(p.meshId, meshes);
     if (!resolved) continue;
+    // Mark the mesh placed whatever its class, so hiding every instance of it
+    // doesn't resurrect it in the unplaced-at-the-origin pass below.
     placedNames.add(resolved);
     const node = instantiate(templates, resolved);
     // Decompose the TRS into position/quaternion/scale (matrixAutoUpdate stays on) so
@@ -1256,8 +1273,16 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
     const c = (nameCounts.get(p.meshId) || 0) + 1; nameCounts.set(p.meshId, c);
     node.name = c === 1 ? p.meshId : `${p.meshId}.${String(c).padStart(3, '0')}`;
     node.userData.placement = p;
+    // Classify: collision-only proxy (+0x40 draw distance 1.0), far copy of
+    // richer geometry, or a sub-area's own set. Each has its own OBJECTS toggle.
+    const kind = isCollisionPlacement(p) ? 'collision'
+      : farCopies.has(resolved) ? 'farlod'
+        : p.fileIdLink ? 'subarea' : null;
+    if (kind === 'collision') node.visible = showCollisionProxies;
+    else if (kind === 'farlod') node.visible = showFarLod;
+    else if (kind === 'subarea') node.visible = showSubAreas;
     zoneRoot.add(node);
-    registerPlacement(node);
+    registerPlacement(node, false, false, false, kind);
     // Sub-area placeholder: this object is the "closed building" shell the interior
     // (file_id_link) replaces. Track it so showing that interior hides this shell.
     if (p.fileIdLink) {
@@ -4846,6 +4871,27 @@ unplacedToggle?.addEventListener('click', () => {
   for (const p of placements) if (p.isUnplaced && p.node) p.node.visible = showUnplaced;
   buildObjectList();
 });
+// Collision proxies / far copies / sub-area sets — same shape as the Unplaced
+// toggle: flip the setting, re-show or re-hide those nodes, rebuild the list.
+const kindToggle = (elId, setting, getter, setter, kind) => {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.classList.toggle('active', getter());
+  el.addEventListener('click', () => {
+    const next = !getter();
+    setter(next);
+    saveProjectSetting(setting, next);
+    el.classList.toggle('active', next);
+    for (const p of placements) if (p.kind === kind && p.node) p.node.visible = next;
+    buildObjectList();
+  });
+};
+kindToggle('obj-collision-proxies', 'collisionProxies',
+  () => showCollisionProxies, (v) => { showCollisionProxies = v; }, 'collision');
+kindToggle('obj-far-lod', 'farLod',
+  () => showFarLod, (v) => { showFarLod = v; }, 'farlod');
+kindToggle('obj-subareas', 'subAreas',
+  () => showSubAreas, (v) => { showSubAreas = v; }, 'subarea');
 document.getElementById('obj-show')?.addEventListener('click', () => setListedVisibility(false, true));
 document.getElementById('obj-hide')?.addEventListener('click', () => setListedVisibility(false, false));
 document.getElementById('vfx-show')?.addEventListener('click', () => setListedVisibility(true, true));
