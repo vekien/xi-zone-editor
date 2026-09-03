@@ -107,6 +107,21 @@ function clearClipboard() {
   try { localStorage.removeItem(XZONE_CLIP_KEY); } catch {}
 }
 
+// The in-memory clipboard holds LIVE scene nodes, so it is only usable while those nodes
+// are still under the current zoneRoot. Loading another zone (or reloading this one)
+// detaches + disposes the old root but leaves its children parented to it, so a stale
+// entry still has a non-null `parent`: cloning it "succeeds", the clone is add()ed to that
+// detached root, and the result is an object-list row with a gizmo and no visible mesh.
+// When any entry is stale, paste must use the serialized cross-zone clip instead.
+function clipboardIsLive() {
+  const zoneRoot = _cb.getZoneRoot();
+  if (!clipboard?.length || !zoneRoot) return false;
+  return clipboard.every((e) => {
+    for (let n = e.node; n; n = n.parent) if (n === zoneRoot) return true;
+    return false;
+  });
+}
+
 export function copySelected(entries = null) {
   // `entries` lets the right-click "Copy Mesh" copy the EXACT clicked object(s), independent of
   // selectedSet. Ctrl+C passes nothing and copies the live selection. Either way we overwrite the
@@ -207,7 +222,7 @@ export function clipboardSummary() {
   let clip = null;
   try { clip = JSON.parse(localStorage.getItem(XZONE_CLIP_KEY) || 'null'); } catch {}
   const xzoneNewer = clip?.items?.length && (clip.ts || 0) > clipboardTs;
-  if (clipboard?.length && !xzoneNewer) return _sum(clipboard.map(e => e.name || e.node?.userData?.placement?.meshId));
+  if (clipboardIsLive() && !xzoneNewer) return _sum(clipboard.map(e => e.name || e.node?.userData?.placement?.meshId));
   if (clip?.items?.length) {
     const s = _sum(clip.items.map(i => i.name || i.meshId));
     return s && clip.sourceZoneName ? `${s} — from ${clip.sourceZoneName}` : s;
@@ -447,7 +462,10 @@ export async function pasteFromClipboard() {
   // Prefer the cross-zone clip (localStorage) when it is NEWER than this tab's in-memory
   // clipboard — i.e. another tab copied something more recently. Without this, a tab's own
   // non-empty in-memory clipboard permanently shadows fresher cross-tab copies.
-  if (!clipboard?.length) { return pasteCrossZone(); }
+  // Likewise when the in-memory clipboard is empty OR stale (copied in a zone that has since
+  // been unloaded — see clipboardIsLive): copySelected always wrote the matching serialized
+  // clip, and pasteCrossZone fetches the source zone's mesh + textures from there.
+  if (!clipboardIsLive()) { return pasteCrossZone(); }
   try {
     const xclip = JSON.parse(localStorage.getItem(XZONE_CLIP_KEY) || 'null');
     if (xclip?.items?.length && (xclip.ts || 0) > clipboardTs) { return pasteCrossZone(); }
