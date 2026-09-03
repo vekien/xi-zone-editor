@@ -14,15 +14,11 @@
 
 .gizmo-tools button {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  width: 62px;
-  height: 54px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  font-size: 12px;
-  white-space: nowrap;
   color: #ccc;
   background: #232329dd;
   border: 1px solid #3a3a44;
@@ -31,7 +27,7 @@
 }
 
 .gizmo-tools button span:first-child {
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
 }
 
@@ -72,10 +68,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #232329dd;
-  border: 1px solid #3a3a44;
-  border-radius: 4px;
-  backdrop-filter: blur(4px);
+  background: #212121;
+  background: linear-gradient(0deg, rgba(33, 33, 33, 1) 0%, rgba(51, 51, 51, 1) 100%);
+  border: 1px solid #000;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px #000;
 }
 
 .gizmo-tools .mode-group button {
@@ -96,7 +93,7 @@
 }
 .collision-cluster .flyout-top {
   position: absolute;
-  top: 111px;
+  top: 82px;
   left: calc(100% + 8px);
 }
 .collision-cluster .flyout-bottom {
@@ -105,11 +102,11 @@
   left: calc(100% + 8px);
 }
 /* "Baked" sits beside "Isolate" on the Collision row — both are collision-isolation modes.
-    Isolate is 48px wide at left:100%+8px, so Baked starts 48+4px further right. */
+    Isolate is 40px wide at left:100%+8px, so Baked starts 40+4px further right. */
 .collision-cluster .flyout-baked {
   position: absolute;
-  top: 111px;
-  left: calc(100% + 8px + 52px);
+  top: 82px;
+  left: calc(100% + 8px + 44px);
 }
 
 /* "Uniform" flies out beside Scale (3rd of 4 in the column → top: 50%);
@@ -127,16 +124,13 @@
    (.gizmo-tools .flyout = 0,2,0) beat the .gizmo-tools button base (0,1,1)
    on their own, so width/height land without !important. Dimmed till hover/active. */
 .gizmo-tools .flyout {
-  width: 48px;
-  height: 48px;
-  gap: 3px;
-  padding: 0 2px;
-  font-size: 11px;
+  width: 40px;
+  height: 40px;
   opacity: 0.6;
   transition: opacity 0.12s ease;
 }
 .gizmo-tools .flyout span:first-child {
-  font-size: 16px;
+  font-size: 20px;
 }
 .gizmo-tools .flyout:hover:not(:disabled),
 .gizmo-tools .flyout.active {
@@ -151,16 +145,16 @@
   bottom: 12px;
   right: 312px;
   z-index: 90;
-  width: 170px;
   box-sizing: border-box;
-  padding: 7px 10px;
+  padding: 6px 15px;
   text-align: center;
   color: #cfd6e6;
-  background: #232329dd;
-  border-radius: 4px;
-  backdrop-filter: blur(4px);
+  background: #00000080;
+  border-radius: 24px;
   user-select: none;
   font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
 }
 
 .fps-counter b {

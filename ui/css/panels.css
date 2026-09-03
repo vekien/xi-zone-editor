@@ -11,15 +11,12 @@
   flex-direction: column;
   min-height: 0;
   overflow: hidden; /* each list pane scrolls itself */
-  background: #1f1f1f;
-  background: linear-gradient(
-    90deg,
-    rgba(31, 31, 31, 1) 0%,
-    rgba(38, 38, 38, 1) 100%
-  );
+  background: #252525;
+  background: linear-gradient(70deg, rgba(37, 37, 37, 1) 0%, rgba(51, 51, 51, 1) 100%);
   border-left: 1px solid #000;
   border-right: solid 1px #000;
-  z-index: 9888;                       /* above the full-screen framing crosshair, below app-loader */
+  z-index: 9888;
+  box-shadow: 0 0 5px #000;
 }
 
 /* ── Right-side vertical tabs (ZONE / OBJS / VFX / SFX / MKRS) ──
@@ -1044,8 +1041,6 @@
 .colslist,
 .textlist {
   max-height: 26vh;
-  border: 1px solid #2c2c34;
-  border-radius: 4px;
 }
 .vfxlist,
 .markerlist,

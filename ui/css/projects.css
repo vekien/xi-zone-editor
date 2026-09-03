@@ -157,10 +157,8 @@ button.pkg-wizard-primary:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Full-screen scrim: swallows every click and blurs the editor behind it, so the
-     launcher reads as a layer over the scene rather than a replacement for it. */
-  background: rgba(8, 9, 13, 0.62);
-  backdrop-filter: blur(9px) saturate(0.85);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
 }
 .projects-shell {
   display: flex;
@@ -168,7 +166,6 @@ button.pkg-wizard-primary:hover {
   height: 90%;
   max-width: 1680px;
   max-height: 1250px;
-  background: #191a20;
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 0 50px 0 #00000063;
@@ -201,8 +198,9 @@ button.pkg-wizard-primary:hover {
 .projects-main {
   position: relative;
   flex: 1 1 auto;
-  background: #191a20;
-  padding: 30px 48px 48px;
+background: #333333;
+background: linear-gradient(214deg, rgba(51, 51, 51, 1) 0%, rgba(26, 26, 26, 1) 100%);
+  padding: 38px 50px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -469,15 +467,14 @@ button.pkg-wizard-primary:hover {
   text-align: left;
   padding: 16px 17px;
   background: #16171c;
-  border: 1px solid #24252c;
+  border: 1px solid #000;
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s, transform 0.08s;
 }
 .proj-item:hover {
   background: #191b22;
-  border-color: color-mix(in srgb, #7fd6e6 34%, #2c2c36);
-  transform: translateY(-1px);
+  border: solid 1px #1c9bf5;
 }
 .proj-item.active {
   border-color: color-mix(in srgb, #7fd6e6 55%, transparent);

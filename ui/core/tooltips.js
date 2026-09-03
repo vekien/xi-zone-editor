@@ -46,18 +46,32 @@ function _position(node) {
   const el = _tipEl;
   const r = node.getBoundingClientRect();
   const gap = 8;
-  // Measure with left/top reset so offsetWidth/Height are accurate.
   el.style.left = '-9999px';
   el.style.top = '0px';
   const tw = el.offsetWidth, th = el.offsetHeight;
-  let below = false;
-  let top = r.top - th - gap;                 // prefer above
-  if (top < 4) { top = r.bottom + gap; below = true; }   // flip below if no headroom
-  let left = r.left + r.width / 2 - tw / 2;    // centre on the anchor
-  left = Math.max(6, Math.min(left, window.innerWidth - tw - 6));   // clamp to viewport
+  const side = node.closest('.gizmo-tools') ? 'right'
+    : node.closest('.side-tabs') ? 'left'
+    : null;
+
+  let left, top;
+  if (side === 'right') {
+    left = r.right + gap;
+    top = r.top + r.height / 2 - th / 2;
+  } else if (side === 'left') {
+    left = r.left - tw - gap;
+    top = r.top + r.height / 2 - th / 2;
+  } else {
+    top = r.top - th - gap;
+    if (top < 4) top = r.bottom + gap;
+    left = r.left + r.width / 2 - tw / 2;
+  }
+  left = Math.max(6, Math.min(left, window.innerWidth - tw - 6));
+  top = Math.max(4, Math.min(top, window.innerHeight - th - 4));
   el.style.left = Math.round(left) + 'px';
   el.style.top = Math.round(top) + 'px';
-  el.classList.toggle('below', below);
+  el.classList.toggle('below', !side && top >= r.bottom);
+  el.classList.toggle('side-left', side === 'left');
+  el.classList.toggle('side-right', side === 'right');
 }
 
 function _show(node, text) {

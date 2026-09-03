@@ -3079,7 +3079,7 @@ function toggleGizmoSpace() {
   toolButtons.space?.classList.toggle('active', isLocal);
   if (toolButtons.space) {
     toolButtons.space.querySelector('span').textContent = isLocal ? 'grid_3x3' : 'language';
-    toolButtons.space.childNodes[toolButtons.space.childNodes.length - 1].textContent = isLocal ? 'Local' : 'World';
+    toolButtons.space.title = isLocal ? 'Local space (X)' : 'World space (X)';
   }
 }
 if (toolButtons.space) toolButtons.space.onclick = toggleGizmoSpace;

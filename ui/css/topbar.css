@@ -2,7 +2,7 @@
 .topbar {
   position: absolute;
   top: 12px;
-  left: 86px;
+  left: 66px;
   z-index: 10;
   height: 40px;
   display: flex;
@@ -18,7 +18,6 @@
   border: 1px solid #000;
   border-radius: 5px;
   box-shadow: 0 1px 3px #000;
-
 }
 
 .topbar button {
@@ -281,7 +280,6 @@
   pointer-events: none;
 }
 
-/* Gizmo toolbar + edit-only list actions are inert in any read-only mode (View / Production) */
 .app.readonly .gizmo-tools {
   opacity: 0.35;
   pointer-events: none;
@@ -290,40 +288,28 @@
   opacity: 0.4;
   pointer-events: none;
 }
-/* Edit-only affordances: selection inspectors + the hotkey spawn bar are hidden
-   in any non-edit mode (View / Production / Base / HD). */
 .app.readonly .sel-panel {
   display: none;
 }
 .app.readonly .hotkey-bar {
   display: none;
 }
-/* Edit-only topbar panels: Asset Browser, Database, Changes — disabled when read-only. */
 .app.readonly #assets-btn,
 .app.readonly #database-btn,
 .app.readonly #changes-btn {
   opacity: 0.4;
   pointer-events: none;
 }
-/* Quick action (Publish) — an edit action, disabled when read-only. */
 .app.readonly .quick-btn {
   opacity: 0.4;
   pointer-events: none;
 }
 
 .changes-badge {
-  /* min-width: 17px; */
-  /* height: 17px; */
-  /* padding: 1px 5px; */
   font-size: 15px;
-  /* line-height: 17px; */
   color: #fff;
-  /* text-align: center; */
-  /* background: #3c82dc; */
-  /* border-radius: 5px; */
-  margin-left: 2px;
+  margin-left: 10px;
   color: #fff555;
-  /* font-style: italic; */
   font-weight: 600;
 }
 
@@ -331,7 +317,6 @@
   display: none;
 }
 
-/* File dropdown menu — lightweight popover; closes on outside click (see main.js). */
 .menu {
   position: absolute;
   z-index: 25;

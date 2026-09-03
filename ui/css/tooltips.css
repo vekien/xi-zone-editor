@@ -22,21 +22,37 @@
   transition: opacity 0.09s ease, transform 0.09s ease;
 }
 .app-tooltip.below { transform: translateY(-3px); }
-.app-tooltip.show { opacity: 1; transform: translateY(0); }
+.app-tooltip.side-right { transform: translateX(-3px); }
+.app-tooltip.side-left { transform: translateX(3px); }
+.app-tooltip.show { opacity: 1; transform: none; }
 
-/* Little caret pointing at the anchor (down when above, up when below). */
+/* Caret: down when above, up when below, sideways for left/right toolbars. */
 .app-tooltip::after {
   content: "";
   position: absolute;
-  left: 50%;
-  margin-left: -5px;
   border: 5px solid transparent;
 }
-.app-tooltip:not(.below)::after {
+.app-tooltip:not(.below):not(.side-left):not(.side-right)::after {
+  left: 50%;
+  margin-left: -5px;
   top: 100%;
   border-top-color: #14161d;
 }
 .app-tooltip.below::after {
+  left: 50%;
+  margin-left: -5px;
   bottom: 100%;
   border-bottom-color: #14161d;
+}
+.app-tooltip.side-right::after {
+  left: -5px;
+  top: 50%;
+  margin-top: -5px;
+  border-right-color: #14161d;
+}
+.app-tooltip.side-left::after {
+  right: -5px;
+  top: 50%;
+  margin-top: -5px;
+  border-left-color: #14161d;
 }
