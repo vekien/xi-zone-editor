@@ -28,6 +28,66 @@ Heavy lifting (DAT I/O, publish, DB lookups, file serving) is done by
 **[xi-tools](https://github.com/vekien/xi-tools)** over a local WebSocket + HTTP bridge
 the app starts for you on first launch.
 
+## Features
+
+**Projects and change-sets**
+
+- Projects launcher — a project is a folder of per-zone change-sets in your workspace; opening one points the bridge at it
+- Change-sets (`zone-changes.json`) auto-restore when a zone loads; save by hand, on every action, or every 60 s
+- Full undo / redo with a configurable history limit
+- Version History — every Publish snapshots the change-set and its log; view a version's changes, re-read its publish log, or restore it
+- Export a change-set as JSON or as individual `xi` CLI commands; load a JSON to replay it onto the scene
+
+**Viewport**
+
+- Zone meshes, textures, placements, VFX and sound emitters parsed client-side straight from the DATs
+- FFXI lighting ported from the client — weather environments, time of day, sun / moon direction and fog
+- Modes: **Edit**, **View** (read-only, your changes shown), **Live Standard**, **Live HD** (the HD asset-pack DAT) and **Backup Base** (the pristine `.base`)
+- Fly camera, grid, world origin, wireframe, flat-colour mode, selection and hover outlines, performance overlay
+- Building interiors (sub-areas) load from their own DATs; pre-production zones render too
+
+**Objects**
+
+- Object list with search, show / hide, per-class filters (collision proxies, far LOD copies, sub-areas, unplaced meshes) and coloured groups
+- Move / rotate / scale gizmo in local or world space, with snapping and uniform scale
+- Copy, paste, delete and restore — the clipboard survives zone switches and tabs, so objects, VFX, sounds, markers and mobs paste across zones
+- Import GLB models as new placements
+- Text planes — editable sign billboards that bake into meshes on Publish
+- Editor-only markers (Spawn, NPC, Monster, Object, Trigger) for annotating a zone
+
+**Visual FX, sound and music**
+
+- Zone particle and light generators listed and rendered — sprite sheets, scrolling UVs, distance culling; paste effects across zones, and pasted point lights register in the zone's light table
+- Sound emitters with in-editor playback; Sound FX and Music browsers with `.wav` / `.ogg` import
+- Zone music slot assignment with BGM preview; footstep sounds borrowed from another zone
+
+**Collision and navmesh**
+
+- Baked collision (0x1C MZB) overlay coloured by wall / terrain type with a triangle wireframe; isolate the baked or the authored collision
+- Author collision as boxes, planes, or meshes extracted from any object — wall / floor, terrain type, camera blocking and subdivision — baked into the DAT on Publish
+- Strip or reset baked collision; replace a zone's whole collision mesh from an OBJ
+- Navmesh overlay and one-click **Generate** (Recast bake through xi-tools)
+- Player spawn marker read live from the database, with a spawn check before Publish
+
+**Monsters, events and database**
+
+- Database panel — browse and search tables, run queries, edit rows, set the player spawn (needs an LSB server and MariaDB)
+- Drag monsters from the catalog into the zone and write their spawns to the database
+- Events panel — event actor tree and dialogue inspector
+- Cutscene authoring — build a cutscene, preview the compiled disassembly, and publish it as Event + Dialog DATs
+- Camera sequencer with keyframes and frame stepping; Title Screen shot timeline for the 22 login-screen zones, with playback and drawn paths
+
+**Publish and packaging**
+
+- Publish the change-set into the game DAT (Standard + HD) with a live log; optional reset from `.base` first, and a per-project strip-baked-collision policy
+- New zone from a template, Duplicate zone (model, event, dialog and NPC DATs), Make Template, Delete custom zone, Reset zone to its baseline
+- Package Project — zip a project's edited zones (game + HD DATs) in the client's override-DAT folder layout
+
+**Asset Browser and setup**
+
+- Bundled catalogs of objects (GLB), music, sound effects and monsters, all drag-to-viewport
+- Splash bootstraps xi-tools and Python; a Setup wizard covers workspace, game paths, server and database; settings for theme, snapping and dev ID ranges
+
 ## Download
 
 **[Releases](https://github.com/vekien/xi-zone-editor/releases)** — grab the latest Windows build and run it. No Node, Rust, or Python install required.
