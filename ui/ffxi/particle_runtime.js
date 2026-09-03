@@ -176,6 +176,7 @@ function resolveLinkedMesh(effectsData, linkedDataId, linkedDataType) {
 
 function buildXimParticleMaterial(texture, opts = {}) {
   return new THREE.ShaderMaterial({
+    vertexColors: true,
     uniforms: {
       uTexture: { value: texture || neutralTexture() },
       uParticleColor: { value: new THREE.Vector4(1, 1, 1, 1) },
@@ -1238,6 +1239,13 @@ export class ParticleEmitter {
     this.rawTex = resolved.rawTex;
     this.hasMesh = !!resolved.geo;
     this.mat = this.hasMesh ? this._buildMaterial() : null;
+    if (this.mat) {
+      const peek = new Particle();
+      for (const init of this.initializers) {
+        try { init(peek, this); } catch {}
+      }
+      this._applyBlendState(this.mat, peek.blendFunc, peek.depthMask);
+    }
 
     // One InstancedMesh per pool (parent particles, plus one per child generator).
     // Every live particle used to be its own Mesh with a cloned material — one draw
@@ -1354,6 +1362,7 @@ export class ParticleEmitter {
     }
     pool.geo.setAttribute('aInstColor', attr);
     pool.geo.setAttribute('aTexTranslate', uvAttr);
+    pool.mat.needsUpdate = true;
     this.meshGroup.add(mesh);
     pool.mesh = mesh; pool.cap = cap; pool.colors = colors; pool.colorAttr = attr;
     pool.uvs = uvs; pool.uvAttr = uvAttr;
