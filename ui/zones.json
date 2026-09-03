@@ -1585,6 +1585,16 @@
     "group": "Rooms"
   },
   {
+    "name": "Bastok Mog House",
+    "path": "game/ROM/1/46.DAT",
+    "group": "Rooms"
+  },
+  {
+    "name": "Bastok Mog House (rental)",
+    "path": "game/ROM/1/22.DAT",
+    "group": "Rooms"
+  },
+  {
     "name": "book1",
     "path": "game/ROM/2/103.DAT",
     "group": "Rooms"
@@ -1621,21 +1631,6 @@
   },
   {
     "name": "dn00",
-    "path": "game/ROM/1/21.DAT",
-    "group": "Rooms"
-  },
-  {
-    "name": "dn00",
-    "path": "game/ROM/1/22.DAT",
-    "group": "Rooms"
-  },
-  {
-    "name": "dn00",
-    "path": "game/ROM/1/45.DAT",
-    "group": "Rooms"
-  },
-  {
-    "name": "dn00",
     "path": "game/ROM/1/115.DAT",
     "group": "Rooms"
   },
@@ -1665,6 +1660,11 @@
     "group": "Rooms"
   },
   {
+    "name": "Jeuno Mog House",
+    "path": "game/ROM/1/20.DAT",
+    "group": "Rooms"
+  },
+  {
     "name": "ku01",
     "path": "game/ROM/2/60.DAT",
     "group": "Rooms"
@@ -1682,11 +1682,6 @@
   {
     "name": "r3ju11_table1",
     "path": "game/ROM/2/96.DAT",
-    "group": "Rooms"
-  },
-  {
-    "name": "ran0",
-    "path": "game/ROM/1/46.DAT",
     "group": "Rooms"
   },
   {
@@ -1812,16 +1807,6 @@
   {
     "name": "ROM/1/127",
     "path": "game/ROM/1/127.DAT",
-    "group": "Rooms"
-  },
-  {
-    "name": "ROM/1/20",
-    "path": "game/ROM/1/20.DAT",
-    "group": "Rooms"
-  },
-  {
-    "name": "ROM/1/47",
-    "path": "game/ROM/1/47.DAT",
     "group": "Rooms"
   },
   {
@@ -2935,8 +2920,13 @@
     "group": "Rooms"
   },
   {
-    "name": "sh-u",
-    "path": "game/ROM/1/23.DAT",
+    "name": "San d'Oria Mog House",
+    "path": "game/ROM/1/45.DAT",
+    "group": "Rooms"
+  },
+  {
+    "name": "San d'Oria Mog House (rental)",
+    "path": "game/ROM/1/21.DAT",
     "group": "Rooms"
   },
   {
@@ -2997,6 +2987,16 @@
   {
     "name": "wi_al",
     "path": "game/ROM/2/45.DAT",
+    "group": "Rooms"
+  },
+  {
+    "name": "Windurst Mog House",
+    "path": "game/ROM/1/47.DAT",
+    "group": "Rooms"
+  },
+  {
+    "name": "Windurst Mog House (rental)",
+    "path": "game/ROM/1/23.DAT",
     "group": "Rooms"
   },
   {
