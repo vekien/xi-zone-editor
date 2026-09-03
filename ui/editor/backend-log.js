@@ -37,7 +37,8 @@ export function openConsole(title) {
   // Colour each line by its leading [tag] — matches the CLI prefixes [debug +…s], [texture], [object].
   const tagClass = { debug: 'cm-debug', texture: 'cm-texture', object: 'cm-object' };
   const append = (line) => {
-    const text = (line == null ? '' : String(line));
+    let text = (line == null ? '' : String(line)).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    if (text.endsWith('\n')) text = text.slice(0, -1);
     for (const piece of text.split('\n')) {
       const span = document.createElement('span');
       const m = /^\s*\[([a-z]+)/.exec(piece);
