@@ -759,8 +759,9 @@ button.pkg-wizard-primary:hover {
   padding: 6px 6px 6px 12px;
   cursor: move;
   user-select: none;
-  background: #2a2a31;
-  border-bottom: 1px solid #34343c;
+background: #252525;
+background: linear-gradient(0deg, rgba(37, 37, 37, 1) 0%, rgba(40, 40, 40, 1) 100%);
+  border-bottom: 1px solid #000;
 }
 
 .modal-title {

@@ -1,7 +1,7 @@
 /* ── unified selection panel ─────────────────────────────────────────── */
 .sel-panel {
   position: absolute;
-  top: 56px;
+  top: 12px;
   right: 360px;
   z-index: 10;
   display: none;
@@ -10,10 +10,10 @@
   width: 260px;
   max-height: calc(100vh - 80px);
   overflow-y: auto;
-  background: #232329dd;
-  border: 1px solid #3a3a44;
-  border-radius: 4px;
-  backdrop-filter: blur(4px);
+  background: #252525;
+  background: linear-gradient(70deg, rgba(37, 37, 37, 1) 0%, rgba(40, 40, 40, 1) 100%);
+  border: 1px solid #000;
+  border-radius: 6px;
 }
 .sel-panel.open {
   display: flex;
@@ -292,7 +292,8 @@ hr.sep {
 .palette .tile .tile-count {
   color: #6f6f7a;
 }
-.hint {
+.sel-panel .hint,
+.palette ~ .hint {
   font: 400 10px/1.4 Roboto, sans-serif;
   color: #7a7a85;
   margin-top: 6px;

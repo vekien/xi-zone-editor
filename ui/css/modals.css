@@ -8,10 +8,10 @@
   width: 340px;
   max-height: 70vh;
   overflow: hidden;
-  background: #25252a;
-  border: 1px solid #34363f;
+  background: #111;
+  border: 1px solid #000;
   border-radius: 12px;
-  box-shadow: 0 20px 55px -14px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 30px -15px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(6px);
 }
 
@@ -107,7 +107,6 @@
 .settings-panel {
   width: min(620px, calc(100vw - 40px));
   max-height: 85vh;
-  background: #191a20;   /* dark canvas so the premium controls + hairline dividers read correctly (matches the cutscene/events modals) */
 }
 /* .modal-body.settings-layout (two classes) outranks the later .modal-body rule, so
    padding:0 / overflow:hidden actually win — nav + content stay edge-to-edge. */
@@ -276,7 +275,8 @@
 .form-row:has(> .check) > .spane-hint ~ .spane-hint {
   padding-left: 26px;
 }
-.hint {
+.settings-panel .hint,
+.modal .hint {
   color: #6a6a78;
   font-size: 11px;
 }

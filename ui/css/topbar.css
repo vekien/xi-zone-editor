@@ -13,16 +13,17 @@
 .topbar-group {
   display: flex;
   overflow: hidden;
-  background: #232329dd;
-  border: 1px solid #3a3a44;
-  border-radius: 4px;
-  backdrop-filter: blur(4px);
+  background: #212121;
+  background: linear-gradient(0deg, rgba(33, 33, 33, 1) 0%, rgba(51, 51, 51, 1) 100%);
+  border: 1px solid #000;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px #000;
+
 }
 
 .topbar button {
   display: flex;
   align-items: center;
-  gap: 6px;
   padding: 10px 20px;
   font-size: 15px;
   color: #ddd;
@@ -33,11 +34,12 @@
 }
 
 .topbar button + button {
-  border-left: 1px solid #3a3a44;
+  border-left: 1px solid #000;
 }
 .topbar button:hover {
   color: #fff;
-  background: #2f2f38ee;
+  background: #333333;
+  background: linear-gradient(0deg, rgba(51, 51, 51, 1) 0%, rgba(77, 77, 77, 1) 100%);
 }
 
 /* Quick action (Publish) — lives in the right-hand nav group, beside the bridge dot. */
@@ -55,7 +57,7 @@
 /* Publish sits in the nav as the one write-to-the-game action, so it carries a
    faint green wash at rest; hover deepens it to the full tint. */
 .topbar #quick-publish {
-  background: #228b3733;
+  box-shadow: inset 0 0 40px #0ce357aa;
 }
 .topbar #quick-publish:hover {
   background: #228b37ee;
@@ -72,20 +74,20 @@
   color: #fff;
 }
 .mode-btn.mode-edit {
-  box-shadow: inset 0 0 0 1px #3a9d5daa, inset 0 0 21px #3a9d5daa;
-} /* edit = green */
+  color: #0ce357;
+}
 .mode-btn.mode-view {
-  box-shadow: inset 0 0 0 1px #2f86ffaa, inset 0 0 21px #2f86ffaa;
-} /* view = blue */
+  color: #2f86ff;
+}
 .mode-btn.mode-production {
-  box-shadow: inset 0 0 0 1px #cf4040aa, inset 0 0 21px #cf4040aa;
-} /* prod = red */
+  color: #d83b43;
+}
 .mode-btn.mode-base {
-  box-shadow: inset 0 0 0 1px #e0852baa, inset 0 0 21px #e0852baa;
-} /* base = orange */
+  color: #d83b43;
+}
 .mode-btn.mode-hd {
-  box-shadow: inset 0 0 0 1px #8c50e6aa, inset 0 0 21px #8c50e6aa;
-} /* HD = violet */
+  color: #f42dfb;
+}
 .mode-menu button.active {
   color: #fff;
   background: #34415c;
