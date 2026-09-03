@@ -2999,9 +2999,52 @@ input[type="color"].swatch::-moz-color-swatch {
   border-color: #6a5430;
 }
 
-/* Pressed state for the OBJECTS "Unplaced" toggle. */
-#obj-unplaced.active {
+/* OBJECTS "Filter" button + its popover. The popover reuses the File-menu
+   skin (.menu); each row is a checkbox-style toggle with the class total. */
+.obj-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.obj-filter-btn .material-symbols-outlined {
+  font-size: 15px;
+  opacity: 0.8;
+}
+.obj-filter-count {
+  font: 600 10px/1 "Roboto Mono", ui-monospace, monospace;
   color: #d8b070;
-  background: #2a2216;
-  border-color: #6a5430;
+}
+.obj-filter-count:empty {
+  display: none;
+}
+.obj-filter-menu {
+  min-width: 170px;
+  z-index: 9900;   /* above the side panel (9888), below modals + tooltips */
+}
+.obj-filter-menu button {
+  padding: 7px 10px;
+  font-size: 13px;
+}
+.obj-filter-menu button::before {
+  content: 'check_box_outline_blank';
+  font-family: 'Material Symbols Outlined';
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.45;
+}
+.obj-filter-menu button.active {
+  color: #d8b070;
+}
+.obj-filter-menu button.active::before {
+  content: 'check_box';
+  opacity: 1;
+}
+.obj-filter-menu button.obj-filter-empty {
+  opacity: 0.4;
+}
+.obj-filter-n {
+  margin-left: auto;
+  padding-left: 14px;
+  font: 400 10px/1 "Roboto Mono", ui-monospace, monospace;
+  opacity: 0.55;
 }

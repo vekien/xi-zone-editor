@@ -931,7 +931,7 @@ export function buildObjectList() {
   const isReal = (p) => !p.isEffect && !p.isMarker && !p.isSky && !p.isCollisionPrimitive && !p.isMob && !p.isTextPlane && !p.isTextBaked;
   // Unplaced meshes are listed alongside real objects but tagged, so it's obvious
   // which geometry the client will never spawn. Hidden entirely when the toggle is off.
-  const showUnplaced = document.getElementById('obj-unplaced')?.classList.contains('active') ?? true;
+  const showUnplaced = document.getElementById('obj-unplaced')?.classList.contains('active') ?? false;
   // Same treatment for the classes the client does not draw in the base zone:
   // collision-only proxies, far copies of richer geometry, sub-area sets.
   const kindOn = (id, dflt) => document.getElementById(id)?.classList.contains('active') ?? dflt;
@@ -943,6 +943,25 @@ export function buildObjectList() {
   const objs = placements.filter((p) => isReal(p)
     && (showUnplaced || !p.isUnplaced)
     && (!p.kind || showKind[p.kind] !== false)).sort(byName);
+  // Filter menu: per-class totals beside each toggle, and a "+N" on the button
+  // for however many classes are switched on — the list count alone can't say
+  // why 4,000 rows became 1,200.
+  {
+    const n = { unplaced: 0, subarea: 0, collision: 0, farlod: 0 };
+    for (const p of placements) {
+      if (!isReal(p)) continue;
+      if (p.isUnplaced) n.unplaced++;
+      else if (p.kind && p.kind in n) n[p.kind]++;
+    }
+    document.querySelectorAll('#obj-filter-menu .obj-filter-n').forEach((el) => {
+      const c = n[el.dataset.kind] || 0;
+      el.textContent = c ? c.toLocaleString() : '';
+      el.parentElement?.classList.toggle('obj-filter-empty', !c);
+    });
+    const on = (showUnplaced ? 1 : 0) + Object.values(showKind).filter(Boolean).length;
+    const badge = document.getElementById('obj-filter-count');
+    if (badge) badge.textContent = on ? `+${on}` : '';
+  }
   const cols = placements.filter((p) => p.isCollisionPrimitive).sort(byName);
   const vfx = placements.filter((p) => p.isEffect && !p.isSound && !p.isMarker).sort(byName);
   const sounds = placements.filter((p) => p.isSound).sort(byName);

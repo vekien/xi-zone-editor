@@ -822,9 +822,10 @@ let vfxIconSize = Math.max(10, Math.min(80, Math.round(loadSetting('vfxIconSize'
 let showSkybox = loadProjectSetting('skybox', loadSetting('skybox', false));         // project-scoped
 let skyboxScaled = loadProjectSetting('skyboxScaled', loadSetting('skyboxScaled', true)); // project-scoped
 // Meshes the DAT ships but no placement record references. Drawn at the origin
-// (see the build loop below) — on by default, matching how the editor has always
-// behaved; the OBJECTS toggle hides them when they get in the way.
-let showUnplaced = loadProjectSetting('unplaced', true);
+// (see the build loop below) — off by default: the client never spawns them and
+// they can outnumber real placements, so listing them buries the zone. The
+// OBJECTS filter menu reveals them.
+let showUnplaced = loadProjectSetting('unplaced', false);
 // Placement classes the client does not draw in the base zone view. Collision
 // proxies and far copies are off by default (they stack invisible or duplicate
 // geometry on the zone); sub-area placeholders stay on — they are the closed
@@ -1300,7 +1301,7 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
   // Sky visibility per zone follows the project's Skybox setting (default off). Re-read it
   // here so each zone build reflects the active project; the Sky toggle still reveals it live.
   showSkybox = loadProjectSetting('skybox', false);
-  showUnplaced = loadProjectSetting('unplaced', true);
+  showUnplaced = loadProjectSetting('unplaced', false);
   document.getElementById('obj-unplaced')?.classList.toggle('active', showUnplaced);
   if (typeof skyToggle !== 'undefined' && skyToggle) skyToggle.checked = showSkybox;
   skyGroup = new THREE.Group(); skyGroup.name = 'skybox';
@@ -4892,6 +4893,27 @@ kindToggle('obj-far-lod', 'farLod',
   () => showFarLod, (v) => { showFarLod = v; }, 'farlod');
 kindToggle('obj-subareas', 'subAreas',
   () => showSubAreas, (v) => { showSubAreas = v; }, 'subarea');
+// The four toggles live in a popover under the OBJECTS "Filter" button (same
+// open/close shape as the File menu). Toggling keeps the menu open — they behave
+// like checkboxes, not commands.
+{
+  const btn = document.getElementById('obj-filter-btn');
+  const menu = document.getElementById('obj-filter-menu');
+  if (btn && menu) {
+    const close = () => menu.classList.remove('open');
+    const open = () => {
+      const r = btn.getBoundingClientRect();
+      menu.style.top = (r.bottom + 6) + 'px';
+      menu.classList.add('open');   // must be displayed before offsetWidth is real
+      menu.style.left = Math.max(4, Math.min(r.left, window.innerWidth - menu.offsetWidth - 8)) + 'px';
+    };
+    btn.onclick = (e) => { e.stopPropagation(); menu.classList.contains('open') ? close() : open(); };
+    document.addEventListener('pointerdown', (e) => {
+      if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) close();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  }
+}
 document.getElementById('obj-show')?.addEventListener('click', () => setListedVisibility(false, true));
 document.getElementById('obj-hide')?.addEventListener('click', () => setListedVisibility(false, false));
 document.getElementById('vfx-show')?.addEventListener('click', () => setListedVisibility(true, true));
