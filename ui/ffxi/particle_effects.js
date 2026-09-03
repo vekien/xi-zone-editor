@@ -350,6 +350,54 @@ function parseParticleMesh(bytes, dv, section) {
   return { id: section.id, meshes };
 }
 
+function parseSpriteSheet(bytes, dv, section) {
+  const ds = section.dataStart;
+  let p = ds;
+  if (p + 0x16 > dv.byteLength) return null;
+  const unkFlag = dv.getUint16(p, true); p += 2;
+  const numMesh = dv.getUint16(p, true); p += 2;
+  const lensFlare = bytes[p++] === 1;
+  p += 2;
+  const normalizationFlag = bytes[p++];
+  const norm = (unkFlag === 1 && normalizationFlag === 0) ? 1 / 256 : 1;
+  const textureName = strAt(bytes, p, 0x10); p += 0x10;
+
+  const frames = [];
+  const offsets = [];
+  for (let i = 0; i < numMesh; i++) {
+    if (p + 4 > dv.byteLength) break;
+    p += 2;
+    const numQuads = bytes[p++];
+    p += 1;
+    if (lensFlare) {
+      if (p + 16 > dv.byteLength) break;
+      offsets.push(dv.getFloat32(p, true));
+      p += 16;
+    }
+    const numVerts = 6 * numQuads;
+    const positions = new Float32Array(numVerts * 3);
+    const colors = new Float32Array(numVerts * 4);
+    const uvs = new Float32Array(numVerts * 2);
+    for (let j = 0; j < numVerts; j++) {
+      if (p + 24 > dv.byteLength) return { id: section.id, textureName, frames, offsets, lensFlare };
+      positions[j * 3] = dv.getFloat32(p, true);
+      positions[j * 3 + 1] = dv.getFloat32(p + 4, true);
+      positions[j * 3 + 2] = dv.getFloat32(p + 8, true);
+      p += 12;
+      colors[j * 4] = bytes[p] / 255;
+      colors[j * 4 + 1] = bytes[p + 1] / 255;
+      colors[j * 4 + 2] = bytes[p + 2] / 255;
+      colors[j * 4 + 3] = bytes[p + 3] / 255;
+      p += 4;
+      uvs[j * 2] = dv.getFloat32(p, true) * norm;
+      uvs[j * 2 + 1] = dv.getFloat32(p + 4, true) * norm;
+      p += 8;
+    }
+    frames.push({ numVerts, positions, colors, uvs, textureName });
+  }
+  return { id: section.id, textureName, frames, offsets, lensFlare };
+}
+
 // ── Parse EffectRoutine (0x07) ──────────────────────────────────────────────
 
 function parseEffectRoutine(bytes, dv, section) {
@@ -440,9 +488,11 @@ export function parseAllEffects(datBuffer) {
         if (pm) particleMeshes.push(pm);
         break;
       }
-      case 0x21:
-        spriteSheets.push({ id: s.id, start: s.start, size: s.size });
+      case 0x21: {
+        const ss = parseSpriteSheet(bytes, dv, s);
+        if (ss) spriteSheets.push(ss);
         break;
+      }
     }
   }
 

@@ -3665,7 +3665,7 @@ export function csRenderTick(dt, activeCamera) {
     }
   }
   if (csActors.length) for (const rec of csActors) { if (rec.mixer) rec.mixer.update(dt); }
-  if (csVfxSystem && csVfxSystem.emitters.length) { try { csVfxSystem.update(); } catch (e) {} }
+  if (csVfxSystem && csVfxSystem.emitters.length) { try { csVfxSystem.update(dt); } catch (e) {} }
   _updateOutline(csActorOutline, !!csSelectedActor);
   // Update the name tag screen position for the selected cutscene actor.
   if (csSelectedActor?.node) {

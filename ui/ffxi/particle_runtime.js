@@ -14,6 +14,12 @@ const _tmpObj = new THREE.Object3D();
 const _bbDir = new THREE.Vector3(), _bbUp = new THREE.Vector3(0, 1, 0);
 const _bbRight = new THREE.Vector3(), _bbUp2 = new THREE.Vector3();
 const _bbMat = new THREE.Matrix4(), _bbQuat = new THREE.Quaternion(), _bbEuler = new THREE.Euler();
+const _cullCam = new THREE.Vector3(), _cullPos = new THREE.Vector3();
+const _partPos = new THREE.Vector3();
+const _bbFwd = new THREE.Vector3(0, 0, 1);
+const _texCache = new Map();
+const _geoCache = new Map();
+const EMITTER_SKIP_DIST_SQ = 200 * 200;
 
 // ── Utility ────────────────────────────────────────────────────────────────
 
@@ -21,15 +27,15 @@ function rand() { return Math.random() * 2 - 1; }
 function posRand(max) { return Math.random() * max; }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-let WHITE_TEXTURE = null;
+let NEUTRAL_TEXTURE = null;
 
-function whiteTexture() {
-  if (!WHITE_TEXTURE) {
-    WHITE_TEXTURE = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat);
-    WHITE_TEXTURE.needsUpdate = true;
-    WHITE_TEXTURE.colorSpace = THREE.NoColorSpace;
+function neutralTexture() {
+  if (!NEUTRAL_TEXTURE) {
+    NEUTRAL_TEXTURE = new THREE.DataTexture(new Uint8Array([0x80, 0x80, 0x80, 0x80]), 1, 1, THREE.RGBAFormat);
+    NEUTRAL_TEXTURE.needsUpdate = true;
+    NEUTRAL_TEXTURE.colorSpace = THREE.NoColorSpace;
   }
-  return WHITE_TEXTURE;
+  return NEUTRAL_TEXTURE;
 }
 
 function ensureColorAttribute(geo) {
@@ -37,28 +43,154 @@ function ensureColorAttribute(geo) {
   const pos = geo.getAttribute('position');
   if (!pos) return;
   const colors = new Float32Array(pos.count * 4);
-  for (let i = 0; i < pos.count; i++) colors.set([1, 1, 1, 1], i * 4);
+  for (let i = 0; i < pos.count; i++) colors.set([0.5, 0.5, 0.5, 0.5], i * 4);
   geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4));
 }
 
-function buildXimParticleMaterial(texture) {
+function fallOff(distance, near, far) {
+  if (far <= near) return distance <= near ? 1 : 0;
+  if (distance <= near) return 1;
+  if (distance >= far) return 0;
+  return (far - distance) / (far - near);
+}
+
+function doubleRangeWeight(distance, n0, n1, f0, f1) {
+  if (distance < n0) return 0;
+  if (distance < n1) return 1 - (n1 - distance) / (n1 - n0);
+  if (distance < f0) return 1;
+  if (distance < f1) return 1 - (distance - f0) / (f1 - f0);
+  return 0;
+}
+
+function particleLocalPos(p, out) {
+  out.x = p.parentOffset.x + p.basePosition.x + p.initialPosition.x + p.position.x;
+  out.y = p.parentOffset.y + p.basePosition.y + p.initialPosition.y + p.position.y;
+  out.z = p.parentOffset.z + p.basePosition.z + p.initialPosition.z + p.position.z;
+  return out;
+}
+
+function findById(list, id) {
+  if (!id || !list) return null;
+  let hit = list.find(p => p.id === id);
+  if (hit) return hit;
+  const low = id.toLowerCase();
+  return list.find(p => (p.id || '').toLowerCase() === low) || null;
+}
+
+function geoFromMeshData(m, cacheKey) {
+  if (!m?.positions?.length) return null;
+  if (cacheKey && _geoCache.has(cacheKey)) return _geoCache.get(cacheKey).clone();
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(m.positions, 3));
+  if (m.normals) geo.setAttribute('normal', new THREE.Float32BufferAttribute(m.normals, 3));
+  if (m.colors) geo.setAttribute('color', new THREE.Float32BufferAttribute(m.colors, 4));
+  if (m.uvs) geo.setAttribute('uv', new THREE.Float32BufferAttribute(m.uvs, 2));
+  geo.computeBoundingSphere();
+  if (cacheKey) {
+    _geoCache.set(cacheKey, geo);
+    return geo.clone();
+  }
+  return geo;
+}
+
+function makeThreeTex(texture) {
+  if (!texture?.rgba) return null;
+  const key = `${texture.name || ''}@${texture.width}x${texture.height}`;
+  const hit = _texCache.get(key);
+  if (hit) return hit;
+  const threeTex = new THREE.DataTexture(texture.rgba, texture.width, texture.height, THREE.RGBAFormat);
+  threeTex.needsUpdate = true;
+  threeTex.magFilter = THREE.LinearFilter;
+  threeTex.minFilter = THREE.LinearFilter;
+  threeTex.wrapS = THREE.RepeatWrapping;
+  threeTex.wrapT = THREE.RepeatWrapping;
+  threeTex.colorSpace = THREE.NoColorSpace;
+  _texCache.set(key, threeTex);
+  return threeTex;
+}
+
+function clearParticleResourceCache() {
+  for (const t of _texCache.values()) t.dispose();
+  _texCache.clear();
+  for (const g of _geoCache.values()) g.dispose();
+  _geoCache.clear();
+}
+
+function lookupTexture(textures, texName, linkedDataId) {
+  const match = (id) => {
+    if (!id) return null;
+    let t = textures.find(x => x.name === id || x.sectionId === id);
+    if (t) return t;
+    const low = id.toLowerCase();
+    t = textures.find(x => (x.name || '').toLowerCase() === low || (x.sectionId || '').toLowerCase() === low);
+    if (t) return t;
+    return textures.find(x => (x.name || '').toLowerCase().startsWith(low)) || null;
+  };
+  return match(texName) || match(linkedDataId);
+}
+
+function resolveLinkedMesh(effectsData, linkedDataId, linkedDataType) {
+  const textures = effectsData.textures || [];
+  const particleMeshes = effectsData.particleMeshes || [];
+  const spriteSheets = effectsData.spriteSheets || [];
+  let geo = null;
+  let texName = null;
+  const type = linkedDataType || '';
+
+  if (type === 'LensFlare') return { geo: null, texture: null, rawTex: null };
+
+  if (linkedDataId && (type === 'SpriteSheet' || !type)) {
+    const ss = findById(spriteSheets, linkedDataId);
+    if (ss?.lensFlare) return { geo: null, texture: null, rawTex: null };
+    if (ss?.frames?.[0]) {
+      geo = geoFromMeshData(ss.frames[0], `ss:${ss.id}:0`);
+      texName = ss.textureName || ss.frames[0].textureName;
+    }
+  }
+  if (!geo && linkedDataId && type !== 'SpriteSheet') {
+    const pm = findById(particleMeshes, linkedDataId);
+    if (pm?.meshes?.[0]) {
+      geo = geoFromMeshData(pm.meshes[0], `pm:${pm.id}:0`);
+      texName = pm.meshes[0].textureName;
+    }
+  }
+  if (!geo && linkedDataId && type === 'StaticMesh') {
+    const ss = findById(spriteSheets, linkedDataId);
+    if (ss?.lensFlare) return { geo: null, texture: null, rawTex: null };
+    if (ss?.frames?.[0]) {
+      geo = geoFromMeshData(ss.frames[0], `ss:${ss.id}:0`);
+      texName = ss.textureName || ss.frames[0].textureName;
+    }
+  }
+
+  if (!geo) return { geo: null, texture: null, rawTex: null };
+
+  const tex = lookupTexture(textures, texName, linkedDataId);
+  const threeTex = makeThreeTex(tex);
+  const rawTex = tex?.rgba
+    ? { rgba: tex.rgba, width: tex.width, height: tex.height, name: tex.name }
+    : null;
+  ensureColorAttribute(geo);
+  return { geo, texture: threeTex, rawTex };
+}
+
+function buildXimParticleMaterial(texture, opts = {}) {
   return new THREE.ShaderMaterial({
     uniforms: {
-      uTexture: { value: texture || whiteTexture() },
+      uTexture: { value: texture || neutralTexture() },
       uParticleColor: { value: new THREE.Vector4(1, 1, 1, 1) },
       uAlphaTest: { value: 0.015 },
+      uIgnoreTextureAlpha: { value: opts.ignoreTextureAlpha ? 1 : 0 },
     },
-    // Particles are drawn as one InstancedMesh per pool: instanceMatrix carries
-    // the transform (three.js defines USE_INSTANCING for InstancedMesh) and
-    // aInstColor the per-particle colour that used to be a per-mesh uniform.
     vertexShader: `
       attribute vec4 color;
       attribute vec4 aInstColor;
+      attribute vec2 aTexTranslate;
       varying vec2 vUv;
       varying vec4 vColor;
       varying vec4 vInstColor;
       void main() {
-        vUv = uv;
+        vUv = uv + aTexTranslate;
         vColor = color;
         vInstColor = aInstColor;
         #ifdef USE_INSTANCING
@@ -72,18 +204,18 @@ function buildXimParticleMaterial(texture) {
       uniform sampler2D uTexture;
       uniform vec4 uParticleColor;
       uniform float uAlphaTest;
+      uniform float uIgnoreTextureAlpha;
       varying vec2 vUv;
       varying vec4 vColor;
       varying vec4 vInstColor;
       void main() {
         vec4 texel = texture2D(uTexture, vUv);
+        if (uIgnoreTextureAlpha > 0.5) texel.a = 0.5;
         vec4 pc = uParticleColor * vInstColor;
         vec4 stage0 = 2.0 * (vColor * texel);
         vec4 outColor = vec4(2.0 * stage0.rgb * pc.rgb, 4.0 * stage0.a * pc.a);
-        float contribution = max(max(outColor.r, outColor.g), outColor.b);
-        outColor.a *= smoothstep(0.015, 0.12, contribution);
         if (outColor.a < uAlphaTest) discard;
-        gl_FragColor = outColor;
+        gl_FragColor = vec4(clamp(outColor.rgb, 0.0, 1.0), outColor.a);
       }
     `,
     transparent: true,
@@ -241,6 +373,7 @@ class Particle {
     this.previousPosition = new THREE.Vector3();
     this.lastMovement = new THREE.Vector3();
     this.texCoordTranslate = [0, 0];
+    this.drawDistanceCulled = false;
   }
 
   getProgress() { return this.maxAge === Infinity ? 0 : clamp(this.age / this.maxAge, 0, 1); }
@@ -391,6 +524,7 @@ function initStandardSetup(bytes, dv, len) {
   const rotationOrder = (bbFlags & 0x0200) ? 'ZYX' : 'XYZ';
   const depthMask = !!(bbFlags & 0x1000);
   const followGenerator = !(rsFlags & 0x0080);
+  const ignoreTextureAlpha = !!(rsFlags & 0x1000);
 
   const basePos = len >= 28
     ? new THREE.Vector3(dv.getFloat32(16, true), dv.getFloat32(20, true), dv.getFloat32(24, true))
@@ -422,6 +556,7 @@ function initStandardSetup(bytes, dv, len) {
   };
   init._linkedDataId = linkedDataId;
   init._linkedDataType = linkedDataType;
+  init._ignoreTextureAlpha = ignoreTextureAlpha;
   return init;
 }
 
@@ -660,6 +795,7 @@ function initChildGenerator(alloc, bytes, kfMap, genMap, overrides) {
     // Find the child generator's linked texture ID from its StandardSetup
     const childSetup = childState.initializers.find(fn => fn._linkedDataId !== undefined);
     childState.linkedDataId = childSetup?._linkedDataId || '';
+    childState.linkedDataType = childSetup?._linkedDataType || '';
     p.allocate(alloc, childState);
   };
 }
@@ -721,6 +857,9 @@ function buildSec3Upd(opc, op, kfMap) {
 
     // Velocity dampener
     case 0x2C: return updVelocityDampener(alloc, dv);
+
+    case 0x2E: return updDrawDistance(dv);
+    case 0x48: return updDoubleRangeDrawDistance(dv);
 
     // Velocity rotation updater
     case 0x2F: return updVelocityRotation(alloc);
@@ -864,6 +1003,53 @@ function updTexCoord(axis, dv) {
   return (dt, p) => { p.texCoordTranslate[axis] += amount * dt; };
 }
 
+function updDrawDistance(dv) {
+  const near = dv.getFloat32(0, true);
+  const far = dv.getFloat32(4, true);
+  return (_dt, p, emitter) => {
+    const cam = emitter?._camLocal;
+    if (!cam) return;
+    particleLocalPos(p, _partPos);
+    const m = fallOff(Math.hypot(cam.x - _partPos.x, cam.y - _partPos.y, cam.z - _partPos.z), near, far);
+    p.drawDistanceCulled = m === 0;
+    p.colorMultiplier[3] *= m;
+  };
+}
+
+function updDoubleRangeDrawDistance(dv) {
+  const n0 = dv.getFloat32(0, true), n1 = dv.getFloat32(4, true);
+  const f0 = dv.getFloat32(8, true), f1 = dv.getFloat32(12, true);
+  return (_dt, p, emitter) => {
+    const cam = emitter?._camLocal;
+    if (!cam) return;
+    particleLocalPos(p, _partPos);
+    const dist = Math.hypot(cam.x - _partPos.x, cam.y - _partPos.y, cam.z - _partPos.z) + 1.15 * Math.abs(p.scale.x);
+    const m = doubleRangeWeight(dist, n0, n1, f0, f1);
+    p.drawDistanceCulled = m === 0;
+    p.colorMultiplier[3] *= m;
+  };
+}
+
+function buildSec1Updaters(opcodes) {
+  const ups = [];
+  for (const op of (opcodes || [])) {
+    const opc = parseInt(op.op, 16);
+    if (opc !== 0x0A) continue;
+    const { dv } = readPayload(op);
+    const maxDist = dv.getFloat32(0, true);
+    ups.push((_dt, emitter) => {
+      if (!Number.isFinite(emitter.framesPerEmission) || maxDist === 0) return;
+      const cam = emitter._camera;
+      const node = emitter.meshGroup?.parent || emitter.meshGroup;
+      if (!cam || !node) return;
+      node.getWorldPosition(_cullPos);
+      cam.getWorldPosition(_cullCam);
+      emitter.emitCulled = _cullCam.distanceTo(_cullPos) > maxDist;
+    });
+  }
+  return ups;
+}
+
 // ── Velocity dampener ──
 
 function updVelocityDampener(alloc, dv) {
@@ -881,7 +1067,7 @@ function updVelocityDampener(alloc, dv) {
 // ── Child generator basic updater ──
 
 function updChildGeneratorBasic(alloc) {
-  return (dt, p) => {
+  return (dt, p, emitter) => {
     const cs = p.getDynamic(alloc);
     if (!(cs instanceof ChildEmitterState)) return;
 
@@ -892,7 +1078,8 @@ function updChildGeneratorBasic(alloc) {
       if (child.age >= child.maxAge) { child.alive = false; continue; }
       child.colorMultiplier[0] = 1; child.colorMultiplier[1] = 1;
       child.colorMultiplier[2] = 1; child.colorMultiplier[3] = 1;
-      for (const upd of cs.updaters) upd(dt, child);
+      child.drawDistanceCulled = false;
+      for (const upd of cs.updaters) upd(dt, child, emitter);
       child.lastMovement.copy(child.position).sub(child.previousPosition);
       child.previousPosition.copy(child.position);
     }
@@ -925,6 +1112,7 @@ function updChildGeneratorBasic(alloc) {
         // Tag child with generator info for rendering
         child._childGenId = cs.childGenId;
         child._childLinkedDataId = cs.linkedDataId;
+        child._childLinkedDataType = cs.linkedDataType;
 
         // Child inherits parent's world position as an offset (not baked into initialPosition)
         child.parentOffset.copy(p.basePosition).add(p.initialPosition).add(p.position);
@@ -984,10 +1172,14 @@ export class ParticleEmitter {
     for (const g of (effectsData.generators || [])) this.genMap[g.id] = g;
 
     // Build typed initializers + updaters from opcodes
+    const sec1 = genData.sections?.[1]?.opcodes || [];
     const sec2 = genData.sections?.[2]?.opcodes || [];
     const sec3 = genData.sections?.[3]?.opcodes || [];
+    this.genUpdaters = buildSec1Updaters(sec1);
     this.initializers = buildSec2Initializers(sec2, this.kfMap, this.genMap);
     this.updaters = buildSec3Updaters(sec3, this.kfMap);
+    this.emitCulled = false;
+    this._camLocal = new THREE.Vector3();
 
     // Emission params (from header)
     this.framesPerEmission = this.header.framesPerEmission || 1;
@@ -1027,6 +1219,7 @@ export class ParticleEmitter {
     const setupInit = this.initializers.find(fn => fn._linkedDataId !== undefined);
     this.linkedDataId = setupInit?._linkedDataId || '';
     this.linkedDataType = setupInit?._linkedDataType || 'StaticMesh';
+    this.ignoreTextureAlpha = !!setupInit?._ignoreTextureAlpha;
 
     // Skip truly non-renderable types
     const SKIP_TYPES = new Set(['PointLight', 'Audio', 'LensFlare', 'Null']);
@@ -1037,16 +1230,14 @@ export class ParticleEmitter {
     // Distortion particles are tracked for post-processing, not rendered as meshes
     this.distortionParticles = []; // [{x, y, scale, alpha}] in screen space
 
-    // Particle pool
     this.particles = [];
-    for (let i = 0; i < MAX_PARTICLES; i++) this.particles.push(new Particle());
 
-    // Resolve particle mesh + texture via linkedDataId → ParticleMesh → texture name
     const resolved = this._resolveMeshAndTexture(effectsData);
     this.texture = resolved.texture;
     this.geo = resolved.geo;
-    this.rawTex = resolved.rawTex; // for editor preview
-    this.mat = this._buildMaterial();
+    this.rawTex = resolved.rawTex;
+    this.hasMesh = !!resolved.geo;
+    this.mat = this.hasMesh ? this._buildMaterial() : null;
 
     // One InstancedMesh per pool (parent particles, plus one per child generator).
     // Every live particle used to be its own Mesh with a cloned material — one draw
@@ -1071,69 +1262,22 @@ export class ParticleEmitter {
   }
 
   _resolveMeshAndTexture(effectsData) {
-    const textures = effectsData.textures || [];
-    const particleMeshes = effectsData.particleMeshes || [];
-
-    let geo = null;
-    let texture = null;
-    let texName = null;
-
-    // 1. Find the ParticleMesh section matching linkedDataId
-    if (this.linkedDataId) {
-      const pm = particleMeshes.find(p => p.id === this.linkedDataId);
-      if (pm?.meshes?.[0]) {
-        const m = pm.meshes[0];
-        geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(m.positions, 3));
-        geo.setAttribute('normal', new THREE.Float32BufferAttribute(m.normals, 3));
-        if (m.colors) geo.setAttribute('color', new THREE.Float32BufferAttribute(m.colors, 4));
-        if (m.uvs) geo.setAttribute('uv', new THREE.Float32BufferAttribute(m.uvs, 2));
-        geo.computeBoundingSphere();
-        texName = m.textureName;
-      }
-    }
-
-    // 2. Find texture: by ParticleMesh textureName, then by linkedDataId, then fallback
-    if (texName) {
-      texture = textures.find(t => t.name === texName || t.sectionId === texName);
-    }
-    if (!texture && this.linkedDataId) {
-      texture = textures.find(t => t.sectionId === this.linkedDataId);
-      if (!texture) texture = textures.find(t => t.name === this.linkedDataId);
-    }
-    // Fallback: first texture that looks like a particle effect texture (not weapon)
-    if (!texture) {
-      texture = textures.find(t => t.rgba && t.name?.startsWith('eff'));
-      if (!texture) texture = textures.find(t => t.rgba);
-    }
-
-    let rawTex = null;
-    let threeTex = null;
-    if (texture?.rgba) {
-      rawTex = { rgba: texture.rgba, width: texture.width, height: texture.height, name: texture.name };
-      threeTex = new THREE.DataTexture(texture.rgba, texture.width, texture.height, THREE.RGBAFormat);
-      threeTex.needsUpdate = true;
-      threeTex.magFilter = THREE.LinearFilter;
-      threeTex.minFilter = THREE.LinearFilter;
-      threeTex.wrapS = THREE.RepeatWrapping;
-      threeTex.wrapT = THREE.RepeatWrapping;
-      threeTex.colorSpace = THREE.NoColorSpace;
-    }
-
-    if (!geo) geo = new THREE.PlaneGeometry(3, 3);
-    ensureColorAttribute(geo);
-
-    return { geo, texture: threeTex, rawTex };
+    return resolveLinkedMesh(effectsData, this.linkedDataId, this.linkedDataType);
   }
 
   _buildMaterial() {
-    return buildXimParticleMaterial(this.texture);
+    const doubleSide = this.linkedDataType === 'StaticMesh' || this.linkedDataType === 'RingMesh';
+    return buildXimParticleMaterial(this.texture, { ignoreTextureAlpha: this.ignoreTextureAlpha, doubleSide });
   }
 
   _emitParticle() {
     let p = null;
     for (const c of this.particles) if (!c.alive) { p = c; break; }
-    if (!p) return null;
+    if (!p) {
+      if (this.particles.length >= MAX_PARTICLES) return null;
+      p = new Particle();
+      this.particles.push(p);
+    }
 
     p.reset();
     p.alive = true;
@@ -1183,31 +1327,36 @@ export class ParticleEmitter {
   setCulled(on) { this.culled = !!on; }
 
   _makePool(geo, mat) {
-    return { geo, mat, mesh: null, cap: 0, colors: null, colorAttr: null, _idx: 0 };
+    return { geo, mat, mesh: null, cap: 0, colors: null, colorAttr: null, uvs: null, uvAttr: null, _idx: 0 };
   }
 
-  // Grow a pool's InstancedMesh to hold `needed` particles. Called mid-frame, so
-  // the instances already composed this frame are carried across.
   _growPool(pool, needed) {
+    if (!pool.geo || !pool.mat) return;
     let cap = Math.max(POOL_MIN, pool.cap);
     while (cap < needed) cap *= 2;
     const old = pool.mesh;
     const mesh = new THREE.InstancedMesh(pool.geo, pool.mat, cap);
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    mesh.frustumCulled = false;   // instances spread far beyond the base quad's bounds
+    mesh.frustumCulled = true;
     mesh.count = 0;
     const colors = new Float32Array(cap * 4);
     const attr = new THREE.InstancedBufferAttribute(colors, 4);
     attr.setUsage(THREE.DynamicDrawUsage);
+    const uvs = new Float32Array(cap * 2);
+    const uvAttr = new THREE.InstancedBufferAttribute(uvs, 2);
+    uvAttr.setUsage(THREE.DynamicDrawUsage);
     if (old) {
       mesh.instanceMatrix.array.set(old.instanceMatrix.array);
       colors.set(pool.colors);
+      uvs.set(pool.uvs);
       this.meshGroup.remove(old);
       old.dispose();
     }
     pool.geo.setAttribute('aInstColor', attr);
+    pool.geo.setAttribute('aTexTranslate', uvAttr);
     this.meshGroup.add(mesh);
     pool.mesh = mesh; pool.cap = cap; pool.colors = colors; pool.colorAttr = attr;
+    pool.uvs = uvs; pool.uvAttr = uvAttr;
   }
 
   _finishPool(pool, n) {
@@ -1216,9 +1365,14 @@ export class ParticleEmitter {
     mesh.count = n;
     mesh.visible = n > 0;
     if (n > 0) {
-      mesh.instanceMatrix.needsUpdate = true; pool.colorAttr.needsUpdate = true;
-      // three.js caches these for raycasts; particles move, so let them recompute lazily.
-      mesh.boundingSphere = null; mesh.boundingBox = null;
+      mesh.instanceMatrix.needsUpdate = true;
+      pool.colorAttr.needsUpdate = true;
+      if (pool.uvAttr) pool.uvAttr.needsUpdate = true;
+      pool._boundTick = (pool._boundTick || 0) + 1;
+      if (n !== pool._lastCount || (pool._boundTick & 7) === 0) {
+        mesh.computeBoundingSphere();
+        pool._lastCount = n;
+      }
     }
   }
 
@@ -1229,16 +1383,22 @@ export class ParticleEmitter {
     const elapsedFrames = dt * FPS;
     this.lifetime += elapsedFrames;
 
+    this.emitCulled = false;
+    for (const upd of this.genUpdaters) upd(elapsedFrames, this);
+    if (this._camera && this.meshGroup) {
+      this._camera.getWorldPosition(this._camLocal);
+      this.meshGroup.worldToLocal(this._camLocal);
+    }
+    if (this.emitCulled && this.aliveCount() === 0) return;
+
     // ── Emit ──
     this.framesUntilNext -= elapsedFrames;
     let aliveCount = this.aliveCount();
-    // continuousSingleton keeps exactly one particle alive; when it dies, emit again
-    // immediately rather than waiting on framesPerEmission (which may be huge).
-    if (this.continuousSingleton && aliveCount === 0 && this.emitting) {
+    if (this.continuousSingleton && aliveCount === 0 && this.emitting && !this.emitCulled) {
       this.framesUntilNext = Math.min(this.framesUntilNext, 0);
     }
 
-    while (this.emitting && this.framesUntilNext <= 0) {
+    while (this.emitting && !this.emitCulled && this.framesUntilNext <= 0) {
       if (this.continuousSingleton && aliveCount > 0) break;
 
       const rateDiv = Math.max(0.01, this.overrides.emissionRate);
@@ -1266,14 +1426,13 @@ export class ParticleEmitter {
       // Reset per-frame multiplier
       p.colorMultiplier[0] = 1; p.colorMultiplier[1] = 1;
       p.colorMultiplier[2] = 1; p.colorMultiplier[3] = 1;
+      p.drawDistanceCulled = false;
 
-      // Advance age
       p.age += elapsedFrames;
       if (p.age >= p.maxAge) { p.alive = false; continue; }
 
-      // Apply all updaters
       for (const upd of this.updaters) {
-        upd(elapsedFrames, p);
+        upd(elapsedFrames, p, this);
       }
 
       // Track movement for billboard
@@ -1330,7 +1489,9 @@ export class ParticleEmitter {
   // Object3D keeps the old Mesh semantics (rotation ↔ quaternion sync) so
   // _applyBillboard is unchanged.
   _renderParticle(p, pool, meshIdx) {
+    if (p.drawDistanceCulled || !pool.geo || !pool.mat) return meshIdx;
     if (meshIdx >= pool.cap) this._growPool(pool, meshIdx + 1);
+    if (!pool.mesh) return meshIdx;
 
     const o = _tmpObj;
     // World position = parentOffset + basePosition + initialPosition + position
@@ -1348,9 +1509,13 @@ export class ParticleEmitter {
 
     const c = p.getColor();
     if (this.overrides.hue) hueShiftRGB(c, this.overrides.hue);
-    const alphaVal = p.alphaOverride != null ? (p.alphaOverride / 255) : clamp(c[3], 0, 1);
+    const alphaVal = p.alphaOverride != null ? (p.alphaOverride / 255) : clamp(c[3], 0, 2);
     const k = meshIdx * 4, col = pool.colors;
-    col[k] = clamp(c[0], 0, 1); col[k + 1] = clamp(c[1], 0, 1); col[k + 2] = clamp(c[2], 0, 1); col[k + 3] = alphaVal;
+    col[k] = clamp(c[0], 0, 2); col[k + 1] = clamp(c[1], 0, 2); col[k + 2] = clamp(c[2], 0, 2); col[k + 3] = alphaVal;
+    if (pool.uvs) {
+      pool.uvs[meshIdx * 2] = p.texCoordTranslate[0];
+      pool.uvs[meshIdx * 2 + 1] = p.texCoordTranslate[1];
+    }
 
     // Blend func + depth mask come from a Sec2 initializer, so every particle of a
     // generator shares them: the first instance each frame sets the pool's material.
@@ -1363,33 +1528,16 @@ export class ParticleEmitter {
     const key = childParticle._childGenId || 'default';
     if (this.childMeshPools[key]) return this.childMeshPools[key];
 
-    const textures = this._effectsData?.textures || [];
-    const linkedId = childParticle._childLinkedDataId || '';
-
-    // Resolve texture by child generator's linked data ID
-    let tex = null;
-    if (linkedId) {
-      tex = textures.find(t => t.sectionId === linkedId);
-      if (!tex) tex = textures.find(t => t.name?.includes(linkedId));
-    }
-    if (!tex) tex = textures.find(t => t.rgba && t.name?.startsWith('eff'));
-
-    let threeTex = null;
-    if (tex?.rgba) {
-      threeTex = new THREE.DataTexture(tex.rgba, tex.width, tex.height, THREE.RGBAFormat);
-      threeTex.needsUpdate = true;
-      threeTex.magFilter = THREE.LinearFilter;
-      threeTex.minFilter = THREE.LinearFilter;
-      threeTex.wrapS = THREE.RepeatWrapping;
-      threeTex.wrapT = THREE.RepeatWrapping;
-      threeTex.colorSpace = THREE.NoColorSpace;
-    }
-
-    const geo = new THREE.PlaneGeometry(1, 1);
-    ensureColorAttribute(geo);
-    const mat = buildXimParticleMaterial(threeTex);
-
-    const pool = this._makePool(geo, mat);
+    const resolved = resolveLinkedMesh(
+      this._effectsData || {},
+      childParticle._childLinkedDataId || '',
+      childParticle._childLinkedDataType || '',
+    );
+    const doubleSide = childParticle._childLinkedDataType === 'StaticMesh' || childParticle._childLinkedDataType === 'RingMesh';
+    const mat = resolved.geo
+      ? buildXimParticleMaterial(resolved.texture, { doubleSide })
+      : null;
+    const pool = this._makePool(resolved.geo, mat);
     this.childMeshPools[key] = pool;
     return pool;
   }
@@ -1399,15 +1547,19 @@ export class ParticleEmitter {
     switch (p.billboardType) {
       case 'XYZ':
       case 'Camera':
-        // Face camera
-        mesh.quaternion.copy(cam.quaternion);
+        _bbDir.copy(this._camLocal).sub(mesh.position);
+        if (_bbDir.lengthSq() > 1e-10) {
+          _bbDir.normalize();
+          mesh.quaternion.setFromUnitVectors(_bbFwd, _bbDir);
+        }
         break;
       case 'XZ':
-        // Only rotate around Y to face camera
-        mesh.quaternion.copy(cam.quaternion);
-        // Zero out X and Z rotation
-        mesh.rotation.x = 0;
-        mesh.rotation.z = 0;
+        _bbDir.copy(this._camLocal).sub(mesh.position);
+        _bbDir.y = 0;
+        if (_bbDir.lengthSq() > 1e-10) {
+          _bbDir.normalize();
+          mesh.quaternion.setFromUnitVectors(_bbFwd, _bbDir);
+        }
         break;
       case 'Movement':
       case 'MovementHorizontal': {
@@ -1489,11 +1641,14 @@ export class ParticleEmitter {
   dispose() {
     if (this.meshGroup) {
       (this.meshGroup.parent || this.scene).remove(this.meshGroup);
-      const kill = (pool) => { if (pool.mesh) pool.mesh.dispose(); pool.geo.dispose(); pool.mat.dispose(); };
+      const kill = (pool) => {
+        if (pool.mesh) pool.mesh.dispose();
+        if (pool.geo) pool.geo.dispose();
+        if (pool.mat) pool.mat.dispose();
+      };
       kill(this.pool);
       for (const cp of Object.values(this.childMeshPools)) kill(cp);
     }
-    if (this.texture) this.texture.dispose();
   }
 }
 
@@ -1527,10 +1682,29 @@ export class ParticleSystem {
     }
   }
 
-  update() {
-    const dt = this.clock.getDelta();
-    // The editor swaps `camera` for the cutscene camera; billboards must follow it.
-    for (const e of this.emitters) { e._camera = this.camera; e.update(dt); }
+  update(dt) {
+    if (dt == null) dt = this.clock.getDelta();
+    const cam = this.camera;
+    if (cam) cam.getWorldPosition(_cullCam);
+    for (const e of this.emitters) {
+      e._camera = cam;
+      if (cam && e.meshGroup) {
+        const node = e.meshGroup.parent || e.meshGroup;
+        node.getWorldPosition(_cullPos);
+        if (_cullCam.distanceToSquared(_cullPos) > EMITTER_SKIP_DIST_SQ) {
+          if (!e._farSkip) {
+            e._farSkip = true;
+            e.meshGroup.visible = false;
+          }
+          continue;
+        }
+        if (e._farSkip) {
+          e._farSkip = false;
+          e.meshGroup.visible = true;
+        }
+      }
+      e.update(dt);
+    }
   }
 
   getDistortionParticles() {
@@ -1544,5 +1718,6 @@ export class ParticleSystem {
   clear() {
     for (const e of this.emitters) e.dispose();
     this.emitters = [];
+    clearParticleResourceCache();
   }
 }

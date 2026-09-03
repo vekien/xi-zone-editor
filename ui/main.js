@@ -317,8 +317,14 @@ function syncProjectSettingsUI() {
 }
 
 // ── renderer / scene / camera ───────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  preserveDrawingBuffer: false,
+  powerPreference: 'high-performance',
+  alpha: false,
+});
+renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
@@ -2384,11 +2390,12 @@ function updatePerfPanel() {
 // placements never move, so the per-frame cost is just a distanceTo per object.
 // Particle emitters are culled too — each one is a draw call plus a per-frame
 // simulation even as a speck on the horizon — and are frozen while hidden.
-let cullEnabled = loadSetting('distCull', false);
+let cullEnabled = loadSetting('distCull', true);
 let cullDistPct = clampSnapValue(Number(loadSetting('distCullPct', 60)), 5, 100, 60); // % of zone diagonal
 let _cullDiag = 4000;          // world units; recomputed when the placement count changes
 let _cullSeenN = -1, _cullCount = 0;
 const _camWP = new THREE.Vector3(), _cullTmp = new THREE.Vector3(), _cullBox = new THREE.Box3();
+const _vfxIconWP = new THREE.Vector3();
 const ANG_KEEP = 0.12;         // objects subtending ≥ this (radius/dist) never cull — keeps terrain/buildings
 function _cullEligible(p) {
   if (!p || !p.node || p.isSky || p.isMarker || p.isSound || p.isCollisionPrimitive) return false;
@@ -5476,24 +5483,24 @@ function animate() {
   // full-screen crosshair. Object editing always uses the viewport camera anyway.
   if (emittedEffects.length) updateEmittedEffects(dt * 30);
   const zoneVfx = getZoneVfxSystem();
-  if (zoneVfx && zoneVfx.emitters.length) { zoneVfx.camera = activeCamera; try { zoneVfx.update(); } catch (e) {} }
+  if (zoneVfx && zoneVfx.emitters.length) { zoneVfx.camera = activeCamera; try { zoneVfx.update(dt); } catch (e) {} }
 
   csRenderTick(dt, activeCamera);   // cutscene NPC anims + VFX + actor outline/tag
   titleRenderTick(dt, activeCamera, renderer);   // title shot playback + Line2 resolution
   for (const p of placements) { if (p.isMob && p.node.userData.mobMixer) p.node.userData.mobMixer.update(dt); }   // placed-mob idle anims
   if (vfxIconGroup && vfxIconGroup.visible) {
     const sc = vfxIconScale();
-    const _wp = new THREE.Vector3();
     for (const sp of vfxIconGroup.children) {
       if (sp.userData.vfxNode) sp.position.copy(sp.userData.vfxNode.position);
-      sp.getWorldPosition(_wp);
-      const f = vfxIconDistFactor(_wp);          // 1 (near) → VFX_ICON_MIN (far)
+      sp.getWorldPosition(_vfxIconWP);
+      const f = vfxIconDistFactor(_vfxIconWP);
+      const hov = sp.userData.vfxNode === hoveredIconNode;
+      if (f <= VFX_ICON_MIN + 0.001 && !hov) { sp.visible = false; continue; }
+      sp.visible = true;
       const a = sp.userData.aspect || 1;
-      const hov = sp.userData.vfxNode === hoveredIconNode;   // mouse-over highlight
       const s = sc * f * (hov ? 1.25 : 1);
       sp.scale.set(s * a, s, 1);
-      // Fade far icons too: remap the size factor onto opacity (hovered = full).
-      const fadeT = (1 - f) / (1 - VFX_ICON_MIN);  // 0 near → 1 far
+      const fadeT = (1 - f) / (1 - VFX_ICON_MIN);
       sp.material.opacity = hov ? 1 : 1 - fadeT * (1 - VFX_ICON_FADE_MIN);
     }
   }

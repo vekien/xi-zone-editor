@@ -231,13 +231,7 @@ export function addEmittedEffect(root, entries, effect, opts, renderOrder) {
 
 export function addPointLightEffect(root, effect) {
   const color = new THREE.Color(effect.color[0] / 255, effect.color[1] / 255, effect.color[2] / 255);
-  const light = new THREE.PointLight(color, 1.5, effect.range || 20, 2);
-  root.add(light);
-  const geo = new THREE.SphereGeometry(0.35, 12, 8);
-  const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending });
-  const marker = new THREE.Mesh(geo, mat);
-  marker.renderOrder = 12000;
-  root.add(marker);
+  root.userData.pointLightColor = color;
 }
 
 export function addPlainVfxMesh(root, entries, renderOrder) {
