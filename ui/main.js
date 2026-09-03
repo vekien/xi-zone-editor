@@ -2382,16 +2382,46 @@ function updatePerfPanel() {
 // whole-zone vista (the 16k-draw-call case). Big geometry (terrain/buildings) and
 // the current selection are always kept. Per-node bounding sphere is cached; static
 // placements never move, so the per-frame cost is just a distanceTo per object.
+// Particle emitters are culled too — each one is a draw call plus a per-frame
+// simulation even as a speck on the horizon — and are frozen while hidden.
 let cullEnabled = loadSetting('distCull', false);
 let cullDistPct = clampSnapValue(Number(loadSetting('distCullPct', 60)), 5, 100, 60); // % of zone diagonal
 let _cullDiag = 4000;          // world units; recomputed when the placement count changes
 let _cullSeenN = -1, _cullCount = 0;
-const _camWP = new THREE.Vector3(), _cullTmp = new THREE.Vector3();
+const _camWP = new THREE.Vector3(), _cullTmp = new THREE.Vector3(), _cullBox = new THREE.Box3();
 const ANG_KEEP = 0.12;         // objects subtending ≥ this (radius/dist) never cull — keeps terrain/buildings
 function _cullEligible(p) {
-  return p && p.node && !p.isSky && !p.isMarker && !p.isEffect && !p.isSound && !p.isCollisionPrimitive;
+  if (!p || !p.node || p.isSky || p.isMarker || p.isSound || p.isCollisionPrimitive) return false;
+  // Effects: only runtime particle emitters. Lights, sounds and static effect
+  // meshes keep their exemption.
+  if (p.isEffect) return !!p.node.userData.vfxEmitter;
+  return true;
+}
+const CULL_FX_REFRESH_MS = 2000;
+function _setNodeCulled(node, on) {
+  node.visible = !on;
+  node.userData._distCulled = on;
+  node.userData.vfxEmitter?.setCulled?.(on);
 }
 function _ensureCullData(node) {
+  const em = node.userData.vfxEmitter;
+  if (em) {
+    // Particles drift, so an emitter's cloud is re-measured every couple of seconds
+    // rather than cached once. Nothing emitted yet → a point at the emitter node.
+    const now = performance.now();
+    if (node.userData._cullR !== undefined && now - (node.userData._cullT || 0) < CULL_FX_REFRESH_MS) return;
+    node.userData._cullT = now;
+    const box = new THREE.Box3();
+    em.meshGroup.traverse((m) => {
+      if (!m.isInstancedMesh || !m.count) return;
+      m.computeBoundingBox();   // three.js caches this; recompute for the live instances
+      box.union(_cullBox.copy(m.boundingBox).applyMatrix4(m.matrixWorld));
+    });
+    if (box.isEmpty()) { node.userData._cullR = 0; node.userData._cullP = node.getWorldPosition(new THREE.Vector3()); return; }
+    const sph = box.getBoundingSphere(new THREE.Sphere());
+    node.userData._cullR = sph.radius; node.userData._cullP = sph.center;
+    return;
+  }
   if (node.userData._cullR !== undefined) return;
   const box = new THREE.Box3().setFromObject(node);
   if (box.isEmpty()) { node.userData._cullR = 0; node.userData._cullP = node.getWorldPosition(new THREE.Vector3()); return; }
@@ -2412,7 +2442,7 @@ function _rebuildCullCache() {
 function uncullAll() {
   for (const p of placements) {
     const n = p?.node;
-    if (n && n.userData._distCulled) { n.visible = true; n.userData._distCulled = false; }
+    if (n && n.userData._distCulled) _setNodeCulled(n, false);
   }
   _cullCount = 0;
 }
@@ -2428,7 +2458,7 @@ function updateDistanceCull() {
     const node = p.node;
     // Never cull the active selection (you may be editing a far object).
     if (node === selected || selectedSet.has(node)) {
-      if (node.userData._distCulled) { node.visible = true; node.userData._distCulled = false; }
+      if (node.userData._distCulled) _setNodeCulled(node, false);
       node.userData._cullP = null; node.userData._cullR = undefined; _ensureCullData(node); // refresh moved pos
       continue;
     }
@@ -2439,10 +2469,10 @@ function updateDistanceCull() {
     const dist = _camWP.distanceTo(node.userData._cullP);
     const cull = dist > maxD && (r / dist) < ANG_KEEP;
     if (cull) {
-      if (node.visible) node.visible = false;
-      node.userData._distCulled = true; culled++;
+      if (!node.userData._distCulled) _setNodeCulled(node, true);
+      culled++;
     } else if (node.userData._distCulled) {
-      node.visible = true; node.userData._distCulled = false;
+      _setNodeCulled(node, false);
     }
   }
   _cullCount = culled;

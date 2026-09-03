@@ -6,6 +6,14 @@ import * as THREE from 'three';
 
 const PI = Math.PI;
 const MAX_PARTICLES = 300;
+// Smallest InstancedMesh a pool starts with; it doubles as particles need it.
+const POOL_MIN = 16;
+// Scratch objects for composing per-particle instance transforms — the old
+// one-Mesh-per-particle path allocated vectors and matrices every frame.
+const _tmpObj = new THREE.Object3D();
+const _bbDir = new THREE.Vector3(), _bbUp = new THREE.Vector3(0, 1, 0);
+const _bbRight = new THREE.Vector3(), _bbUp2 = new THREE.Vector3();
+const _bbMat = new THREE.Matrix4(), _bbQuat = new THREE.Quaternion(), _bbEuler = new THREE.Euler();
 
 // ── Utility ────────────────────────────────────────────────────────────────
 
@@ -40,14 +48,24 @@ function buildXimParticleMaterial(texture) {
       uParticleColor: { value: new THREE.Vector4(1, 1, 1, 1) },
       uAlphaTest: { value: 0.015 },
     },
+    // Particles are drawn as one InstancedMesh per pool: instanceMatrix carries
+    // the transform (three.js defines USE_INSTANCING for InstancedMesh) and
+    // aInstColor the per-particle colour that used to be a per-mesh uniform.
     vertexShader: `
       attribute vec4 color;
+      attribute vec4 aInstColor;
       varying vec2 vUv;
       varying vec4 vColor;
+      varying vec4 vInstColor;
       void main() {
         vUv = uv;
         vColor = color;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vInstColor = aInstColor;
+        #ifdef USE_INSTANCING
+          gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+        #else
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        #endif
       }
     `,
     fragmentShader: `
@@ -56,10 +74,12 @@ function buildXimParticleMaterial(texture) {
       uniform float uAlphaTest;
       varying vec2 vUv;
       varying vec4 vColor;
+      varying vec4 vInstColor;
       void main() {
         vec4 texel = texture2D(uTexture, vUv);
+        vec4 pc = uParticleColor * vInstColor;
         vec4 stage0 = 2.0 * (vColor * texel);
-        vec4 outColor = vec4(2.0 * stage0.rgb * uParticleColor.rgb, 4.0 * stage0.a * uParticleColor.a);
+        vec4 outColor = vec4(2.0 * stage0.rgb * pc.rgb, 4.0 * stage0.a * pc.a);
         float contribution = max(max(outColor.r, outColor.g), outColor.b);
         outColor.a *= smoothstep(0.015, 0.12, contribution);
         if (outColor.a < uAlphaTest) discard;
@@ -1028,8 +1048,12 @@ export class ParticleEmitter {
     this.rawTex = resolved.rawTex; // for editor preview
     this.mat = this._buildMaterial();
 
-    // Three.js mesh pool
-    this.meshPool = [];
+    // One InstancedMesh per pool (parent particles, plus one per child generator).
+    // Every live particle used to be its own Mesh with a cloned material — one draw
+    // call each, so 500 zone emitters × up to 300 particles buried the renderer.
+    this.pool = this._makePool(this.geo, this.mat);
+    // Set by the editor's distance cull: freeze in place, resume when the camera returns.
+    this.culled = false;
     this.meshGroup = new THREE.Group();
     if (parent) {
       // Caller (e.g. the level editor's zoneRoot) already owns the FFXI→display transform;
@@ -1042,7 +1066,7 @@ export class ParticleEmitter {
     }
 
     // Child particle rendering (separate geo/texture per child generator)
-    this.childMeshPools = {}; // genId → { pool, geo, mat }
+    this.childMeshPools = {}; // genId → pool (see _makePool)
     this._effectsData = effectsData;
   }
 
@@ -1154,8 +1178,52 @@ export class ParticleEmitter {
     }
   }
 
+  // Editor distance cull. Unlike setActive this is not user intent: the emitter
+  // freezes (no age, no emit, no draw) and picks up where it left off.
+  setCulled(on) { this.culled = !!on; }
+
+  _makePool(geo, mat) {
+    return { geo, mat, mesh: null, cap: 0, colors: null, colorAttr: null, _idx: 0 };
+  }
+
+  // Grow a pool's InstancedMesh to hold `needed` particles. Called mid-frame, so
+  // the instances already composed this frame are carried across.
+  _growPool(pool, needed) {
+    let cap = Math.max(POOL_MIN, pool.cap);
+    while (cap < needed) cap *= 2;
+    const old = pool.mesh;
+    const mesh = new THREE.InstancedMesh(pool.geo, pool.mat, cap);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    mesh.frustumCulled = false;   // instances spread far beyond the base quad's bounds
+    mesh.count = 0;
+    const colors = new Float32Array(cap * 4);
+    const attr = new THREE.InstancedBufferAttribute(colors, 4);
+    attr.setUsage(THREE.DynamicDrawUsage);
+    if (old) {
+      mesh.instanceMatrix.array.set(old.instanceMatrix.array);
+      colors.set(pool.colors);
+      this.meshGroup.remove(old);
+      old.dispose();
+    }
+    pool.geo.setAttribute('aInstColor', attr);
+    this.meshGroup.add(mesh);
+    pool.mesh = mesh; pool.cap = cap; pool.colors = colors; pool.colorAttr = attr;
+  }
+
+  _finishPool(pool, n) {
+    const mesh = pool.mesh;
+    if (!mesh) return;
+    mesh.count = n;
+    mesh.visible = n > 0;
+    if (n > 0) {
+      mesh.instanceMatrix.needsUpdate = true; pool.colorAttr.needsUpdate = true;
+      // three.js caches these for raycasts; particles move, so let them recompute lazily.
+      mesh.boundingSphere = null; mesh.boundingBox = null;
+    }
+  }
+
   update(dt) {
-    if (!this.enabled || dt <= 0 || dt > 1) return;
+    if (!this.enabled || this.culled || dt <= 0 || dt > 1) return;
 
     const FPS = 60;
     const elapsedFrames = dt * FPS;
@@ -1163,7 +1231,7 @@ export class ParticleEmitter {
 
     // ── Emit ──
     this.framesUntilNext -= elapsedFrames;
-    let aliveCount = this.particles.filter(p => p.alive).length;
+    let aliveCount = this.aliveCount();
     // continuousSingleton keeps exactly one particle alive; when it dies, emit again
     // immediately rather than waiting on framesPerEmission (which may be huge).
     if (this.continuousSingleton && aliveCount === 0 && this.emitting) {
@@ -1181,7 +1249,7 @@ export class ParticleEmitter {
         this._emitParticle();
         if (this.continuousSingleton) break;
       }
-      aliveCount = this.particles.filter(p => p.alive).length;
+      aliveCount = this.aliveCount();
       if (this.continuousSingleton) break;
     }
 
@@ -1226,7 +1294,7 @@ export class ParticleEmitter {
       }
 
       // ── Render parent particle ──
-      meshIdx = this._renderParticle(p, this.meshPool, this.geo, this.mat, meshIdx);
+      meshIdx = this._renderParticle(p, this.pool, meshIdx);
 
       // ── Render child particles ──
       for (const child of p.children) {
@@ -1234,16 +1302,14 @@ export class ParticleEmitter {
         // Find or create the child mesh pool for this child's generator
         const childPool = this._getChildPool(child);
         if (!childPool) continue;
-        childPool._idx = this._renderParticle(child, childPool.pool, childPool.geo, childPool.mat, childPool._idx || 0);
+        childPool._idx = this._renderParticle(child, childPool, childPool._idx || 0);
       }
     }
 
-    // Hide unused meshes
-    for (let i = meshIdx; i < this.meshPool.length; i++) this.meshPool[i].visible = false;
-
-    // Hide unused child meshes
+    // Commit instance counts + buffers; pools with nothing live this frame draw nothing.
+    this._finishPool(this.pool, meshIdx);
     for (const cp of Object.values(this.childMeshPools)) {
-      for (let i = (cp._idx || 0); i < cp.pool.length; i++) cp.pool[i].visible = false;
+      this._finishPool(cp, cp._idx || 0);
       cp._idx = 0;
     }
   }
@@ -1260,34 +1326,35 @@ export class ParticleEmitter {
     return n;
   }
 
-  _renderParticle(p, pool, geo, baseMat, meshIdx) {
-    while (pool.length <= meshIdx) {
-      const m = new THREE.Mesh(geo, baseMat.clone());
-      this.meshGroup.add(m);
-      pool.push(m);
-    }
+  // Compose one particle into instance slot `meshIdx` of `pool`. The scratch
+  // Object3D keeps the old Mesh semantics (rotation ↔ quaternion sync) so
+  // _applyBillboard is unchanged.
+  _renderParticle(p, pool, meshIdx) {
+    if (meshIdx >= pool.cap) this._growPool(pool, meshIdx + 1);
 
-    const mesh = pool[meshIdx];
-    mesh.visible = true;
-
+    const o = _tmpObj;
     // World position = parentOffset + basePosition + initialPosition + position
-    mesh.position.copy(p.parentOffset).add(p.basePosition).add(p.initialPosition).add(p.position);
+    o.position.copy(p.parentOffset).add(p.basePosition).add(p.initialPosition).add(p.position);
 
-    this._applyBillboard(mesh, p);
+    this._applyBillboard(o, p);
 
-    mesh.scale.set(
+    o.scale.set(
       Math.max(0.001, Math.abs(p.scale.x)),
       Math.max(0.001, Math.abs(p.scale.y)),
       Math.max(0.001, Math.abs(p.scale.z || p.scale.x)),
     );
+    o.updateMatrix();
+    pool.mesh.setMatrixAt(meshIdx, o.matrix);
 
     const c = p.getColor();
     if (this.overrides.hue) hueShiftRGB(c, this.overrides.hue);
     const alphaVal = p.alphaOverride != null ? (p.alphaOverride / 255) : clamp(c[3], 0, 1);
-    if (mesh.material.uniforms?.uParticleColor) {
-      mesh.material.uniforms.uParticleColor.value.set(clamp(c[0], 0, 1), clamp(c[1], 0, 1), clamp(c[2], 0, 1), alphaVal);
-    }
-    this._applyBlendState(mesh.material, p.blendFunc, p.depthMask);
+    const k = meshIdx * 4, col = pool.colors;
+    col[k] = clamp(c[0], 0, 1); col[k + 1] = clamp(c[1], 0, 1); col[k + 2] = clamp(c[2], 0, 1); col[k + 3] = alphaVal;
+
+    // Blend func + depth mask come from a Sec2 initializer, so every particle of a
+    // generator shares them: the first instance each frame sets the pool's material.
+    if (meshIdx === 0) this._applyBlendState(pool.mat, p.blendFunc, p.depthMask);
 
     return meshIdx + 1;
   }
@@ -1322,7 +1389,7 @@ export class ParticleEmitter {
     ensureColorAttribute(geo);
     const mat = buildXimParticleMaterial(threeTex);
 
-    const pool = { pool: [], geo, mat, _idx: 0 };
+    const pool = this._makePool(geo, mat);
     this.childMeshPools[key] = pool;
     return pool;
   }
@@ -1344,15 +1411,14 @@ export class ParticleEmitter {
         break;
       case 'Movement':
       case 'MovementHorizontal': {
-        const dir = p.lastMovement.clone();
-        if (p.billboardType === 'MovementHorizontal') dir.y = 0;
-        if (dir.lengthSq() > 1e-10) {
-          dir.normalize();
-          const up = new THREE.Vector3(0, 1, 0);
-          const right = new THREE.Vector3().crossVectors(up, dir).normalize();
-          const correctedUp = new THREE.Vector3().crossVectors(dir, right);
-          const m = new THREE.Matrix4().makeBasis(right, correctedUp, dir);
-          mesh.quaternion.setFromRotationMatrix(m);
+        _bbDir.copy(p.lastMovement);
+        if (p.billboardType === 'MovementHorizontal') _bbDir.y = 0;
+        if (_bbDir.lengthSq() > 1e-10) {
+          _bbDir.normalize();
+          _bbRight.crossVectors(_bbUp, _bbDir).normalize();
+          _bbUp2.crossVectors(_bbDir, _bbRight);
+          _bbMat.makeBasis(_bbRight, _bbUp2, _bbDir);
+          mesh.quaternion.setFromRotationMatrix(_bbMat);
         } else {
           mesh.quaternion.copy(cam.quaternion);
         }
@@ -1375,9 +1441,8 @@ export class ParticleEmitter {
 
     // For billboard types that also have rotation, apply it additively
     if (p.billboardType !== 'None' && p.rotation.lengthSq() > 1e-10) {
-      const rotQ = new THREE.Quaternion().setFromEuler(
-        new THREE.Euler(p.rotation.x, p.rotation.y, p.rotation.z, p.rotationOrder === 'ZYX' ? 'ZYX' : 'XYZ'));
-      mesh.quaternion.multiply(rotQ);
+      _bbQuat.setFromEuler(_bbEuler.set(p.rotation.x, p.rotation.y, p.rotation.z, p.rotationOrder === 'ZYX' ? 'ZYX' : 'XYZ'));
+      mesh.quaternion.multiply(_bbQuat);
     }
   }
 
@@ -1424,12 +1489,9 @@ export class ParticleEmitter {
   dispose() {
     if (this.meshGroup) {
       (this.meshGroup.parent || this.scene).remove(this.meshGroup);
-      for (const m of this.meshPool) { m.geometry.dispose(); m.material.dispose(); }
-      for (const cp of Object.values(this.childMeshPools)) {
-        for (const m of cp.pool) { m.geometry.dispose(); m.material.dispose(); }
-        cp.geo.dispose();
-        cp.mat.dispose();
-      }
+      const kill = (pool) => { if (pool.mesh) pool.mesh.dispose(); pool.geo.dispose(); pool.mat.dispose(); };
+      kill(this.pool);
+      for (const cp of Object.values(this.childMeshPools)) kill(cp);
     }
     if (this.texture) this.texture.dispose();
   }
@@ -1467,7 +1529,8 @@ export class ParticleSystem {
 
   update() {
     const dt = this.clock.getDelta();
-    for (const e of this.emitters) e.update(dt);
+    // The editor swaps `camera` for the cutscene camera; billboards must follow it.
+    for (const e of this.emitters) { e._camera = this.camera; e.update(dt); }
   }
 
   getDistortionParticles() {
