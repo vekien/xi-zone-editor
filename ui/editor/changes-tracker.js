@@ -72,7 +72,10 @@ export function getChanges() {
       ...(c.subAreaId != null ? { subAreaId: c.subAreaId, subAreaDat: c.subAreaDat, index: c.index } : {}) };
   });
   const vfx = all.filter((c) => c.isEffect && (!c.isSound || c.sourceDat)).map((c) => {
-    if (c.op === 'add' && c.sourceDat) return { op: 'add', source_id: c.sourceId, source_offset: c.sourceOffset ?? null, source_dat: c.sourceDat, mesh: c.mesh ?? null, sound: !!c.isSound, pos: c.pos, name: c.name, ts: c.ts || 0 };
+    if (c.op === 'add' && c.sourceDat) return { op: 'add', source_id: c.sourceId, source_offset: c.sourceOffset ?? null, source_dat: c.sourceDat, mesh: c.mesh ?? null, sound: !!c.isSound, pos: c.pos, name: c.name, ts: c.ts || 0,
+      // Id the backend gave this copy at its first Publish (auto-named, e.g. 'l_00'). Pinned so every
+      // later Publish re-creates it under the same id and reload can adopt the baked copy by id.
+      ...(c.newId ? { new_id: c.newId } : {}) };
     const sid = c.node.userData.effect?.sectionId;
     if (c.op === 'delete') return { op: 'remove', id: sid, name: c.name, ts: c.ts || 0 };
     return { op: 'modify', id: sid, name: c.name, pos: c.pos, scale: c.scale, ts: c.ts || 0 };
@@ -106,6 +109,7 @@ export function collectChanges() {
         out.push({ op: 'add', isEffect: true, isSound: !!p.isSound, entry: p, node: n, name: p.name,
           sourceDat: p.sourceDat, sourceId: p.sourceId, sourceOffset: p.sourceOffset ?? n.userData.effect?.sourceOffset ?? null,
           mesh: n.userData.effect?.mesh ?? null,   // VFX type key — lets reload match a published copy back
+          newId: p.newId || null,                  // backend-pinned id of the baked copy (see toChangeSet)
           pos: trs(n.position), seq: n.userData.changeSeq || 0, ts: n.userData.changeTs || 0 });
         continue;
       }
@@ -488,7 +492,8 @@ export async function loadChangesFromJson(data, label, { recordHistory = true } 
       console.warn('[vfx reload] source preview failed:', sourceDat, eff.id, e);
     }
     if (!node) node = _deps.buildXZoneEffectNode(eff, isSoundGen, pos, displayName);
-    const entry = { node, name: node.name, isEffect: true, isSound: !!isSoundGen, sourceDat, sourceId: eff.id, sourceOffset: eff.sourceOffset ?? null };
+    const entry = { node, name: node.name, isEffect: true, isSound: !!isSoundGen, sourceDat, sourceId: eff.id, sourceOffset: eff.sourceOffset ?? null,
+      ...(eff.newId ? { newId: eff.newId } : {}) };
     return {
       do: () => {
         node.visible = true;
@@ -519,11 +524,14 @@ export async function loadChangesFromJson(data, label, { recordHistory = true } 
       entry.sourceDat = rec.source_dat;
       entry.sourceId = rec.source_id;
       entry.sourceOffset = rec.source_offset ?? null;
+      // The baked copy's FourCC is the id the next Publish must reuse — pin it (a legacy
+      // position-matched adoption pins the generator's own id the same way).
+      entry.newId = rec.new_id || entry.node.userData.effect?.sectionId || undefined;
       const fx = entry.node.userData.effect;
       if (fx && rec.mesh && !fx.mesh) fx.mesh = rec.mesh;
       markChange(entry.node, rec.ts);
     },
-    undo: () => { addedEntries.delete(entry); entry.sourceDat = undefined; entry.sourceId = undefined; entry.sourceOffset = undefined; },
+    undo: () => { addedEntries.delete(entry); entry.sourceDat = undefined; entry.sourceId = undefined; entry.sourceOffset = undefined; entry.newId = undefined; },
   });
   const buildAddNode = (tmplMap, resolvedName, rec, sourceZoneRel, sourceName) => {
     const node = _deps.instantiate(tmplMap, resolvedName);
@@ -642,12 +650,29 @@ export async function loadChangesFromJson(data, label, { recordHistory = true } 
     }
   }
   // ---- vfx ----
+  // Ids the backend pinned to this change-set's pasted effects at an earlier Publish (`new_id`).
+  // A baked generator with that id IS the paste: adopt it by id (position may have moved since),
+  // and treat modify/remove ops recorded against that id — the editor emitted them while the
+  // copy was still an unmatched duplicate — as edits of the add itself: a modify moves the adopted
+  // node (the re-emitted add then carries that position), a remove cancels the add.
+  const pinnedIds = new Set(fxIn.filter(r => r.op === 'add' && r.source_dat && r.new_id).map(r => r.new_id));
+  const removedPinned = new Set(fxIn.filter(r => r.op === 'remove' && r.id && pinnedIds.has(r.id)).map(r => r.id));
   for (const rec of fxIn) {
+    if (rec.op !== 'add' && rec.id && pinnedIds.has(rec.id)) {
+      const tw = fxById.get(rec.id);
+      if (tw) {
+        if (rec.op === 'modify') ops.push(makeVfxModifyOp(tw.node, rec));
+        else if (rec.op === 'remove') ops.push(makeRemoveOp(tw, rec.ts));
+      }
+      continue;
+    }
     // Cross-zone VFX/SFX paste (op:'add' carrying source_dat). After Publish the copy is baked
-    // into the loaded DAT, so ADOPT the matching baked effect (same type, at the recorded
-    // position) to avoid a duplicate. Before Publish there's nothing baked → re-instantiate the
-    // placeholder so the paste survives the reload and re-applies on the next Publish.
+    // into the loaded DAT, so ADOPT the matching baked effect — by its pinned id when the
+    // change-set has one, else same type at the recorded position — to avoid a duplicate. Before
+    // Publish there's nothing baked → re-instantiate the placeholder so the paste survives the
+    // reload and re-applies on the next Publish.
     if (rec.op === 'add' && rec.source_dat) {
+      if (rec.new_id && removedPinned.has(rec.new_id)) continue;   // the user deleted the baked copy
       const isSound = !!(rec.sound || /^sound /.test(rec.name || ''));
       const cands = _deps.getPlacements().filter(p => {
         if (!p.isEffect || adoptedFx.has(p) || addedEntries.has(p) || usedFx.has(p)) return false;
@@ -657,7 +682,11 @@ export async function loadChangesFromJson(data, label, { recordHistory = true } 
         return rec.mesh ? m === rec.mesh : true;
       });
       let twin = null;
-      if (cands.length && Array.isArray(rec.pos)) {
+      if (rec.new_id) {
+        const byId = fxById.get(rec.new_id);
+        if (byId && !adoptedFx.has(byId) && !addedEntries.has(byId) && !usedFx.has(byId)) twin = byId;
+      }
+      if (!twin && cands.length && Array.isArray(rec.pos)) {
         const d2 = (p) => { const q = p.node.position; return (q.x - rec.pos[0]) ** 2 + (q.y - rec.pos[1]) ** 2 + (q.z - rec.pos[2]) ** 2; };
         const nearest = cands.reduce((a, b) => (d2(b) < d2(a) ? b : a));
         // Tight gate: the backend patches the baked copy's position to rec.pos, so the real
@@ -669,7 +698,7 @@ export async function loadChangesFromJson(data, label, { recordHistory = true } 
         ops.push(makeFxAdoptOp(twin, rec));
       } else {
         const label = (rec.name || '').replace(/\s*\[[^\]]*\](\.\d+)?$/, '').trim() || 'effect';
-        const eff = { id: rec.source_id, sourceOffset: rec.source_offset ?? null, label, mesh: rec.mesh ?? null };
+        const eff = { id: rec.source_id, sourceOffset: rec.source_offset ?? null, label, mesh: rec.mesh ?? null, newId: rec.new_id || null };
         ops.push(await makeXZoneEffectAddOp(eff, isSound, rec.source_dat, rec.pos || [0, 0, 0], rec.name, rec.ts));
       }
       continue;

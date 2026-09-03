@@ -3900,6 +3900,15 @@ async function applyToGame() {
   }
   CACHE_BUST = Date.now();   // publish rewrote the DAT → bust the browser cache so a
                              // Production/HD-mode reload shows the new bytes
+  // The backend auto-names pasted effects on their first Publish and reports the ids; pin them on
+  // the entries so the next snapshot carries `new_id` and a reload adopts the baked copies by id.
+  if (stdR && stdR.vfx && Array.isArray(stdR.vfx.addIds)) {
+    for (const a of stdR.vfx.addIds) {
+      if (!a || !a.new_id) continue;
+      const p = placements.find(e => e.isEffect && addedEntries.has(e) && (e.node.userData.changeTs || 0) === a.ts);
+      if (p) p.newId = a.new_id;
+    }
+  }
   // Placed mobs are DB spawns (not DAT objects) — write them after the bake.
   await writeMobSpawns(snap, con);
   const { out, stats } = publishStats(stdR);
