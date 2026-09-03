@@ -116,15 +116,6 @@ export function setCollisionMat(node, m) {
 
 // ── geometry helpers ──────────────────────────────────────────────────────────
 
-// Wireframe outline for a collision prim — always non-subdivided so only the outer
-// edges show (subdivided EdgesGeometry leaks internal triangle diagonals).
-function _collisionOutlineGeo(type) {
-  const base = type === 'plane' ? new THREE.PlaneGeometry(1, 1) : new THREE.BoxGeometry(1, 1, 1);
-  const edges = new THREE.EdgesGeometry(base, 1);
-  base.dispose();
-  return edges;
-}
-
 // Compute subdivision segments: minimal by default; devs can raise per-prim for denser terrain.
 function _collisionPrimSegs(type, scaleVec) {
   if (type === 'mesh') return { x: 1, y: 1, z: 1 };
@@ -190,9 +181,7 @@ export function _rebuildCollisionPrimGeo(entry) {
   const wire = mesh.children.find((c) => c.isLineSegments);
   if (wire) {
     wire.geometry.dispose();
-    wire.geometry = type === 'mesh'
-      ? new THREE.EdgesGeometry(newGeo, 1)
-      : _collisionOutlineGeo(type);
+    wire.geometry = new THREE.WireframeGeometry(newGeo);
   }
   if (_getSelected && _getSelected() === entry && _updateCollisionDetailsPanel) {
     _updateCollisionDetailsPanel();
@@ -224,6 +213,17 @@ function _makePrimMaterial() {
   });
   collisionPrimMaterials.push(mat);
   return mat;
+}
+
+// Pure-black triangle wireframe on top of the prim's tinted fill — every edge, subdivisions
+// included, matching the baked overlay. Depth-tested so it's occluded properly.
+function _attachPrimWire(mesh, geo) {
+  const cwire = new THREE.LineSegments(
+    new THREE.WireframeGeometry(geo),
+    new THREE.LineBasicMaterial({ color: 0x000000 }),
+  );
+  cwire.raycast = () => {};
+  mesh.add(cwire);
 }
 
 // ── public API ────────────────────────────────────────────────────────────────
@@ -263,12 +263,7 @@ export function addCollisionPrimitive(type) {
   mesh.userData.original = { p: mesh.position.clone(), q: mesh.quaternion.clone(), s: mesh.scale.clone() };
   mesh.userData.xiId = _newXiId();
 
-  const cwire = new THREE.LineSegments(
-    _collisionOutlineGeo(type),
-    new THREE.LineBasicMaterial({ color: 0x0a0a0e, opacity: 0.6, transparent: true }),
-  );
-  cwire.raycast = () => {};
-  mesh.add(cwire);
+  _attachPrimWire(mesh, geo);
 
   _ensurePrimGroup(zoneRoot).add(mesh);
   _getPlacementSet().add(mesh);
@@ -315,12 +310,7 @@ export function buildCollisionPrimFromRec(rec) {
   if (rec.collisionType === 'mesh' && rec.vertices?.length) {
     mesh.userData.originalVertices = new Float32Array(rec.vertices);
   }
-  const cwire = new THREE.LineSegments(
-    rec.collisionType === 'mesh' ? new THREE.EdgesGeometry(geo, 1) : _collisionOutlineGeo(rec.collisionType),
-    new THREE.LineBasicMaterial({ color: 0x0a0a0e, opacity: 0.6, transparent: true }),
-  );
-  cwire.raycast = () => {};
-  mesh.add(cwire);
+  _attachPrimWire(mesh, geo);
   _ensurePrimGroup(zoneRoot).add(mesh);
   _getPlacementSet().add(mesh);
   const hasMat = rec.wall !== undefined || rec.terrain !== undefined || rec.collisionMat !== undefined;
@@ -396,12 +386,7 @@ export function createCollisionFromMesh(entries) {
   mesh.userData.sourceEntry = sources.map((e) => e.name).join(', ');
   mesh.userData.sourceXiIds = sources.map((e) => e.node.userData.xiId).filter(Boolean);
 
-  const cwire = new THREE.LineSegments(
-    new THREE.EdgesGeometry(geo, 1),
-    new THREE.LineBasicMaterial({ color: 0x0a0a0e, opacity: 0.6, transparent: true }),
-  );
-  cwire.raycast = () => {};
-  mesh.add(cwire);
+  _attachPrimWire(mesh, geo);
 
   _ensurePrimGroup(zoneRoot).add(mesh);
   _getPlacementSet().add(mesh);

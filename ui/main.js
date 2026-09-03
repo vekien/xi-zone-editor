@@ -1088,9 +1088,9 @@ async function _loadNavmesh(url) {
     nmesh.raycast = () => {};
     navmeshGroup = new THREE.Group(); navmeshGroup.name = 'navmesh';
     navmeshGroup.add(nmesh);
-    // Always-on cell-shade wireframe (EdgesGeometry + dark depth-tested lines), like the collision
-    // overlay — with the fill writing depth while isolating, only the near surface shows instead of
-    // front+back edges x-raying through each other.
+    // Always-on cell-shade wireframe (EdgesGeometry + dark depth-tested lines) — with the fill
+    // writing depth while isolating, only the near surface shows instead of front+back edges
+    // x-raying through each other.
     const nwire = new THREE.LineSegments(
       new THREE.EdgesGeometry(geo, 1),
       new THREE.LineBasicMaterial({ color: 0x0a0a0e, opacity: 0.6, transparent: true }));
@@ -1122,11 +1122,11 @@ function buildCollisionOverlay(collision) {
   cmesh.raycast = () => {}; // overlay only — never intercept clicks
   const _cg = new THREE.Group(); _cg.name = 'collision'; setCollisionGroup(_cg);
   _cg.add(cmesh);
-  // Always-on wireframe so the collision shape reads clearly (EdgesGeometry + a
-  // depth-tested line material so it's occluded properly).
+  // Always-on pure-black triangle wireframe on top of the fill (WireframeGeometry = every
+  // triangle edge, not just the creases EdgesGeometry keeps; depth-tested so it's occluded).
   const cwire = new THREE.LineSegments(
-    new THREE.EdgesGeometry(geo, 1),
-    new THREE.LineBasicMaterial({ color: 0x0a0a0e, opacity: 0.6, transparent: true }));
+    new THREE.WireframeGeometry(geo),
+    new THREE.LineBasicMaterial({ color: 0x000000 }));
   cwire.raycast = () => {};
   _cg.add(cwire);
   _cg.visible = showCollision;
