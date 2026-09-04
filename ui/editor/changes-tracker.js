@@ -1,4 +1,21 @@
 import * as THREE from 'three';
+import { rebindZoneAnim } from '../core/zone-animations.js';
+
+// Generator-bound object animation carried by a copied placement (see core/zone-animations.js).
+// Node side: { sourceId, sourceDat, sourceOffset, newId, rotation, rotVelocity, rotationOrder }.
+// Change-set side (`anim` on a placements op:add — what xi zone import-json reads):
+//   { source_id, source_dat, source_offset, new_id?, rotation, rot_velocity, rotation_order }
+// new_id is the generator FourCC the backend allocated at the first Publish, pinned so later
+// publishes re-create the copy under the same id and the record's BlockID keeps matching.
+const animToRec = (a) => ({
+  source_id: a.sourceId, source_dat: a.sourceDat || null, source_offset: a.sourceOffset ?? null,
+  ...(a.newId ? { new_id: a.newId } : {}),
+  rotation: a.rotation || [0, 0, 0], rot_velocity: a.rotVelocity || [0, 0, 0], rotation_order: a.rotationOrder || 'XYZ',
+});
+const animFromRec = (r) => (r && r.source_id) ? ({
+  sourceId: r.source_id, sourceDat: r.source_dat || null, sourceOffset: r.source_offset ?? null, newId: r.new_id || null,
+  rotation: r.rotation || [0, 0, 0], rotVelocity: r.rot_velocity || [0, 0, 0], rotationOrder: r.rotation_order || 'XYZ',
+}) : null;
 
 // Changes Tracker - extracted from main.js.
 // Tracks added/deleted/modified scene objects for the change-set.
@@ -52,6 +69,7 @@ export function getChanges() {
       if (c.uid) r.uid = c.uid;            // per-instance id — keeps overlapping copies distinct across reload
       if (c.ts) r.ts = c.ts;
       if (c.sourceZone) { r.sourceZone = c.sourceZone; if (c.sourceName) r.sourceName = c.sourceName; }
+      if (c.anim) r.anim = animToRec(c.anim);   // generator-bound object: clone its generator + bind the record
       if (c.glb) {
         r.glb = c.glb;
         if (c.glbName) r.glbName = c.glbName;
@@ -142,6 +160,7 @@ export function collectChanges() {
         pos: trs(n.position), rot: trs(n.rotation), scale: trs(n.scale), seq: n.userData.changeSeq || 0, ts: n.userData.changeTs || 0 };
       // Cross-zone provenance: record source zone + original name for exportCommands().
       if (n.userData.sourceZone) { rec.sourceZone = n.userData.sourceZone; rec.sourceName = n.userData.sourceName || null; }
+      if (n.userData.animSource?.sourceId) rec.anim = n.userData.animSource;
       // GLB model inject: brand-new mesh imported from a GLB file on disk.
       if (n.userData.glbImport) {
         const gi = n.userData.glbImport;
@@ -469,6 +488,10 @@ export async function loadChangesFromJson(data, label, { recordHistory = true } 
       if (rec.xiId) ud.xiId = rec.xiId;   // keep the identity group across reload→republish
       if (rec.uid) ud.uid = rec.uid;            // keep the per-instance id so re-save stays dedup-stable
       if (rec.sourceZone) { ud.sourceZone = rec.sourceZone; ud.sourceName = rec.sourceName || null; }
+      // Keep the animation on the adopted (baked) node so the re-emitted add still asks for its
+      // generator clone; the baked record's own BlockID binding wins for the editor preview.
+      const anim = animFromRec(rec.anim);
+      if (anim) { ud.animSource = anim; rebindZoneAnim(entry.node); }
       // Carry GLB provenance onto the adopted (baked) node so a later reset+republish can
       // re-import it — the baked node has no glbImport of its own.
       if (rec.glb) ud.glbImport = { sourcePath: rec.glb_source || rec.glb, origin: rec.glbOrigin || rec.glb_source || null, fileName: rec.glbName || rec.glb, opaque: !!rec.opaque, doubleSided: !!rec.doubleSided, lit: rec.shade != null, shade: rec.shade ?? 1.0 };
@@ -546,6 +569,8 @@ export async function loadChangesFromJson(data, label, { recordHistory = true } 
     if (rec.xiId) node.userData.xiId = rec.xiId;
     if (rec.uid) node.userData.uid = rec.uid;
     if (sourceZoneRel) { node.userData.sourceZone = sourceZoneRel; node.userData.sourceName = sourceName || null; }
+    const anim = animFromRec(rec.anim);
+    if (anim) node.userData.animSource = anim;
     node.userData.original = { p: node.position.clone(), q: node.quaternion.clone(), s: node.scale.clone() };
     return node;
   };

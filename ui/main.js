@@ -14,6 +14,7 @@ import { parseEffects, describeSurface, describeEmitter, describePointLight, des
 import { initUndoRedo, pushCommand, undo, redo, clearHistory, updateHistoryButtons, enforceHistoryLimit } from './editor/undo-redo.js';
 import { initFlyCamera, flyState, flySpeed, heldKeys, flyClock, WORLD_UP, FLY_SPEED_MIN, FLY_SPEED_MAX, flyUpdate, onFlyLook, endFlyLook, setFlySpeed, setFlyTarget, updateZoomSpeedUi, speedToSlider } from './viewport/fly-camera.js';
 import { initLighting, LIGHT_UNIFORMS_GLSL, litRGB_GLSL, applyFog_GLSL, BIAS, NO_BIAS, TH, ambientToColor, diffuseToColor, sunDirDisplay, applyDayColors, applyEnvironment } from './viewport/lighting.js';
+import { initZoneAnimations, loadZoneAnimations, clearZoneAnimations, bindPlacements, updateZoneAnimations, setPlayAnimations, isPlayingAnimations } from './core/zone-animations.js';
 import { connectBridge, bridgeOnline, onBridgeStatus, bridgeCall, bridgeCancel, setBridgeUrl, bridgeHttpUrl, exportsUrl, BRIDGE_HTTP_BASE } from './ffxi/bridge.js';
 import { runSetupWizard, initSetupSettings } from './panels/setup-wizard.js';
 
@@ -1209,6 +1210,7 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
   clearHistory();
   if (zoneRoot) { scene.remove(zoneRoot); disposeSubtree(zoneRoot); }
   clearZoneVfxSystem();
+  clearZoneAnimations();
   placements = []; placementGroups = []; placementSet.clear(); selectedSet.clear(); deletedEntries.clear(); addedEntries.clear(); skyGroup = null; resetMarkerGroup(); vfxIconGroup = null; setCollisionGroup(null); setCollisionMaterial(null); setCollisionPrimGroup(null); getCollisionPrimMaterials().length = 0; navmeshGroup = null; navmeshMaterial = null; navmeshNavFile = null; currentCompanionDats = null; playerMarkerGroup = null; playerSpawn = null; selected = null; animatedTextures = []; emittedEffects = []; waterTints = []; parsed = null; templates = null; resetSubAreaState(); footstepSourceZone = ''; syncFootstepSourceUI();
   objlistEl.innerHTML = ''; selectionEl.textContent = 'nothing selected';
 
@@ -1232,6 +1234,7 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
   }
 
   const { meshes, placements: plc, textures, meshIdToName, collision } = parsed;
+  loadZoneAnimations(datBuf);   // generators that draw + animate placed objects (BlockID-bound)
   const texMap = buildTextures(textures); // FFXI name -> three.js DataTexture (same keys)
   templates = buildMeshTemplates(meshes, texMap);
 
@@ -1298,6 +1301,8 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
       arr.push(node);
     }
   }
+
+  bindPlacements();   // resolve BlockID → generator bindings so the object list can badge them
 
   // Meshes never referenced by a placement sit at the origin. Two kinds:
   //  - celestial/skybox (sun, moon, stars, clouds): additive sky elements meant to
@@ -2327,6 +2332,11 @@ if (viewBtn && viewMenu) {
     saveSetting('wireframe', wireframe);
     if (wireToggle) wireToggle.checked = wireframe;
     applyWireframe();
+    syncViewToggleBtns();
+    closeViewMenu();
+  };
+  viewMenu.querySelector('[data-action="play-anim"]').onclick = () => {
+    setPlayAnimations(!isPlayingAnimations());
     syncViewToggleBtns();
     closeViewMenu();
   };
@@ -3909,6 +3919,16 @@ async function applyToGame() {
       if (p) p.newId = a.new_id;
     }
   }
+  // Same for copied animated objects: the backend cloned each one's generator under a fresh id
+  // and bound the new record to it — pin the id on the add so re-publishes keep them in step.
+  if (stdR && stdR.placements && Array.isArray(stdR.placements.animIds)) {
+    for (const a of stdR.placements.animIds) {
+      if (!a || !a.new_id) continue;
+      const p = placements.find(e => !e.isEffect && addedEntries.has(e) && e.node.userData.animSource
+        && (a.uid ? e.node.userData.uid === a.uid : (e.node.userData.changeTs || 0) === a.ts));
+      if (p) p.node.userData.animSource.newId = a.new_id;
+    }
+  }
   // Placed mobs are DB spawns (not DAT objects) — write them after the bake.
   await writeMobSpawns(snap, con);
   const { out, stats } = publishStats(stdR);
@@ -4496,6 +4516,7 @@ function syncViewToggleBtns() {
   viewMenu?.querySelector('[data-action="sel-outline"]')?.classList.toggle('active', showOutline);
   viewMenu?.querySelector('[data-action="hover-outline"]')?.classList.toggle('active', showHoverOutline);
   viewMenu?.querySelector('[data-action="wireframe"]')?.classList.toggle('active', wireframe);
+  viewMenu?.querySelector('[data-action="play-anim"]')?.classList.toggle('active', isPlayingAnimations());
 }
 if (gridToggle) { gridToggle.checked = grid.visible; gridToggle.onchange = (e) => { grid.visible = e.target.checked; saveSetting('grid', grid.visible); syncViewToggleBtns(); }; }
 if (mapCenterToggle) { mapCenterToggle.checked = originGizmo.visible; mapCenterToggle.onchange = (e) => { originGizmo.visible = e.target.checked; saveSetting('mapCenter', originGizmo.visible); syncViewToggleBtns(); }; }
@@ -5249,6 +5270,13 @@ initPlayerMarker({
   getEl:                   (id) => document.getElementById(id),
 });
 
+// ── zone-animations module init ───────────────────────────────────────────────
+initZoneAnimations({
+  getPlacements: () => placements,
+  loadSetting,
+  saveSetting,
+});
+
 // ── zone-effects module init ──────────────────────────────────────────────────
 initZoneEffects({
   getScene:              () => scene,
@@ -5491,6 +5519,7 @@ function animate() {
   // cutscene camera sits on the gizmo's object (e.g. the camera rig) it blew up to a
   // full-screen crosshair. Object editing always uses the viewport camera anyway.
   if (emittedEffects.length) updateEmittedEffects(dt * 30);
+  updateZoneAnimations(dt);   // generator-bound placements (windmill blades …) — View → Play Animations
   const zoneVfx = getZoneVfxSystem();
   if (zoneVfx && zoneVfx.emitters.length) { zoneVfx.camera = activeCamera; try { zoneVfx.update(dt); } catch (e) {} }
 

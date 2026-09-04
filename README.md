@@ -44,6 +44,7 @@ the app starts for you on first launch.
 - FFXI lighting ported from the client — weather environments, time of day, sun / moon direction and fog
 - Modes: **Edit**, **View** (read-only, your changes shown), **Live Standard**, **Live HD** (the HD asset-pack DAT) and **Backup Base** (the pristine `.base`)
 - Fly camera, grid, world origin, wireframe, flat-colour mode, selection and hover outlines, performance overlay
+- **View → Play Animations** plays the zone's own object animations — placements the client hands to a particle generator (windmill blades and the like) spin as they do in-game; off shows their static DAT pose
 - Building interiors (sub-areas) load from their own DATs; pre-production zones render too
 
 **Objects**
@@ -51,6 +52,7 @@ the app starts for you on first launch.
 - Object list with search, show / hide, per-class filters (collision proxies, far LOD copies, sub-areas, unplaced meshes) and coloured groups
 - Move / rotate / scale gizmo in local or world space, with snapping and uniform scale
 - Copy, paste, delete and restore — the clipboard survives zone switches and tabs, so objects, VFX, sounds, markers and mobs paste across zones
+- Animated objects keep their animation when copied: the paste previews the motion, and Publish clones the object's generator and binds the new placement to it (same zone or across zones)
 - Import GLB models as new placements
 - Text planes — editable sign billboards that bake into meshes on Publish
 - Editor-only markers (Spawn, NPC, Monster, Object, Trigger) for annotating a zone

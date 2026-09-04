@@ -388,6 +388,12 @@ function parseZoneDef(bytes, dv, section, table1) {
       fileIdLink: stride >= OBJ_STRIDE_MODERN ? (dv.getUint32(b + 0x50, true) || null) : null,  // sub-area id this object is a placeholder for (0 = none); hide it when that interior is shown
       // Draw distance at +0x40 (0 = no limit). See COLLISION_DRAW_DIST.
       drawDist: stride >= OBJ_STRIDE_MODERN ? dv.getFloat32(b + 0x40, true) : null,
+      // BlockID at +0x34: 0 for an ordinary static object. A FourCC starting '_'/'@' groups
+      // the parts of a multi-part door. Any OTHER FourCC names the 0x05 generator that draws
+      // this object: the client skips the record in its normal pass (RenderType 0) and the
+      // generator renders the same mesh at its own base position with its motion opcodes —
+      // Rabao's windmill blades de_fusya02 carry 'f001'/'f002'. See core/zone-animations.js.
+      blockId: stride >= OBJ_STRIDE_MODERN ? (strAt(bytes, b + 0x34, 4) || null) : null,
       pos: [dv.getFloat32(b + 0x10, true), dv.getFloat32(b + 0x14, true), dv.getFloat32(b + 0x18, true)],
       rot: [dv.getFloat32(b + 0x1C, true), dv.getFloat32(b + 0x20, true), dv.getFloat32(b + 0x24, true)],
       scale: [dv.getFloat32(b + 0x28, true), dv.getFloat32(b + 0x2C, true), dv.getFloat32(b + 0x30, true)],

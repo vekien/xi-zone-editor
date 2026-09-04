@@ -65,6 +65,7 @@
 //   getMode()           → string
 
 import * as THREE from 'three';
+import { zoneAnimFor, describeZoneAnim } from './zone-animations.js';
 
 // ── outline objects (created in initSelection) ────────────────────────────────
 let selectionOutline = null;
@@ -404,7 +405,12 @@ export function updateSelectionReadout() {
   const srcDatLine = (pl && n.userData.sourceZone)
     ? `<div class="kv"><span class="k">source</span><span>${n.userData.sourceZone}${n.userData.sourceName ? `<br>${n.userData.sourceName}` : ''}</span></div>`
     : '';
-  const meshLine = pl ? `<div class="kv"><span class="k">mesh</span><span>${pl.meshId}</span></div>${srcDatLine}`
+  // Generator-bound object (BlockID → 0x05): the client draws it through that generator.
+  const anim = pl ? zoneAnimFor(n) : null;
+  const animLine = anim
+    ? `<div class="kv"><span class="k">anim</span><span title="Drawn and animated by this generator in the client; View → Play Animations plays it here">${anim.genId} · ${describeZoneAnim(anim)}</span></div>`
+    : '';
+  const meshLine = pl ? `<div class="kv"><span class="k">mesh</span><span>${pl.meshId}</span></div>${srcDatLine}${animLine}`
     : effect ? `<div class="kv"><span class="k">id</span><span>${effect.sectionId}</span></div><div class="kv"><span class="k">vfx</span><span>${effect.mesh}</span></div>${offLine}${srcFxLine}`
     : (n.userData.markerCsIcon || n.userData.markerIcon) != null ? `<div class="kv"><span class="k">marker</span><span>${n.userData.markerCsIcon || n.userData.markerIcon}</span></div>`
     : `<div class="kv"><span class="k">status</span><span>(unplaced)</span></div>`;

@@ -11,6 +11,7 @@ import { vfxBaseName, newGroupId, newHotkeyId } from '../editor/utils.js';
 import { loadZoneSetting, saveZoneSetting, removeZoneSetting } from '../editor/settings.js';
 import { scheduleAutoSave } from '../editor/auto-save.js';
 import { isSkyName } from '../ffxi/zone.js';
+import { zoneAnimFor, describeZoneAnim } from './zone-animations.js';
 
 let _R = {};
 export function initObjectList(refs) { _R = refs; }
@@ -823,6 +824,18 @@ function makeObjectRow(p) {
     badge.textContent = 'UNPLACED';
     badge.title = 'No placement record references this mesh — the editor draws it at '
                 + 'the origin, but the game client never spawns it.';
+    li.appendChild(badge);
+  }
+  // Generator-bound object: the record's BlockID names the 0x05 generator that draws (and
+  // animates) it in the client. See core/zone-animations.js.
+  const anim = (!p.isEffect && !p.isUnplaced) ? zoneAnimFor(p.node) : null;
+  if (anim) {
+    const badge = document.createElement('span');
+    badge.className = 'rt-badge anim-badge';
+    badge.textContent = 'ANIM';
+    badge.title = `Animated by generator ${anim.genId} — ${describeZoneAnim(anim)}. The client draws this object `
+                + 'through that generator, not the placement record. View → Play Animations plays it here; '
+                + 'a copy takes the animation with it.';
     li.appendChild(badge);
   }
   const KIND_BADGE = {

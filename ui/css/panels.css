@@ -1581,6 +1581,14 @@ input[type="color"].swatch::-moz-color-swatch {
   border-color: #6a5430;
 }
 
+/* Generator-bound objects: the placement's BlockID names the 0x05 generator that draws and
+   animates it in the client (windmill blades …). Teal = "moves". */
+.rt-badge.anim-badge {
+  color: #7fe0c8;
+  background: #14302a;
+  border-color: #2f7a66;
+}
+
 /* OBJECTS "Filter" button + its popover. The popover reuses the File-menu
    skin (.menu); each row is a checkbox-style toggle with the class total. */
 .obj-filter-btn {

@@ -239,6 +239,36 @@ export function describeSurface(gen) {
   };
 }
 
+// ── generator-driven object animation ──────────────────────────────────────
+// A 0x1C placement whose BlockID (+0x34) names a generator is never drawn by the client's
+// normal pass (ZoneRenderer::SetRenderTypes → RenderType 0); the generator draws the linked
+// 0x2E mesh itself, at StandardSetup's base position, with sec2 0x09 as its rotation and the
+// motion opcodes animating it. Rabao's windmill blades are the model case: f001 → de_fusya02,
+// Rotation = the placement's yaw, RotationVelocity z = 0.0122 rad per 60 Hz frame, and a sec3
+// RotationUpdater (0x05) integrating it. Describe that motion so the editor can play it on the
+// placed object (core/zone-animations.js) and carry it with a copy (import-json `anim`).
+export function describeObjectAnimation(gen) {
+  const c = gen.config;
+  if (!c || c.linkedDataType !== 'StaticMesh') return null;
+  const sec2 = gen.sections[1], sec3 = gen.sections[2];
+  const rotOp = findOp(sec2, 0x09), velOp = findOp(sec2, 0x0B), sclOp = findOp(sec2, 0x0F);
+  // Only a RotationUpdater turns the velocity into motion; a velocity without one is inert.
+  const spins = !!(velOp && findOp(sec3, 0x05));
+  const rotVelocity = spins ? velOp.args.slice(0, 3).map(bits2float) : [0, 0, 0];
+  return {
+    sectionId: gen.id,
+    sourceOffset: gen.sourceOffset,
+    meshLink: c.linkedDataId,
+    autoRun: gen.autoRun,
+    position: c.basePosition,
+    rotation: rotOp ? rotOp.args.slice(0, 3).map(bits2float) : [0, 0, 0],
+    scale: sclOp ? sclOp.args.slice(0, 3).map(bits2float) : [1, 1, 1],
+    rotVelocity,                                                  // radians per effect frame (60 Hz)
+    rotationOrder: (c.billboardFlags & 0x0200) ? 'ZYX' : 'XYZ',   // xim StandardParticleSetup bit 0x200
+    spins,
+  };
+}
+
 export function describeEmitter(gen) {
   const c = gen.config;
   if (!c || (c.linkedDataType !== 'StaticMesh' && c.linkedDataType !== 'SpriteSheet' && c.linkedDataType !== 'LensFlare')) return null;

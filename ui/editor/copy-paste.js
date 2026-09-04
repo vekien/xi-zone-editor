@@ -6,6 +6,7 @@
 // The callbacks parameter is a single object — see initCopyPaste for the full list.
 
 import * as THREE from 'three';
+import { animSourceFor } from '../core/zone-animations.js';
 
 export const XZONE_CLIP_KEY = 'xi_xzone_clip';   // cross-zone / cross-tab clipboard (localStorage)
 
@@ -144,12 +145,18 @@ export function copySelected(entries = null) {
   try {
     const currentZoneUrl = _cb.getCurrentZoneUrl();
     const zoneName = document.getElementById('zone').selectedOptions?.[0]?.text || currentZoneUrl;
+    const currentRel = currentZoneUrl.replace(/^game(-hd)?\//i, '');
     const objItems = validObjs.map(e => {
       const n = e.node;
-      return { meshId: meshIdForEntry(e), name: e.name, xiId: n.userData.xiId,
+      const item = { meshId: meshIdForEntry(e), name: e.name, xiId: n.userData.xiId,
         pos: [n.position.x, n.position.y, n.position.z],
         rot: [n.rotation.x, n.rotation.y, n.rotation.z],
         scale: [n.scale.x, n.scale.y, n.scale.z] };
+      // A generator-bound object (windmill blades …) takes its animation with it: the generator
+      // to clone on Publish + the motion for the editor preview. See core/zone-animations.js.
+      const anim = animSourceFor(n, currentRel);
+      if (anim) item.anim = anim;
+      return item;
     }).filter(i => i.meshId);
     const fxItems = validFx.map(e => {
       const fx = e.node.userData.effect || {};
@@ -535,10 +542,14 @@ export async function pasteFromClipboard() {
     node.name = _cb.uniquePlacementName(displayBase);
     // A copy of a building-interior object becomes a normal main-zone add — drop the sub-area
     // routing identity (subAreaId/subAreaDat/index) so the paste doesn't try to bind an interior DAT.
-    const { subAreaId: _saId, subAreaDat: _saDat, index: _saIdx, ...basePlacement } = src.userData.placement || {};
+    // Likewise the BlockID: it names the generator that draws THE SOURCE record. The copy gets its
+    // own generator on Publish (change-set `anim`), which the editor previews from animSource.
+    const { subAreaId: _saId, subAreaDat: _saDat, index: _saIdx, blockId: _blockId, ...basePlacement } = src.userData.placement || {};
     node.userData = { placement: { ...basePlacement, meshId }, addName: src.userData.addName ?? meshId,
       xiId: src.userData.xiId || _cb.newXiId(),
       uid: _cb.newUid() };
+    const anim = animSourceFor(src, (_cb.getCurrentZoneUrl() || '').replace(/^game(-hd)?\//i, ''));
+    if (anim) node.userData.animSource = anim;
     const glbRef = _cb.lightGlbRef(src);
     if (glbRef) node.userData.glbImport = glbRef;
     // Preserve cross-zone provenance when cloning a previously cross-zone-pasted node.
@@ -662,6 +673,7 @@ export async function pasteCrossZone() {
       node.userData.sourceZone = clip.sourceZoneUrl.replace(/^game(-hd)?\//i, '');
       node.userData.sourceName = item.meshId;
     }
+    if (item.anim?.rotVelocity) node.userData.animSource = { ...item.anim };   // generator-bound object: keep its motion
     node.userData.original = { p: node.position.clone(), q: node.quaternion.clone(), s: node.scale.clone() };
     return node;
   }
