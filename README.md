@@ -14,8 +14,10 @@
 > editing the database and writing server Lua, and to use a **separate, sandboxed
 > game install** for experimentation rather than your main client.
 
-![ss](ss.png)
-![ss2](ss2.png)
+![Editing a desert windmill town: the selected object outlined in orange with a move gizmo, and the object list beside it](screenshots/1.png)
+![Cutscene authoring on Qufim Island: camera, actor, dialogue and animation tracks on the timeline](screenshots/2.png)
+![Authored collision volumes drawn as red boxes over the terrain, with the project's zone list](screenshots/3.png)
+![The Asset Browser filtered to trees, placing one in a zone](screenshots/4.png)
 
 ---
 
