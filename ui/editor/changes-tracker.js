@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { rebindZoneAnim } from '../core/zone-animations.js';
+import { loadZoneSetting } from './settings.js';
 
 // Generator-bound object animation carried by a copied placement (see core/zone-animations.js).
 // Node side: { sourceId, sourceDat, sourceOffset, newId, rotation, rotVelocity, rotationOrder }.
@@ -257,14 +258,25 @@ export function snapshotChanges() {
     if (c.ts) rec.ts = c.ts;
     return rec;
   });
+  // Deliberate hides only, read from the persisted overrides that every visibility
+  // control writes through (setVisibilityOverride) — NOT from node.visible.
+  //
+  // Reading the live scene meant anything that dimmed a node for its own reasons was
+  // indistinguishable from the user hiding it. Distance culling did exactly that: it
+  // set node.visible = false on far geometry, autosave wrote those nodes into the
+  // project's zone-changes.json as user hides, and the next load replayed them as
+  // real edits — zones came back with chunks missing, carrying a change-set nobody
+  // had made. Culling is gone, but the snapshot should not be able to invent edits
+  // for the next thing that touches visibility either.
+  const overrides = loadZoneSetting(_deps.getCurrentZoneUrl(), 'visibility') || {};
   const visibility = {};
   for (const p of _deps.getPlacements()) {
     // Text planes are editor-only (their baked GLB carries the in-game mesh); the bakes are
     // hidden in the EDITOR by design but must stay visible in-game — keep both out of the map.
     if (p.isTextPlane || p.isTextBaked) continue;
     const key = _deps.visibilityKeyFor(p);
-    const vis = p.isSound ? _deps.iconVisible(p.node) : p.node.visible;
-    if (vis !== _deps.defaultVisibilityFor(p)) visibility[key] = vis;
+    const vis = overrides[key];
+    if (vis !== undefined && vis !== _deps.defaultVisibilityFor(p)) visibility[key] = vis;
   }
   // locks + categorySets are per-user editor view-state, NOT content — they persist
   // separately in editor.json (via saveZoneSetting), and restore from there on load.

@@ -6,6 +6,7 @@
 // to the projects launcher. Settings → Setup edits the same fields later.
 
 import { bridgeCall, bridgeOnline, connectBridge, setBridgeUrl, onBridgeStatus } from '../ffxi/bridge.js';
+import { listsStatus, listsUpdate } from '../ffxi/lists.js';
 import { runToolsBoot } from '../js/tools-boot.js';
 
 const SETUP_DONE_KEY = 'xi.setupComplete';
@@ -698,6 +699,35 @@ async function loadSettingsValues() {
         ? `Using the values below (overriding network.lua).`
         : `No server checkout set — falling back to ${db.user}@${db.host}/${db.database}.`));
   }
+
+  // The player spawn marker reads chars.pos_* live from the server database, so
+  // without one it can only ever be an unchecked box that does nothing. Disable it
+  // rather than leave it lit and inert, and say why in the tooltip.
+  syncPlayerMarkerAvailability(!!st?.serverOk || db?.source === 'override');
+}
+
+/** Enable/disable Settings → Editor → "Show player spawn marker". */
+function syncPlayerMarkerAvailability(hasServer) {
+  const cb = document.getElementById('toggle-show-player');
+  if (!cb) return;
+  cb.disabled = !hasServer;
+  const row = cb.closest('label');
+  if (row) {
+    row.classList.toggle('disabled', !hasServer);
+    if (!hasServer) {
+      row.dataset.enabledTitle ??= row.title || '';
+      row.title = 'Needs a server database — set XI_SERVER_DIR, or database credentials, '
+        + 'under Settings → Setup → Server & Database.';
+    } else if (row.dataset.enabledTitle != null) {
+      row.title = row.dataset.enabledTitle;
+    }
+  }
+  // A marker left on from a previous install would otherwise keep trying to query
+  // a database that is no longer configured.
+  if (!hasServer && cb.checked) {
+    cb.checked = false;
+    cb.dispatchEvent(new Event('change'));
+  }
 }
 
 // Settings → Setup → XI Tools. The Rust side already supports a local-checkout
@@ -725,6 +755,115 @@ async function refreshToolsPane() {
       ? `Using your local checkout — ${st.toolsDir}`
       : `Using the downloaded release${st.localVersion ? ` (v${st.localVersion})` : ''} — ${st.toolsDir}`,
     'ok');
+}
+
+// Settings → Setup → DAT Lists. xi-tools authors mv/lists and publishes it with a
+// manifest of sha256s; this build bakes a copy and the shell replaces any list
+// whose contents have moved (src-tauri/src/lists.rs). This pane is the disk view
+// of that, plus the one button that goes to the network.
+const LISTS_SOURCE_URL = 'https://github.com/vekien/xi-tools/tree/main/mv/lists';
+
+// What each list is for, in the user's terms. Keyed by filename because that is
+// what the manifest names; anything not listed here still shows, unlabelled, so
+// a list added upstream appears the day it ships rather than the day this map
+// catches up.
+const LIST_BLURBS = {
+  'characters.json': 'Races, faces, gear and the animation catalogue',
+  'npcs.json': 'NPC and monster models',
+  'zone_npcs.json': 'Where each NPC stands, per zone',
+  'zones.json': 'Every zone, by name and DAT',
+  'effects.json': 'Spell and ability VFX',
+  'images.json': 'Maps, UI art and cutscene stills',
+  'music.json': 'Music track names',
+  'sfx.json': 'Sound-effect folders and titles',
+  'zone_music.json': 'Which BGM each zone plays',
+  'floors.json': 'Ground textures for Scenes',
+};
+
+/** Bytes as MB/KB, for the list sizes. */
+function fmtBytes(bytes) {
+  const n = Number(bytes);
+  if (!Number.isFinite(n) || n <= 0) return '—';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** The manifest's ISO stamp as a plain date. */
+function fmtStamp(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Disk only — opening Settings must not spend a request, the same rule
+// refreshToolsPane follows. The Update button is what goes to the network.
+async function refreshListsPane() {
+  const table = document.getElementById('lists-table');
+  if (!table) return;
+  const st = await listsStatus();
+  if (!st) {
+    setState('lists-status', 'Only available in the desktop app.', 'bad');
+    const btn = document.getElementById('lists-update');
+    if (btn) btn.disabled = true;
+    table.innerHTML = '';
+    return;
+  }
+  setState('lists-status',
+    `${st.files.length} lists, ${fmtBytes(st.bytes)} — `
+    + (st.downloaded ? `${st.downloaded} updated since this build` : 'all from this build'),
+    'ok');
+  const gen = document.getElementById('lists-generated');
+  if (gen) gen.textContent = st.generated ? `Built from xi-tools' lists of ${fmtStamp(st.generated)}.` : '';
+  const dir = document.getElementById('lists-dir');
+  if (dir) dir.textContent = st.downloaded ? st.dir : '';
+
+  table.innerHTML = '';
+  for (const f of st.files) {
+    const row = document.createElement('div');
+    row.className = 'lists-row';
+    const name = document.createElement('span');
+    name.className = 'lists-name mono';
+    name.textContent = f.name;
+    const blurb = document.createElement('span');
+    blurb.className = 'lists-blurb';
+    blurb.textContent = LIST_BLURBS[f.name] || '';
+    const size = document.createElement('span');
+    size.className = 'lists-size mono';
+    size.textContent = fmtBytes(f.bytes);
+    const src = document.createElement('span');
+    src.className = 'lists-src' + (f.source === 'downloaded' ? ' updated' : '');
+    src.textContent = f.source === 'downloaded' ? 'Updated' : 'In build';
+    row.append(name, size, src, blurb);
+    table.appendChild(row);
+  }
+}
+
+// The one network action on this pane. Reports "up to date" rather than silence,
+// so a deliberate press always gets an answer.
+async function doUpdateLists() {
+  const btn = document.getElementById('lists-update');
+  if (btn) btn.disabled = true;
+  setState('lists-msg', 'Checking xi-tools…');
+  try {
+    const res = await listsUpdate();
+    await refreshListsPane();
+    const n = res?.updated?.length ?? 0;
+    if (n) {
+      setState('lists-msg',
+        `Updated ${n} list${n === 1 ? '' : 's'} (${fmtBytes(res.bytes)}). Reload the editor to use them.`,
+        'ok');
+    } else if (res?.error) {
+      setState('lists-msg', res.error, 'bad');
+    } else {
+      setState('lists-msg', 'Already up to date.', 'ok');
+    }
+    if (n && res?.error) setState('lists-msg', `${res.error}`, 'bad');
+  } catch (e) {
+    setState('lists-msg', String(e?.message || e), 'bad');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function refreshShortcutPane() {
@@ -889,7 +1028,16 @@ export function initSetupSettings() {
     loadSettingsValues();
     refreshShortcutPane();
     refreshToolsPane();
+    refreshListsPane();
   });
+
+  document.getElementById('lists-update')?.addEventListener('click', doUpdateLists);
+  for (const id of ['lists-open', 'lists-src-link']) {
+    document.getElementById(id)?.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.open(LISTS_SOURCE_URL, '_blank', 'noopener');
+    });
+  }
   onBridgeStatus((online) => {
     if (online && document.getElementById('settings-panel')?.classList.contains('open')) {
       loadSettingsValues();

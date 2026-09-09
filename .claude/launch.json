@@ -4,8 +4,24 @@
     {
       "name": "xi-zone-editor-ui",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "ui"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "ui"
+      ],
       "port": 5174
+    },
+    {
+      "name": "xi-zone-editor-dist",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--prefix",
+        "ui"
+      ],
+      "port": 4173
     }
   ]
 }

@@ -71,36 +71,6 @@
   line-height: 1.4;
   color: #7a7a88;
 }
-.perf-cull {
-  border-top: 1px solid #2e2e38;
-  margin-top: 6px;
-  padding: 6px 18px 16px;
-}
-.perf-cullrow {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 6px 0;
-}
-.perf-cullcount {
-  margin-left: auto;
-  font-size: 12px;
-  color: #9a9aa8;
-  font-variant-numeric: tabular-nums;
-}
-.perf-slider {
-  padding: 4px 0 0;
-}
-.perf-slider-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 6px;
-}
-.perf-slider.disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
 .help-panel {
   width: min(760px, calc(100vw - 40px));
 }

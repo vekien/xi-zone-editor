@@ -15,8 +15,10 @@ use std::thread;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 
-const GH_OWNER: &str = "vekien";
-const GH_REPO: &str = "xi-tools";
+mod lists;
+
+pub const GH_OWNER: &str = "vekien";
+pub const GH_REPO: &str = "xi-tools";
 const BRIDGE_HOST: &str = "127.0.0.1";
 const BRIDGE_PORT: u16 = 8777;
 const BRIDGE_IDLE_SECS: u32 = 90;
@@ -426,6 +428,36 @@ fn tools_clear_local_path() -> Result<ToolsStatus, String> {
 }
 
 /// Folder picker pre-labelled for choosing an xi-tools checkout.
+// ── DAT lists ────────────────────────────────────────────────────────────────
+// The baked lists under ui/public/lists are refreshed from xi-tools at runtime;
+// see src/lists.rs for why that is content-addressed rather than versioned.
+
+/// Which lists are in effect and where each comes from. Disk only — opening
+/// Settings must not spend a request.
+#[tauri::command]
+fn lists_status() -> lists::ListsStatus {
+    lists::status(&app_data_dir())
+}
+
+/// The downloaded copy of one list, or `None` when the baked copy is current —
+/// the page fetches that one out of the bundle itself.
+#[tauri::command]
+fn lists_read(name: String) -> Result<Option<String>, String> {
+    lists::read(&app_data_dir(), &name)
+}
+
+/// Fetch xi-tools' manifest and pull anything whose contents have moved. Never
+/// fails the caller: offline is a normal outcome, reported in `error`.
+#[tauri::command]
+async fn lists_update() -> lists::ListsSync {
+    tauri::async_runtime::spawn_blocking(|| lists::sync(&app_data_dir()))
+        .await
+        .unwrap_or_else(|e| lists::ListsSync {
+            error: Some(format!("list update task failed: {e}")),
+            ..Default::default()
+        })
+}
+
 #[tauri::command]
 fn pick_tools_folder(initial: Option<String>) -> Option<String> {
     let mut dialog = rfd::FileDialog::new().set_title("Select local xi-tools folder");
@@ -1598,6 +1630,9 @@ fn main() {
             pick_folder,
             desktop_shortcut_status,
             create_desktop_shortcut,
+            lists_status,
+            lists_read,
+            lists_update,
         ])
         .on_window_event(|_window, event| {
             if let tauri::WindowEvent::Destroyed = event {

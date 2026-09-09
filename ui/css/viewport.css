@@ -324,3 +324,67 @@
   font-size: 11px;
   color: #9ad;
 }
+
+/* ── Zone loading indicator ──────────────────────────────────────────────────
+   Sits over the viewport only — `.app` is the positioning context and the panel
+   is 300px, the same offset .fps-counter uses. Scoped rather than full-screen so
+   the Zone List stays readable and clickable while a zone builds; #changes-loader
+   is the full-screen one, for the projects launcher.
+
+   Parsing a multi-MB DAT and building its meshes blocks the main thread, so the
+   spinner WILL stall mid-load. That is why show() waits for a paint before the
+   work starts and why the card carries a text phase: the words are what tells you
+   it is alive, the spinner only reads as motion either side of the freeze. */
+.zone-loader {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 300px;
+  z-index: 95;   /* over the canvas + gizmo tools, under the panel (9888) and modals */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 16, 20, 0.35);
+  backdrop-filter: blur(1.5px);
+  pointer-events: all;   /* the scene is mid-rebuild — swallow clicks meant for it */
+}
+.zone-loader[hidden] { display: none; }
+.zone-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 30px;
+  color: #cdd2de;
+  background: #232329f2;
+  border: 1px solid #3a3a44;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px #000a;
+  min-width: 190px;
+}
+.zone-loader-spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid #ffffff1f;
+  border-top-color: #5fe6ff;
+  border-radius: 50%;
+  animation: zone-loader-spin 0.9s linear infinite;
+}
+@keyframes zone-loader-spin {
+  to { transform: rotate(360deg); }
+}
+.zone-loader-text {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+/* The zone name, when we know it — long enough to wrap on a room DAT path. */
+.zone-loader-sub {
+  font-size: 11.5px;
+  color: #8a8aa4;
+  max-width: 260px;
+  text-align: center;
+  word-break: break-word;
+}
+.zone-loader-sub:empty { display: none; }

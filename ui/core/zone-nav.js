@@ -1,5 +1,6 @@
 import { loadSetting, saveSetting } from '../editor/settings.js';
 import { bridgeCall, bridgeOnline } from '../ffxi/bridge.js';
+import { loadList } from '../ffxi/lists.js';
 
 let _deps = {};
 
@@ -15,6 +16,19 @@ export function updateZoneInfo() {
   const zonesData = _deps.getZonesData();
   const customZonesData = _deps.getCustomZonesData();
   const currentZoneUrl = _deps.getCurrentZoneUrl();
+  if (!currentZoneUrl) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    const colsTrisEmpty = document.getElementById('cols-tris');
+    if (colsTrisEmpty) colsTrisEmpty.textContent = '';
+    // The buttons below still need their disabled state resolved for "no zone".
+    _deps.updateHdUI();
+    _deps.updateDeleteZoneBtn?.();
+    _deps.updateMakeTemplateBtn();
+    _deps.ensureZoneMusic();
+    return;
+  }
+  el.style.display = '';
   const zoneEntry = zonesData.find((z) => z.path === currentZoneUrl)
     || customZonesData.find((z) => z.path === currentZoneUrl);
   const isHd = (_deps.getMode() === 'hd');
@@ -135,8 +149,10 @@ export function loadPinnedZones() {
 export function savePinnedZones(arr) { saveSetting('pinnedZones', JSON.stringify(arr)); }
 export function isZonePinned(path) { return loadPinnedZones().includes(path); }
 export function zoneNameForPath(path) {
-  const zonesData = _deps.getZonesData();
-  const customZonesData = _deps.getCustomZonesData();
+  // Called from loadZone's first paint, so it must survive being reached before
+  // initZoneNav has wired the deps.
+  const zonesData = _deps.getZonesData?.() || [];
+  const customZonesData = _deps.getCustomZonesData?.() || [];
   const z = zonesData.find((z) => z.path === path) || customZonesData.find((z) => z.path === path);
   return z?.name || path.replace(/^game\//, '');
 }
@@ -308,14 +324,16 @@ export async function refreshCustomZones() {
     }));
     _deps.setCustomZonesData(customZonesData);
     if (!customZonesData.length) return;
+    const staticPaths = new Set((_deps.getZonesData() || []).map((z) => z.path));
     const grp = document.createElement('optgroup');
     grp.label = 'ROM10 — CUSTOM';
     for (const z of customZonesData) {
+      if (staticPaths.has(z.path)) continue;   // already listed under Dev / XI Modified
       const o = document.createElement('option');
       o.value = z.path; o.textContent = z.name;
       grp.appendChild(o);
     }
-    sel.insertBefore(grp, sel.firstChild);
+    if (grp.children.length) sel.insertBefore(grp, sel.firstChild);
     const currentZoneUrl = _deps.getCurrentZoneUrl();
     if (currentZoneUrl) sel.value = currentZoneUrl;
     _deps.populateFootstepSourceZones();
@@ -332,14 +350,14 @@ export async function populateZones() {
   if (!sel) return;
   const lastZone = loadSetting('lastZone', '');
   try {
-    const zones = await fetch('zones.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+    const zones = await loadList('zones.json');
     _deps.setZonesData(zones);
     sel.innerHTML = '<option value="">---</option>';
     const romOf = (z) => (z.path.match(/game\/(ROM\d*)\//i)?.[1] || 'ROM').toUpperCase();
     const groupOf = (z) => z.group || romOf(z);
     const groupLabel = (g) => g === 'ROM' ? 'ROM (base)' : g;
-    // ROM groups by number first, then the two curated groups at the bottom.
-    const TAIL = ['Dev / Prototype', 'Rooms'];
+    // ROM groups by number first, then the curated groups at the bottom.
+    const TAIL = ['Dev / Prototype', 'Dev / XI Modified', 'Rooms'];
     const groups = [...new Set(zones.map(groupOf))].sort((a, b) => {
       const ta = TAIL.indexOf(a), tb = TAIL.indexOf(b);
       if (ta !== -1 || tb !== -1) return (ta === -1 ? -1 : ta) - (tb === -1 ? -1 : tb);
@@ -367,11 +385,11 @@ export async function populateZones() {
       const customEl = document.getElementById('custom-dat');
       if (customEl) customEl.value = lastZone.replace(/^game\//, '');
     } else {
-      const def = zones.find((z) => z.path.toUpperCase().endsWith('ROM/1/41.DAT'));
-      if (def) sel.value = def.path;
+      sel.value = '';   // nothing open yet — don't imply a zone is loaded
     }
   } catch (e) {
-    console.error('zones.json not found — run gen_zones.py', e);
+    console.error('lists/zones.json failed to load — the Zone List is empty', e);
+    _deps.setStatus?.('Zone List unavailable: zones.json failed to load. Use Zone DAT to open a zone by path.', true);
     sel.innerHTML = '<option value="game/ROM/1/41.DAT">ROM/1/41 — Lower Jeuno</option>';
   }
   const launcherState = _deps.getLauncherState();

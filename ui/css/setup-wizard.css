@@ -622,3 +622,41 @@ body.wiz-active #panel {
 }
 .set-env-state.ok { color: #6cc98a; }
 .set-env-state.bad { color: #e07070; }
+
+/* ── Settings → Setup → DAT Lists ────────────────────────────────────────────
+   One row per list from lists_status: name, what it is for, size, and whether the
+   copy in effect came from the build or from a download. The settings modal is
+   620px wide and the nav takes 200 of it, so the blurb gets its own line rather
+   than a column — as one it wrapped to five lines on the longer descriptions. */
+.lists-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #2a2a3a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.lists-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  column-gap: 10px;
+  align-items: baseline;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  border-top: 1px solid #23232f;
+}
+.lists-row:first-child { border-top: 0; }
+.lists-name { color: #cdcde0; }
+.lists-size { color: #8a8aa4; text-align: right; }
+/* The point of the column: at a glance, which lists this build is no longer the
+   source of. */
+.lists-src { color: #6a6a80; text-align: right; min-width: 52px; }
+.lists-src.updated { color: #6cc98a; }
+.lists-blurb {
+  grid-column: 1 / -1;
+  color: #8a8aa4;
+  margin-top: 2px;
+}
+.lists-blurb:empty { display: none; }
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

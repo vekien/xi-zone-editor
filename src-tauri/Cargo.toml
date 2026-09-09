@@ -16,6 +16,8 @@ dotenvy = "0.15"
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
 once_cell = "1"
+# sha256 for verifying downloaded DAT lists (src/lists.rs).
+sha2 = "0.10"
 
 [profile.release]
 strip = true

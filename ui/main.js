@@ -795,6 +795,7 @@ let placements = [];          // selectable objects { node, name, li }
 let skyGroup = null;          // unplaced (skybox/environment) meshes, toggled separately
 // markerGroup — moved to markers.js (use getMarkerGroup/setMarkerGroup)
 let vfxIconGroup = null;      // editor-only billboard icons marking every VFX generator (nodes are hidden)
+const _vfxIconWP = new THREE.Vector3();   // scratch: per-frame world position for icon scaling/fade
 let _vfxIconTex = null;
 // collisionGroup, collisionMaterial, collisionPrimGroup, collisionPrimMaterials — moved to collision-ui.js
 // Use getCollisionGroup/setCollisionGroup, getCollisionMaterial/setCollisionMaterial,
@@ -821,7 +822,7 @@ let publishReset = loadProjectSetting('publishReset', loadSetting('publishReset'
 let hdPublishMode = loadProjectSetting('hdPublishMode',
   loadSetting('hdPublishMode', loadSetting('publishHd', true) ? 'publish' : 'off'));
 let clearCollisionOnReset = loadProjectSetting('clearCollisionOnReset', loadSetting('clearCollisionOnReset', false));   // project-scoped: Reset/Publish also wipes the zone's own collision (replace, not append)
-let showPlayerMarker = loadSetting('showPlayerMarker', true);   // overlay a "PLAYER" disc at the DB spawn point
+let showPlayerMarker = loadSetting('showPlayerMarker', false);  // overlay a "PLAYER" disc at the DB spawn point
 let validateSpawn = loadSetting('validateSpawn', true);         // warn on Publish if no collision under the spawn
 let playerMarkerGroup = null;   // editor-only "PLAYER" billboard overlay (not a placement, never exported)
 let playerSpawn = null;         // { x,y,z,zone,name,charid } last read from chars
@@ -877,7 +878,7 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 // XZONE_CLIP_KEY — moved to copy-paste.js
 let lastCanvasPointerClient = null;
-let copyTransformIncludeScale = loadSetting('copyTransformIncludeScale', false);
+let copyTransformIncludeScale = loadSetting('copyTransformIncludeScale', true);
 let pasteOffset = loadSetting('pasteOffset', false);   // Ctrl+V: nudge the copy vs paste on top of the original             // {x,y} — updated by canvas pointermove for paste-at-cursor
 
 function setStatus(msg, isError = false) {
@@ -1182,6 +1183,7 @@ async function fetchDatBuffer(url, baseDat, hd) {
 // baseDat/hd default from the current mode so switching zones while in Base/HD mode keeps
 // showing those bytes; setMode/reloadZoneClean pass them explicitly to override.
 async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode() === 'hd') } = {}) {
+  if (!url) return;
   // HD preview is per-zone (not every zone has an HD asset). A genuine zone change while
   // in HD mode drops back to Edit so the new zone loads its real standard bytes — the HD
   // toggle (gated on availability) is the way back in. Mode-toggle reloads (_suppressStateFetch)
@@ -1203,6 +1205,7 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
   saveCurrentZoneCamera();
   statusZoneUrl = url;
   setStatus(`fetching ${url}…`);
+  await showZoneLoader('Loading zone…', zoneNameForPath(url));
   closeConsole();          // the publish/backend log belongs to the zone we're leaving
   transform.detach();
   clearSelectionOutline();
@@ -1222,6 +1225,7 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
     ]);
     datBuf = buf; keyTables = kt;
     setStatus('decrypting + parsing zone…');
+    setZoneLoaderText('Decrypting and parsing…');
     parsed = parseZone(datBuf, keyTables);
   } catch (e) {
     if (!e.message.startsWith('DAT not found') && !e.message.startsWith('Failed to fetch')) {
@@ -1230,9 +1234,11 @@ async function loadZone(url, { baseDat = (getMode() === 'base'), hd = (getMode()
       console.error(e);
     }
     hideChangesLoader();   // zone never finished loading → don't leave the project-open overlay stuck
+    hideZoneLoader();
     return;
   }
 
+  setZoneLoaderText('Building the scene…');
   const { meshes, placements: plc, textures, meshIdToName, collision } = parsed;
   loadZoneAnimations(datBuf);   // generators that draw + animate placed objects (BlockID-bound)
   const texMap = buildTextures(textures); // FFXI name -> three.js DataTexture (same keys)
@@ -2390,140 +2396,14 @@ function updatePerfPanel() {
   _perfEls.geo.textContent = String(info.memory.geometries);
   _perfEls.tex.textContent = String(info.memory.textures);
   _perfEls.plc.textContent = String(typeof placements !== 'undefined' ? placements.length : 0);
-  _syncCullUI();   // keep the "hiding N" readout live while the panel is open
 }
 
-// ── Distance culling (perf) ──────────────────────────────────────────────────
-// Hides small/distant placements past a draw distance to cut draw calls on the
-// whole-zone vista (the 16k-draw-call case). Big geometry (terrain/buildings) and
-// the current selection are always kept. Per-node bounding sphere is cached; static
-// placements never move, so the per-frame cost is just a distanceTo per object.
-// Particle emitters are culled too — each one is a draw call plus a per-frame
-// simulation even as a speck on the horizon — and are frozen while hidden.
-let cullEnabled = loadSetting('distCull', true);
-let cullDistPct = clampSnapValue(Number(loadSetting('distCullPct', 60)), 5, 100, 60); // % of zone diagonal
-let _cullDiag = 4000;          // world units; recomputed when the placement count changes
-let _cullSeenN = -1, _cullCount = 0;
-const _camWP = new THREE.Vector3(), _cullTmp = new THREE.Vector3(), _cullBox = new THREE.Box3();
-const _vfxIconWP = new THREE.Vector3();
-const ANG_KEEP = 0.12;         // objects subtending ≥ this (radius/dist) never cull — keeps terrain/buildings
-function _cullEligible(p) {
-  if (!p || !p.node || p.isSky || p.isMarker || p.isSound || p.isCollisionPrimitive) return false;
-  // Effects: only runtime particle emitters. Lights, sounds and static effect
-  // meshes keep their exemption.
-  if (p.isEffect) return !!p.node.userData.vfxEmitter;
-  return true;
-}
-const CULL_FX_REFRESH_MS = 2000;
-function _setNodeCulled(node, on) {
-  node.visible = !on;
-  node.userData._distCulled = on;
-  node.userData.vfxEmitter?.setCulled?.(on);
-}
-function _ensureCullData(node) {
-  const em = node.userData.vfxEmitter;
-  if (em) {
-    // Particles drift, so an emitter's cloud is re-measured every couple of seconds
-    // rather than cached once. Nothing emitted yet → a point at the emitter node.
-    const now = performance.now();
-    if (node.userData._cullR !== undefined && now - (node.userData._cullT || 0) < CULL_FX_REFRESH_MS) return;
-    node.userData._cullT = now;
-    const box = new THREE.Box3();
-    em.meshGroup.traverse((m) => {
-      if (!m.isInstancedMesh || !m.count) return;
-      m.computeBoundingBox();   // three.js caches this; recompute for the live instances
-      box.union(_cullBox.copy(m.boundingBox).applyMatrix4(m.matrixWorld));
-    });
-    if (box.isEmpty()) { node.userData._cullR = 0; node.userData._cullP = node.getWorldPosition(new THREE.Vector3()); return; }
-    const sph = box.getBoundingSphere(new THREE.Sphere());
-    node.userData._cullR = sph.radius; node.userData._cullP = sph.center;
-    return;
-  }
-  if (node.userData._cullR !== undefined) return;
-  const box = new THREE.Box3().setFromObject(node);
-  if (box.isEmpty()) { node.userData._cullR = 0; node.userData._cullP = node.getWorldPosition(new THREE.Vector3()); return; }
-  const sph = box.getBoundingSphere(new THREE.Sphere());
-  node.userData._cullR = sph.radius; node.userData._cullP = sph.center.clone();
-}
-function _rebuildCullCache() {
-  const gbox = new THREE.Box3();
-  for (const p of placements) {
-    if (!_cullEligible(p)) continue;
-    _ensureCullData(p.node);
-    const r = p.node.userData._cullR, c = p.node.userData._cullP;
-    gbox.expandByPoint(_cullTmp.copy(c).addScalar(r));
-    gbox.expandByPoint(_cullTmp.copy(c).addScalar(-r));
-  }
-  if (!gbox.isEmpty()) _cullDiag = gbox.getSize(_cullTmp).length() || _cullDiag;
-}
-function uncullAll() {
-  for (const p of placements) {
-    const n = p?.node;
-    if (n && n.userData._distCulled) _setNodeCulled(n, false);
-  }
-  _cullCount = 0;
-}
-function updateDistanceCull() {
-  if (!cullEnabled || !placements.length) return;
-  if (_cullSeenN !== placements.length) { _rebuildCullCache(); _cullSeenN = placements.length; }
-  const cam = cutsceneCamActive ? csCamera : camera;
-  cam.getWorldPosition(_camWP);
-  const maxD = (cullDistPct / 100) * _cullDiag;
-  let culled = 0;
-  for (const p of placements) {
-    if (!_cullEligible(p)) continue;
-    const node = p.node;
-    // Never cull the active selection (you may be editing a far object).
-    if (node === selected || selectedSet.has(node)) {
-      if (node.userData._distCulled) _setNodeCulled(node, false);
-      node.userData._cullP = null; node.userData._cullR = undefined; _ensureCullData(node); // refresh moved pos
-      continue;
-    }
-    // Leave user-hidden objects alone (only un-hide what WE culled).
-    if (!node.userData._distCulled && !node.visible) continue;
-    _ensureCullData(node);
-    const r = node.userData._cullR || 0;
-    const dist = _camWP.distanceTo(node.userData._cullP);
-    const cull = dist > maxD && (r / dist) < ANG_KEEP;
-    if (cull) {
-      if (!node.userData._distCulled) _setNodeCulled(node, true);
-      culled++;
-    } else if (node.userData._distCulled) {
-      _setNodeCulled(node, false);
-    }
-  }
-  _cullCount = culled;
-}
-
-// Cull panel wiring
-const _cullEnableEl = document.getElementById('cull-enable');
-const _cullDistEl = document.getElementById('cull-dist');
-const _cullDistValEl = document.getElementById('cull-dist-val');
-const _cullCountEl = document.getElementById('cull-count');
-const _cullSliderRow = document.getElementById('cull-slider-row');
-function _syncCullUI() {
-  if (_cullEnableEl) _cullEnableEl.checked = cullEnabled;
-  if (_cullDistEl) _cullDistEl.value = String(cullDistPct);
-  if (_cullDistValEl) _cullDistValEl.textContent = cullDistPct + '%';
-  if (_cullSliderRow) _cullSliderRow.classList.toggle('disabled', !cullEnabled);
-  if (_cullCountEl) _cullCountEl.textContent = cullEnabled ? `hiding ${_cullCount}` : '';
-}
-if (_cullEnableEl) {
-  _cullEnableEl.addEventListener('change', () => {
-    cullEnabled = _cullEnableEl.checked;
-    saveSetting('distCull', cullEnabled);
-    if (cullEnabled) { _cullSeenN = -1; } else { uncullAll(); }
-    _syncCullUI();
-  });
-}
-if (_cullDistEl) {
-  _cullDistEl.addEventListener('input', () => {
-    cullDistPct = Number(_cullDistEl.value);
-    saveSetting('distCullPct', cullDistPct);
-    _syncCullUI();
-  });
-}
-_syncCullUI();
+// Distance culling was removed: it hid placements by setting node.visible = false,
+// and the change-set's visibility map is built by reading node.visible. Autosave
+// therefore recorded every distant object as a user hide, wrote it to the project's
+// zone-changes.json, and the next load replayed those hides as real edits — zones
+// arrived with chunks missing and a change-set nobody had made. Draw-call count is
+// not worth a feature that can silently corrupt a project.
 
 // ── Menu dropdown (New / Import GLB / Export JSON / Export Commands) ─────────
 // A lightweight popover, not a draggable modal: clicking anywhere outside closes it.
@@ -3236,6 +3116,36 @@ async function reloadZoneClean(baseDat = false, hd = false) {
 }
 
 // Pull this zone's saved change-set from its workspace (once per zone). Stash it to
+// ── Zone loading indicator ───────────────────────────────────────────────────
+// Viewport-scoped card shown for the whole of loadZone: fetch → parse → build →
+// change-set replay. Distinct from showChangesLoader(), which is the full-screen
+// overlay the projects launcher puts up before the first zone arrives.
+//
+// show() resolves only AFTER the browser paints. Parsing and mesh-building block
+// the main thread for seconds on a large zone, so without waiting for a frame the
+// card would be set up and torn down inside one JS turn and never appear at all —
+// the same reason showChangesLoader does it.
+function showZoneLoader(text, sub = '') {
+  const el = document.getElementById('zone-loader');
+  if (!el) return Promise.resolve();
+  setZoneLoaderText(text, sub);
+  el.hidden = false;
+  return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+}
+// Phase updates are fire-and-forget: they land on the next paint the main thread
+// allows, which during a parse is after it finishes. Still worth setting — the
+// text is what the user reads when the spinner is frozen.
+function setZoneLoaderText(text, sub) {
+  const t = document.getElementById('zone-loader-text');
+  if (t && text != null) t.textContent = text;
+  const sEl = document.getElementById('zone-loader-sub');
+  if (sEl && sub != null) sEl.textContent = sub;
+}
+function hideZoneLoader() {
+  const el = document.getElementById('zone-loader');
+  if (el) el.hidden = true;
+}
+
 // replay when Edit is entered; replay immediately if already editing with no local edits.
 // "Loading Changes" blocking overlay — shown while a saved change-set replays onto the scene.
 // showChangesLoader resolves only AFTER the browser paints the overlay: a change-set with no GLB
@@ -3248,7 +3158,7 @@ function showChangesLoader() {
 function hideChangesLoader() { document.getElementById('changes-loader')?.classList.add('hidden'); }
 
 async function refreshZoneState() {
-  if (!bridgeOnline() || !currentZoneUrl || getModeFetchedZone() === currentZoneUrl) { hideChangesLoader(); return; }
+  if (!bridgeOnline() || !currentZoneUrl || getModeFetchedZone() === currentZoneUrl) { hideChangesLoader(); hideZoneLoader(); return; }
   setModeFetchedZone(currentZoneUrl);
   try {
     const st = await bridgeCall('zone.state', { zone: currentZoneUrl });
@@ -3276,7 +3186,7 @@ async function refreshZoneState() {
       markSaved(liveSnap);   // scene now reflects the workspace — auto-save won't re-write it
     }
   } catch (e) { setModeFetchedZone(''); }  // allow a retry
-  finally { hideChangesLoader(); }   // the project-open overlay (shown on click) comes down once the replay settles
+  finally { hideChangesLoader(); hideZoneLoader(); }   // both overlays come down once the replay settles
 }
 
 // Called at the end of loadZone. A genuine zone change forgets the old pending set
@@ -3300,7 +3210,8 @@ function onZoneLoaded() {
   markSaved();               // baseline for auto-save (refreshZoneState updates it after any replay)
   refreshHdVariant();        // per-zone HD-variant check (de-duped; cheap on mode-toggle reloads)
   refreshCompanionDats();    // async fetch of dialog/npc/event DAT paths for zone info display
-  if (getSuppressStateFetch()) return;
+  if (getSuppressStateFetch()) { hideZoneLoader(); return; }   // mode toggle: no replay to wait for
+  setZoneLoaderText('Checking for saved changes…');
   setModeReplayPending(null);
   setModeFetchedZone('');
   refreshZoneState();
@@ -4190,6 +4101,7 @@ window.addEventListener('keydown', (e) => {
 const zoneEl = document.getElementById('zone');
 zoneEl.onchange = async (e) => {
   const nextZone = e.target.value;
+  if (!nextZone) { zoneEl.value = currentZoneUrl || ''; return; }
   if (currentZoneUrl && nextZone !== currentZoneUrl && hasUnsavedChanges()) {
     const ok = await xi_confirm('Unsaved Changes', 'You have unsaved changes. Continue and discard them?', 'Discard');
     if (!ok) { zoneEl.value = currentZoneUrl; return; }
@@ -5542,7 +5454,6 @@ function animate() {
       sp.material.opacity = hov ? 1 : 1 - fadeT * (1 - VFX_ICON_FADE_MIN);
     }
   }
-  updateDistanceCull();   // perf: hide small/distant placements past the draw distance (no-op unless enabled)
   updateSelectionOutline();
   updateHoverOutline();
   // csActorOutline + selected actor name tag are updated inside csRenderTick()
