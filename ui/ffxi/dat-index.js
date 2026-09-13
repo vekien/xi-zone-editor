@@ -29,7 +29,9 @@ const ITEM_DATS = [
   { cat: 'Armor_2',                   s: 23040, e: 28671, jp: 'ROM/286/72.DAT',   en: 'ROM/286/73.DAT'  },
   { cat: 'Moblin_Maze_Mongers',       s: 28672, e: 29695, jp: 'ROM/217/20.DAT',   en: 'ROM/217/21.DAT'  },
   { cat: 'Monstrosity_1',             s: 29696, e: 30719, jp: 'ROM/288/79.DAT',   en: 'ROM/288/80.DAT'  },
-  { cat: 'Custom_Items',              s: 30720, e: 57343, jp: 'ROM/288/79.DAT',   en: 'ROM/288/80.DAT'  },
+  // Added by the 10 Sept 2026 retail update (all placeholders so far); absent on a legacy install.
+  { cat: 'Items_7',                   s: 30720, e: 31743, jp: 'ROM/387/13.DAT',   en: 'ROM/387/14.DAT'  },
+  { cat: 'Custom_Items',              s: 31744, e: 57343, jp: 'ROM/288/79.DAT',   en: 'ROM/288/80.DAT'  },
   { cat: 'Records_of_Eminence_Objectives', s: 57344, e: 61431, jp: 'ROM/307/15.DAT', en: 'ROM/307/16.DAT' },
   { cat: 'Items_3',                   s: 61432, e: 61439, jp: 'ROM/314/89.DAT',   en: 'ROM/314/89.DAT'  },
   { cat: 'Monstrosity_2',             s: 61440, e: 61951, jp: 'ROM/288/66.DAT',   en: 'ROM/288/67.DAT'  },
